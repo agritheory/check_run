@@ -14,7 +14,9 @@ app_license = "MIT"
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/check_run/css/check_run.css"
-# app_include_js = "/assets/check_run/js/check_run.js"
+app_include_js = [
+	"/assets/js/check_run.min.js"
+]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/check_run/css/check_run.css"
@@ -31,7 +33,10 @@ app_license = "MIT"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {
+	'Employee': 'public/js/custom/employee_custom.js',
+	"Supplier": 'public/js/custom/supplier_custom.js',
+}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -58,6 +63,7 @@ app_license = "MIT"
 
 # before_install = "check_run.install.before_install"
 # after_install = "check_run.install.after_install"
+after_migrate = 'check_run.customize.load_customizations'
 
 # Uninstallation
 # ------------
@@ -127,7 +133,7 @@ app_license = "MIT"
 # Testing
 # -------
 
-# before_tests = "check_run.install.before_tests"
+# before_tests = "check_run.check_run.doctype.check_run.test_check_run.before_tests"
 
 # Overriding Methods
 # ------------------------------
@@ -150,27 +156,7 @@ app_license = "MIT"
 
 # User Data Protection
 # --------------------
-
-user_data_fields = [
-	{
-		"doctype": "{doctype_1}",
-		"filter_by": "{filter_by}",
-		"redact_fields": ["{field_1}", "{field_2}"],
-		"partial": 1,
-	},
-	{
-		"doctype": "{doctype_2}",
-		"filter_by": "{filter_by}",
-		"partial": 1,
-	},
-	{
-		"doctype": "{doctype_3}",
-		"strict": False,
-	},
-	{
-		"doctype": "{doctype_4}"
-	}
-]
+#
 
 # Authentication and authorization
 # --------------------------------
