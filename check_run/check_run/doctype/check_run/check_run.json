@@ -21,7 +21,7 @@
   "bank_account",
   "pay_to_account",
   "section_break_9",
-  "html_10",
+  "check_run_table",
   "transactions",
   "amended_from",
   "print_count",
@@ -51,7 +51,6 @@
   },
   {
    "allow_on_submit": 1,
-   "description": "Final check number in this check run.",
    "fieldname": "final_check_number",
    "fieldtype": "Int",
    "in_list_view": 1,
@@ -101,10 +100,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "fieldname": "html_10",
-   "fieldtype": "HTML"
-  },
-  {
    "default": "0.00",
    "fieldname": "beg_balance",
    "fieldtype": "Currency",
@@ -146,11 +141,15 @@
    "fieldtype": "Select",
    "hidden": 1,
    "options": "Draft\nSubmitted\nConfirm Print\nPrinted"
+  },
+  {
+   "fieldname": "check_run_table",
+   "fieldtype": "HTML"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2022-07-03 11:25:38.873413",
+ "modified": "2022-07-04 05:50:56.817736",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run",

@@ -96,7 +96,7 @@ def create_invoices():
 	for supplier in suppliers:
 		pi = frappe.new_doc('Purchase Invoice')
 		pi.company = company
-		pi.set_posting_date = 1
+		pi.set_posting_time = 1
 		pi.posting_date = day
 		pi.supplier = supplier[0]
 		pi.append('items', {
@@ -109,7 +109,7 @@ def create_invoices():
 	# two electric meters / test invoice aggregation
 	pi = frappe.new_doc('Purchase Invoice')
 	pi.company = company
-	pi.set_posting_date = 1
+	pi.set_posting_time = 1
 	pi.posting_date = day
 	pi.supplier = suppliers[0][0]
 	pi.append('items', {
@@ -125,7 +125,7 @@ def create_invoices():
 	for supplier in suppliers:
 		pi = frappe.new_doc('Purchase Invoice')
 		pi.company = company
-		pi.set_posting_date = 1
+		pi.set_posting_time = 1
 		pi.posting_date = next_day
 		pi.supplier = supplier[0]
 		pi.append('items', {
@@ -138,7 +138,7 @@ def create_invoices():
 	# two electric meters / test invoice aggregation
 	pi = frappe.new_doc('Purchase Invoice')
 	pi.company = company
-	pi.set_posting_date = 1
+	pi.set_posting_time = 1
 	pi.posting_date = next_day
 	pi.supplier = suppliers[0][0]
 	pi.append('items', {

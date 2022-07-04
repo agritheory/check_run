@@ -32,6 +32,19 @@ class CheckRun(Document):
 		else:
 			self.validate_last_check_number()
 
+	def is_dirty(self, doc):
+		dirty = False
+		for key in ('start_date', 'end_date', 'check_run_date', 'initial_check_number', 'company', 'bank_account', 'pay_to_account'):
+			if self.get(key) != doc.get(key):
+				return True
+		for db_row in json.loads(self.transactions):
+			for frm_row in doc.transactions:
+				if db_row.get('name') == frm_row.get('name'):
+					if db_row.get('mode_of_payment') != frm_row.get('mode_of_payment'):
+						return True
+					if db_row.get('pay') != frm_row.get('pay'):
+						return True
+
 	def set_status(self, status=None):
 		if status:
 			self.status = status
@@ -67,11 +80,6 @@ class CheckRun(Document):
 		account_check_number = frappe.get_value('Bank Account', self.bank_account, "check_number") or 0
 		if int(check_number) < int(account_check_number):
 			frappe.throw(f'Initial Check Number cannot be lower than the last used check number <b>{account_check_number}</b> for <b>{self.bank_account}</b>')
-
-	@frappe.whitelist()
-	def get_balance(self):
-		gl_account = frappe.get_value('Bank Account', self.bank_account, 'account')
-		return get_balance_on(gl_account, self.check_run_date)
 
 	@frappe.whitelist()
 	def before_submit(self):
@@ -259,18 +267,18 @@ def check_for_draft_check_run(company, bank_account):
 
 @frappe.whitelist()
 def confirm_print(docname):
-	frappe.db.set_value('Check Run', docname, 'status', 'Printed')
-	return
+	return frappe.db.set_value('Check Run', docname, 'status', 'Printed')
 
 
 @frappe.whitelist()
 def get_entries(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	modes_of_payment = frappe.get_all('Mode of Payment', order_by='name')
-	docstatus = frappe.get_value('Check Run', doc.name, 'docstatus')
-	if docstatus and docstatus > 0:
-		return {'transactions': json.loads(frappe.get_value('Check Run', doc.name, 'transactions')), 'modes_of_payment': modes_of_payment}
-
+	if frappe.db.exists('Check Run', doc.name):
+		db_doc = frappe.get_doc('Check Run', doc.name)
+		print("dirty", db_doc.is_dirty(doc))
+		if db_doc.docstatus > 0 or not db_doc.is_dirty(doc):
+			return {'transactions': json.loads(frappe.get_value('Check Run', doc.name, 'transactions')), 'modes_of_payment': modes_of_payment}
 	transactions =  frappe.db.sql("""
 	(
 		SELECT
@@ -339,6 +347,16 @@ def get_entries(doc):
 		'company': doc.company, 'pay_to_account': doc.pay_to_account
 	}, as_dict=True)
 	return {'transactions': transactions, 'modes_of_payment': modes_of_payment}
+
+
+@frappe.whitelist()
+def get_balance(doc):
+	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+	print(doc)
+	if not doc.bank_account or not doc.check_run_date:
+		return
+	gl_account = frappe.get_value('Bank Account', doc.bank_account, 'account')
+	return get_balance_on(gl_account, doc.check_run_date)
 
 
 def mode_dimensions_from_doc_items(doc, dimension='cost_center'):

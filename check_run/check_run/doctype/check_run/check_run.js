@@ -34,9 +34,7 @@ frappe.ui.form.on("Check Run", {
 				}
 			}
 		})
-		// print is only accessible from custom buttom
-		$('[data-original-title="Print"]').hide()
-		render_page(frm)
+		get_entries(frm)
 		confirm_print(frm)
 		if(frm.doc.docstatus > 0){
 			frm.set_df_property('initial_check_number', 'read_only', 1)
@@ -46,24 +44,19 @@ frappe.ui.form.on("Check Run", {
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
 		permit_first_user(frm)
-		setup_keyboard_navigation(frm)
 	},
 	end_date: frm => {
-		warn_on_field_reset().then(get_entries(frm, true))
+		get_entries(frm)
 	},
 	start_date: frm => {
-		warn_on_field_reset().then(() => {
-			frappe.xcall("get_balance",{	doc: frm.doc})
-			.then(() => {
-				get_entries(frm, true)
-				frm.refresh_field("beg_balance")
-			}).fail((f) => {
-				console.error(f)
-			})
+		frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_balance',{ doc: frm.doc })
+		.then(r => {
+			frm.set_value('beg_balance', r)
+			get_entries(frm)
 		})
 	},
 	onload: frm => {
-		frm.$check_run = $(frm.fields_dict['html_10'].wrapper)
+		frm.$check_run = undefined
 		frm.transactions = []
 		frm.check_run_sort = {
 			partyInput: '',
@@ -74,15 +67,9 @@ frappe.ui.form.on("Check Run", {
 		}
 	},
 	pay_to_account: frm => {
-		warn_on_field_reset().then(get_entries(frm, true))
+		get_entries(frm)
 	}
 })
-
-function render_page(frm) {
-	return new Promise((resolve) => {
-		resolve(get_entries(frm, false))
-	})
-}
 
 function set_queries(frm){
 	frm.set_query("bank_account", function() {
@@ -102,25 +89,17 @@ function set_queries(frm){
 	})
 }
 
-function get_entries(frm, reload){
-	return new Promise((resolve) => {
-		frappe.call({
-			method: 'check_run.check_run.doctype.check_run.check_run.get_entries',
-			args: { doc: frm.doc, reload: reload},
-		}).done((r) => {
-			// console.log("TRANSACTIONS", r.message.transactions)
-			frm.transactions = r.message.transactions.slice(0, 10)
-			frm.modes_of_payment = r.message.modes_of_payment
-			check_run.mount_table(frm, frm.$check_run)
-			if (!frappe.user.has_role(["Accounts Manager"])) {
-				frm.disable_form()
-				frm.$check_run.css({ 'pointer-events': 'none' })
-			}
-			resolve()
-		}).fail((r) => {
-			console.log(r)
-			resolve()
-		})
+function get_entries(frm){
+	frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_entries', { doc: frm.doc}
+	).then((r) => {
+		console.log("TRANSACTIONS", frm.transactions.length, r.transactions.length)
+		frm.transactions = r.transactions
+		frm.modes_of_payment = r.modes_of_payment
+		check_run.mount_table(frm)
+		if (!frappe.user.has_role(["Accounts Manager"])) {
+			frm.disable_form()
+			frm.$check_run.css({ 'pointer-events': 'none' })
+		}
 	})
 }
 
@@ -134,7 +113,6 @@ function total_check_run(frm){
 	frm.set_value("amount_check_run", Number(total))
 }
 
-
 function get_defaults(frm){
 	if(!frm.is_new()){ return }
 	frm.set_value('start_date', moment().startOf('week').format())
@@ -147,204 +125,16 @@ function get_defaults(frm){
 }
 
 function get_last_check_number(frm){
+	//  TODO: refactor to xcall
 	if(frm.doc.__islocal && frm.doc.start_date){
 		frappe.call({
 			method: "set_last_check_number",
 			doc: frm.doc,
 		}).then((r) => {
-			console.log(r)
 			frm.refresh_field("last_check")
 			frm.refresh_field("initial_check_number")
-		}).fail((f) => {
-			console.error(f)
 		})
 	}
-}
-
-
-function setup_keyboard_navigation (frm) {
-	const focus_first_row = () => {
-		let first_row = frm.$check_run.find(".checkrun-row-container:first")
-		$(first_row[0]).focus()
-	}
-	let focus_next = () => {
-		$(document.activeElement).next().focus()
-	}
-	let focus_prev = () => {
-		$(document.activeElement).prev().focus()
-	}
-	let list_row_focused = () => {
-		return $(document.activeElement).is(".checkrun-row-container")
-	}
-	let check_row = ($row) => {
-		let $input = $row.find("input[type=checkbox]")
-		$input.click()
-	}
-
-	let get_list_row_if_focused = () => list_row_focused() ? $(document.activeElement) : null
-
-	let is_current_page = () => frm.page.wrapper.is(":visible")
-	let is_input_focused = () => $(document.activeElement).is("input")
-
-	let handle_navigation = (direction) => {
-		if (!is_current_page() || is_input_focused()) return false;
-
-		let $list_row = get_list_row_if_focused()
-		if ($list_row) {
-			direction === "down" ? focus_next() : focus_prev()
-		} else {
-			focus_first_row()
-		}
-	}
-
-	frappe.ui.keys.add_shortcut({
-		shortcut: "down",
-		action: () => handle_navigation("down"),
-		description: __("Navigate down"),
-		page: frm.page,
-	})
-
-	frappe.ui.keys.add_shortcut({
-		shortcut: "up",
-		action: () => handle_navigation("up"),
-		description: __("Navigate up"),
-		page: frm.page,
-	})
-
-	frappe.ui.keys.add_shortcut({
-		shortcut: "shift+down",
-		action: () => {
-			if (!is_current_page() || is_input_focused()) return false;
-			let $list_row = get_list_row_if_focused();
-			check_row($list_row);
-			focus_next();
-		},
-		description: __("Select multiple list items"),
-		page: frm.page,
-	})
-
-	frappe.ui.keys.add_shortcut({
-		shortcut: "shift+up",
-		action: () => {
-			if (!is_current_page() || is_input_focused()) { return false }
-			let $list_row = get_list_row_if_focused()
-			check_row($list_row)
-			focus_prev()
-		},
-		description: __("Select multiple list items"),
-		page: frm.page,
-	})
-
-	frappe.ui.keys.add_shortcut({
-		shortcut: "space",
-		action: () => {
-			let $list_row = get_list_row_if_focused()
-			if ($list_row) {
-				check_row($list_row)
-				return true
-			}
-			return false
-		},
-		description: __("Select list item"),
-		page: frm.page,
-	})
-
-	frappe.ui.keys.add_shortcut({
-		shortcut: "c",
-		action: () => {
-			let $list_row = get_list_row_if_focused()
-			if ($list_row) {
-				let el = $list_row.find("[data-mop-index]")
-				set_mop_input(frm, el, 'Check')
-				return true
-			}
-			return false
-		},
-		description: __("Select list item"),
-		page: frm.page,
-	})
-
-	frappe.ui.keys.add_shortcut({
-		shortcut: "a",
-		action: () => {
-			let $list_row = get_list_row_if_focused()
-			if ($list_row) {
-				let el = $list_row.find("[data-mop-index]")
-				set_mop_input(frm, el, 'ACH/EFT')
-				return true
-			}
-			return false
-		},
-		description: __("Select list item"),
-		page: frm.page,
-	})
-
-	frappe.ui.keys.add_shortcut({
-		shortcut: "e",
-		action: () => {
-			let $list_row = get_list_row_if_focused()
-			if ($list_row) {
-				let el = $list_row.find("[data-mop-index]")
-				set_mop_input(frm, el, 'ECheck')
-				return true
-			}
-			return false
-		},
-		description: __("Select list item"),
-		page: frm.page,
-	})
-}
-
-function show_mop_input(frm, el) {
-	if (el[0].tagName == "SPAN")
-		el = $(el[0].parentNode)
-	el.find("span").hide()
-	el.find("select").show().focus()
-	el.find("[data-mop]").unbind('change blur keyup').on("click", (e) => {
-		set_mop_input(frm, el, el.children()[0].value)
-	}).on("blur", () => {
-		el.find("span").show()
-		el.find("select").hide()
-	})
-}
-
-function show_party_filter(frm, el) {
-	if (el[0].tagName == "SPAN")
-		el = $(el[0].parentNode)
-	el.find("span").hide()
-	el.find("input").show().focus()
-	el.find("#party-input").unbind('change blur keyup').on("keyup", frappe.utils.debounce((e) => {
-		if(e.target.value != ''){
-			frm.check_run_sort.partyFilter = e.target.value
-			let transactions = frm.check_run_state.transactions.filter(row => row.party.toLowerCase().search(e.target.value.toLowerCase()) !== -1)
-			frm.$check_run.html(frappe.render_template("check_run", {
-				"transactions": frm.check_run_state.transactions, 'modes_of_payment': frm.modes_of_payment
-			}))
-			//setup_sort_and_filter(frm)
-		} else {
-			frm.$check_run.html(frappe.render_template("check_run", {
-				"transactions": frm.check_run_state.transactions, 'modes_of_payment': frm.modes_of_payment
-			}))
-			//setup_sort_and_filter(frm)
-		}
-	}, 400))
-	el.on("blur", () => {
-		if (!el.find("input").value){
-			frm.check_run_sort.partyFilter = ''
-			frm.$check_run.html(frappe.render_template("check_run", {
-				"transactions": frm.check_run_state.transactions, 'modes_of_payment': frm.modes_of_payment
-			}))
-			//setup_sort_and_filter(frm)
-			el.find("span").show()
-			el.find("input").hide()
-		}
-	})
-}
-
-function set_mop_input(frm, el, value){
-	frm.check_run_state.transactions[el.data('mopIndex')].mode_of_payment = value
-	//$(el.children()[0]).html(value)
-	frm.dirty()
 }
 
 function permit_first_user(frm){
@@ -386,7 +176,6 @@ function confirm_print(frm){
 		.then(() => {
 			d.hide()
 			frm.reload_doc()
-			render_page(frm)
 		})
 	})
 	d.wrapper.find('#reprint').on('click', () => {
@@ -422,12 +211,4 @@ function reprint_checks(frm){
 		d.hide()
 	})
 	d.show()
-}
-
-
-async function warn_on_field_reset(callback){
-	await frappe.confirm(
-		__("Changing this field will reload transactions"),
-		callback
-	)
 }
