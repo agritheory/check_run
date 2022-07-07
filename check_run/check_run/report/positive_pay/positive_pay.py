@@ -39,7 +39,7 @@ def get_data(filters):
 		WHERE
 		`tabPayment Entry`.reference_date >= %(start_date)s 
 		AND `tabPayment Entry`.reference_date <= %(end_date)s
-		AND `tabPayment Entry`.bank_account = 'Checking - Local Bank'		
+		AND `tabPayment Entry`.bank_account = %(bank_account)s
 		AND `tabPayment Entry`.payment_type = 'Pay'
 		AND `tabPayment Entry`.mode_of_payment = 'Check'
 		AND `tabPayment Entry`.docstatus = 1
