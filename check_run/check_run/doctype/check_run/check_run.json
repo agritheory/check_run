@@ -22,6 +22,7 @@
   "pay_to_account",
   "section_break_9",
   "check_run_table",
+  "html_15",
   "transactions",
   "amended_from",
   "print_count",
@@ -143,13 +144,19 @@
    "options": "Draft\nSubmitted\nConfirm Print\nPrinted"
   },
   {
+   "default": "<span></span>",
    "fieldname": "check_run_table",
+   "fieldtype": "HTML"
+  },
+  {
+   "default": "<span></span>",
+   "fieldname": "html_15",
    "fieldtype": "HTML"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2022-07-04 05:50:56.817736",
+ "modified": "2022-07-07 11:07:40.783065",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run",

@@ -277,8 +277,8 @@ def get_entries(doc):
 	if frappe.db.exists('Check Run', doc.name):
 		db_doc = frappe.get_doc('Check Run', doc.name)
 		print("dirty", db_doc.is_dirty(doc))
-		if db_doc.docstatus > 0 or not db_doc.is_dirty(doc):
-			return {'transactions': json.loads(frappe.get_value('Check Run', doc.name, 'transactions')), 'modes_of_payment': modes_of_payment}
+		if db_doc.transactions and json.loads(db_doc.transactions):
+			return {'transactions': json.loads(db_doc.transactions), 'modes_of_payment': modes_of_payment}
 	transactions =  frappe.db.sql("""
 	(
 		SELECT
@@ -319,7 +319,7 @@ def get_entries(doc):
 		AND `tabExpense Claim`.payable_account = %(pay_to_account)s
 	)
 	UNION (
-		SELECT 
+		SELECT
 			'Journal Entry' AS doctype,
 			`tabJournal Entry`.name,
 			`tabJournal Entry`.name AS ref_number,

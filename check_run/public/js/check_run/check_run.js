@@ -7,9 +7,7 @@ check_run.mount_table = frm => {
 		console.log('existing vue app')
 		frm.check_run_state.docstatus = frm.doc.docstatus
 		frm.check_run_state.transactions = frm.transactions
-		frm.check_run_state.modes_of_payment = state.modes_of_payment
-		frm.check_run_state.state = state
-		frm.$check_run.$forceUpdate()
+		frm.check_run_state.modes_of_payment = frm.check_run_state.modes_of_payment
 		return
 	}
 	const state = Vue.observable({
@@ -21,7 +19,7 @@ check_run.mount_table = frm => {
 	})
 
 	frm.check_run_state = state
-	// if (frm.$check_run instanceof Vue) { return }
+
 	frm.$check_run = new window.Vue({
 		el: $(frm.fields_dict['check_run_table'].wrapper).get(0),
 		render: h => h(
@@ -31,7 +29,7 @@ check_run.mount_table = frm => {
 				modes_of_payment: state.modes_of_payment, // populate modes_of_payment select. doesn't get updated
 				docstatus: state.docstatus, // used to conditionally render column inputs based on submission status. doesn't get updated
 				state: state
-			} 
+			}
 		})
 	})
 }
