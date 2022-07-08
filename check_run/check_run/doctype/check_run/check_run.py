@@ -32,19 +32,6 @@ class CheckRun(Document):
 		else:
 			self.validate_last_check_number()
 
-	def is_dirty(self, doc):
-		dirty = False
-		for key in ('start_date', 'end_date', 'check_run_date', 'initial_check_number', 'company', 'bank_account', 'pay_to_account'):
-			if self.get(key) != doc.get(key):
-				return True
-		for db_row in json.loads(self.transactions):
-			for frm_row in doc.transactions:
-				if db_row.get('name') == frm_row.get('name'):
-					if db_row.get('mode_of_payment') != frm_row.get('mode_of_payment'):
-						return True
-					if db_row.get('pay') != frm_row.get('pay'):
-						return True
-
 	def set_status(self, status=None):
 		if status:
 			self.status = status
@@ -276,7 +263,6 @@ def get_entries(doc):
 	modes_of_payment = frappe.get_all('Mode of Payment', order_by='name')
 	if frappe.db.exists('Check Run', doc.name):
 		db_doc = frappe.get_doc('Check Run', doc.name)
-		print("dirty", db_doc.is_dirty(doc))
 		if db_doc.transactions and json.loads(db_doc.transactions):
 			return {'transactions': json.loads(db_doc.transactions), 'modes_of_payment': modes_of_payment}
 	transactions =  frappe.db.sql("""
