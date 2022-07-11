@@ -1,0 +1,12 @@
+{
+	"name": "check_run",
+	"dependencies": {},
+	"devDependencies": {
+		"@testing-library/cypress": "^8",
+		"@4tw/cypress-drag-drop": "2.2.0",
+		"cypress-file-upload": "^5",
+		"cypress": "^6",
+		"ts-custom-error": "~3.0.0"
+	},
+	"browser": "./cypress/support/index.js"
+}

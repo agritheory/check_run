@@ -41,30 +41,31 @@
 			<tbody>
 				<template v-for="(item, i) in transactions">
 				<tr
-					v-if="partyIsInFilter(transactions[i].party)"
+					v-if="partyIsInFilter(item.party)"
 					:key=i
 					class="checkrun-row-container"
 					tabindex="1"
 				>
-					<td style="text-align: left">{{ transactions[i].party }}</td>
+					<td style="text-align: left">{{ item.party }}</td>
 					<td>
 						<a
 							:href="transactionUrl(i)"
 							target="_blank"
 						>
-							{{ transactions[i].ref_number || transactions[i].name}}
+							{{ item.ref_number || item.name}}
 						</a>
 					</td>
-					<td> {{ transactions[i].posting_date }}	</td>
+					<td> {{ item.posting_date }}	</td>
 					<td
 						class="mop-onclick"
 						:data-mop-index="i"
 					>
 						<select
 							v-if="state.docstatus < 1"
+							:style="`outline: 1px solid ${ (item.mode_of_payment.length < 2 && item.pay) ? 'var(--danger)' : 'transparent' }`"
 							class="mop-input form-control"
-							:data-mop="transactions[i].mode_of_payment"
-							v-model="transactions[i].mode_of_payment"
+							:data-mop="item.mode_of_payment"
+							v-model="item.mode_of_payment"
 							@change="markDirty()"
 						>
 						<option></option>
@@ -77,10 +78,10 @@
 							</option>
 						</template>
 						</select>
-						<span v-else>{{ transactions[i].mode_of_payment }}</span>
+						<span v-else>{{ item.mode_of_payment }}</span>
 					</td>
-					<td>{{ format_currency(transactions[i].amount, "USD", 2) }}</td>
-					<td>{{ moment(transactions[i].due_date).format("MM/DD/YY") }}</td>
+					<td>{{ format_currency(item.amount, "USD", 2) }}</td>
+					<td>{{ moment(item.due_date).format("MM/DD/YY") }}</td>
 						<td v-if="state.docstatus < 1" style="text-align: left">
 							<input
 								type="checkbox"
@@ -88,12 +89,12 @@
 								data-fieldtype="Check"
 								@change="markDirty()"
 								:data-checkbox-index="i"
-								v-model="transactions[i].pay"
-								:id="transactions[i].id" />Pay
+								v-model="item.pay"
+								:id="item.id" />Pay
 						</td>
 						<td v-else>
 							<a :href="paymentEntryUrl(i)" target="_blank">
-							{{ transactions[i].check_number }}</a></td>
+							{{ item.check_number }}</a></td>
 				</tr>
 				</template>
 			</tbody>
@@ -120,14 +121,14 @@ export default {
 		selectAll: (val, oldVal) => {
 			cur_frm.check_run_state.transactions.forEach(row => { row.pay = val })
 			cur_frm.dirty();
-		}
+		},
 	},
 	methods: {
 		transactionUrl: transactionId => {
 			if(!this.transactions) {
 				return ""
 			}
-			return encodeURI(frappe.urllib.get_base_url() + "/app/" + this.transactions[transactionId].doctype.toLowerCase().replace(" ", "-") + "/" + thiis.transactions[transactionId].name );
+			return encodeURI(frappe.urllib.get_base_url() + "/app/" + this.transactions[transactionId].doctype.toLowerCase().replace(" ", "-") + "/" + this.transactions[transactionId].name)
 		},
 		paymentEntryUrl: transactionId => {
 			if(!this.transactions) {
@@ -148,12 +149,14 @@ export default {
 		},
 		markDirty() {
 			cur_frm.dirty()
-		}
+		},
 	},
 	beforeMount() {
+		let amountInCheckRun = 0.0
 		this.moment = moment;
-		this.format_currency = format_currency;
-	}
+		this.format_currency = format_currency
+		this.frm = cur_frm // migrate to use a prop instead
+	},
 }
 </script>
 <style scoped>
@@ -162,5 +165,13 @@ export default {
 	}
 	.table thead th {
 		vertical-align: top;
+	}
+	.checkrun-check-box {
+		vertical-align: sub; /* weird but this gives the best alignment */
+	}
+	.check-run-table td, .check-run-table th {
+		max-height: 1.5rem;
+		padding: 0.4rem;
+		vertical-align: middle;
 	}
 </style>

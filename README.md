@@ -60,14 +60,16 @@ In a new terminal window
 ```
 bench update
 ```
-
-### Printer Server setup
+### Testing
+#### Running Cypress tests
+To set up local Cypress tests;
+```bash
+cd apps/check_run
+yarn
 ```
-sudo apt-get install gcc cups python3-dev libcups2-dev -y
-bench pip install pycups
-sudo usermod -a -G lpadmin {username} # the "frappe" user in most installations
-```
-Go to `{server URL or localhost}:631` to access the CUPS web interface
-Configuration on a remote server will take extra steps to secure:
-https://askubuntu.com/questions/23936/how-do-you-administer-cups-remotely-using-the-web-interface
+Additional steps may be required on WSL, use Nicky's guide:
+https://nickymeuleman.netlify.app/blog/gui-on-wsl2-cypress
 
+```bash
+yarn run cypress open
+```
