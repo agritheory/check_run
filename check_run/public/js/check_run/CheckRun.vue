@@ -86,7 +86,7 @@
 								type="checkbox"
 								class="input-with-feedback checkrun-check-box"
 								data-fieldtype="Check"
-								@change="markDirty()"
+								@change="onPayChange()"
 								:data-checkbox-index="i"
 								v-model="transactions[i].pay"
 								:id="transactions[i].id" />Pay
@@ -119,6 +119,8 @@ export default {
 	watch: {
 		selectAll: (val, oldVal) => {
 			cur_frm.check_run_state.transactions.forEach(row => { row.pay = val })
+			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
+			cur_frm.refresh_field("amount_check_run")
 			cur_frm.dirty();
 		}
 	},
@@ -148,6 +150,11 @@ export default {
 		},
 		markDirty() {
 			cur_frm.dirty()
+		},
+		onPayChange() {
+			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
+			cur_frm.refresh_field("amount_check_run")
+			this.markDirty()
 		}
 	},
 	beforeMount() {

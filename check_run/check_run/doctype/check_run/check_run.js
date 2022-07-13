@@ -14,6 +14,7 @@ frappe.ui.form.on("Check Run", {
 			})
 		}
 		frm.doc.transactions = JSON.stringify(frm.check_run_state.transactions)
+		frm.doc.amount_check_run = frm.check_run_state.check_run_total()
 	},
 	refresh: frm => {
 		frm.layout.show_message('')

@@ -8,7 +8,12 @@ check_run.mount_table = frm => {
 		party_filter: "",
 		docstatus: frm.doc.docstatus,
 		modes_of_payment: frm.modes_of_payment,
-		show_party_filter: false
+		show_party_filter: false,
+		check_run_total: function() {
+			return this.transactions.reduce((partialSum, t) => {
+				return t.pay ? partialSum + t.amount : partialSum;
+			}, 0);
+		}
 	})
 	if (frm.$check_run instanceof Vue) {
 		frm.$check_run.$destroy();
