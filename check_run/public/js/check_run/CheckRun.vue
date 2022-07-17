@@ -63,7 +63,7 @@
 						:data-mop-index="i"
 					>
 
-						<ADropdown v-model="state.transactions[i].mode_of_payment" :items="modeOfPaymentNames" v-if="state.docstatus < 1" :state="state" :transactionIndex="i" />
+						<ADropdown v-model="state.transactions[i].mode_of_payment" :items="modeOfPaymentNames" v-if="state.docstatus < 1" :transactionIndex="i" :isOpen="state.transactions[i].mopIsOpen" @isOpenChanged="val => state.transactions[i].mopIsOpen = val"/>
 
 						<span v-else>{{ transactions[i].mode_of_payment }}</span>
 					</td>

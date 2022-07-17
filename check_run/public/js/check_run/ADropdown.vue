@@ -1,5 +1,5 @@
 <template>
-  <div class="autocomplete" :class="{ 'isOpen': state.transactions[transactionIndex].mopIsOpen }">
+  <div class="autocomplete" :class="{ 'isOpen': isOpen }">
     <input
       type="text"
       :id="`mop-input-${transactionIndex}`"
@@ -13,7 +13,7 @@
     />
     <ul
       id="autocomplete-results"
-      v-show="state.transactions[transactionIndex].mopIsOpen"
+      v-show="isOpen"
       class="autocomplete-results"
     >
       <li
@@ -41,7 +41,7 @@
     name: 'ADropdown',
     props: {
       value: String,
-      //isOpen: Object,
+      isOpen: Boolean,
       items: {
         type: Array,
         required: false,
@@ -51,9 +51,6 @@
         type: Boolean,
         required: false,
         default: false,
-      },
-      state: {
-        required: false
       },
       transactionIndex: Number
     },
@@ -97,15 +94,14 @@
         });
       },
       onChange() {
-        //this.$emit('input', this.search);
 
         if (this.isAsync) {
           this.isLoading = true;
         } else {
           this.filterResults();
 
-          this.state.transactions[this.transactionIndex].mopIsOpen = true
-          //this.$emit('isOpenChanged', this.isOpen.val)
+          this.isOpen = true
+          this.$emit('isOpenChanged', this.isOpen)
 
         }
       },
@@ -117,8 +113,8 @@
       },
       closeResults() {
 
-        this.state.transactions[this.transactionIndex].mopIsOpen = false
-        //this.$emit('isOpenChanged', this.isOpen.val)
+        this.isOpen = false
+        this.$emit('isOpenChanged', this.isOpen)
 
         if(!this.items.includes(this.search)) {
           this.search = ''
