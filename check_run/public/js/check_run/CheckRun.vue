@@ -44,7 +44,9 @@
 					v-if="partyIsInFilter(transactions[i].party)"
 					:key=i
 					class="checkrun-row-container"
+					:class="{ selectedRow: state.selectedRow == i }"
 					tabindex="1"
+					@click="state.selectedRow = i"
 				>
 					<td style="text-align: left">{{ transactions[i].party }}</td>
 					<td>
@@ -60,23 +62,9 @@
 						class="mop-onclick"
 						:data-mop-index="i"
 					>
-						<select
-							v-if="state.docstatus < 1"
-							class="mop-input form-control"
-							:data-mop="transactions[i].mode_of_payment"
-							v-model="transactions[i].mode_of_payment"
-							@change="markDirty()"
-						>
-						<option></option>
-						<template v-for="(mop, j) in modes_of_payment">
-							<option
-								:value="modes_of_payment[j].name"
-								:key="j"
-							>
-								{{modes_of_payment[j].name}}
-							</option>
-						</template>
-						</select>
+
+						<ADropdown v-model="state.transactions[i].mode_of_payment" :items="modeOfPaymentNames" v-if="state.docstatus < 1" :state="state" :transactionIndex="i" />
+
 						<span v-else>{{ transactions[i].mode_of_payment }}</span>
 					</td>
 					<td>{{ format_currency(transactions[i].amount, "USD", 2) }}</td>
@@ -102,8 +90,13 @@
 </template>
 <script>
 
+import ADropdown from "./ADropdown.vue";
+
 export default {
 	name: 'CheckRun',
+	components: {
+    ADropdown
+  },
 	props: ['transactions', 'modes_of_payment', 'docstatus', 'state'],
 	data(){
 		return {
@@ -113,7 +106,8 @@ export default {
 				mode_of_payment: 1,
 				amount: 1,
 				due_date: 1
-			}
+			},
+			modeOfPaymentNames: this.modes_of_payment.map(mop => mop.name)
 		}
 	},
 	watch: {
@@ -170,4 +164,8 @@ export default {
 	.table thead th {
 		vertical-align: top;
 	}
+	.table tr.selectedRow {
+		background-color: #ececec;
+	}
+
 </style>
