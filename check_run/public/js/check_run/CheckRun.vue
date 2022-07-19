@@ -44,7 +44,9 @@
 					v-if="partyIsInFilter(item.party)"
 					:key=i
 					class="checkrun-row-container"
+					:class="{ selectedRow: state.selectedRow == i }"
 					tabindex="1"
+					@click="state.selectedRow = i"
 				>
 					<td style="text-align: left">{{ item.party }}</td>
 					<td>
@@ -60,6 +62,7 @@
 						class="mop-onclick"
 						:data-mop-index="i"
 					>
+<<<<<<< HEAD
 						<select
 							v-if="state.docstatus < 1"
 							:style="`outline: 1px solid ${ (item.mode_of_payment.length < 2 && item.pay) ? 'var(--danger)' : 'transparent' }`"
@@ -79,6 +82,12 @@
 						</template>
 						</select>
 						<span v-else>{{ item.mode_of_payment }}</span>
+=======
+
+						<ADropdown v-model="state.transactions[i].mode_of_payment" :items="modeOfPaymentNames" v-if="state.docstatus < 1" :transactionIndex="i" :isOpen="state.transactions[i].mopIsOpen" @isOpenChanged="val => state.transactions[i].mopIsOpen = val"/>
+
+						<span v-else>{{ transactions[i].mode_of_payment }}</span>
+>>>>>>> 0823fc56926e40b30060b97d661c622f06c5466e
 					</td>
 					<td>{{ format_currency(item.amount, "USD", 2) }}</td>
 					<td>{{ moment(item.due_date).format("MM/DD/YY") }}</td>
@@ -87,7 +96,7 @@
 								type="checkbox"
 								class="input-with-feedback checkrun-check-box"
 								data-fieldtype="Check"
-								@change="markDirty()"
+								@change="onPayChange()"
 								:data-checkbox-index="i"
 								v-model="item.pay"
 								:id="item.id" />Pay
@@ -103,8 +112,13 @@
 </template>
 <script>
 
+import ADropdown from "./ADropdown.vue";
+
 export default {
 	name: 'CheckRun',
+	components: {
+    ADropdown
+  },
 	props: ['transactions', 'modes_of_payment', 'docstatus', 'state'],
 	data(){
 		return {
@@ -114,12 +128,15 @@ export default {
 				mode_of_payment: 1,
 				amount: 1,
 				due_date: 1
-			}
+			},
+			modeOfPaymentNames: this.modes_of_payment.map(mop => mop.name)
 		}
 	},
 	watch: {
 		selectAll: (val, oldVal) => {
 			cur_frm.check_run_state.transactions.forEach(row => { row.pay = val })
+			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
+			cur_frm.refresh_field("amount_check_run")
 			cur_frm.dirty();
 		},
 	},
@@ -150,6 +167,14 @@ export default {
 		markDirty() {
 			cur_frm.dirty()
 		},
+<<<<<<< HEAD
+=======
+		onPayChange() {
+			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
+			cur_frm.refresh_field("amount_check_run")
+			this.markDirty()
+		}
+>>>>>>> 0823fc56926e40b30060b97d661c622f06c5466e
 	},
 	beforeMount() {
 		let amountInCheckRun = 0.0
@@ -166,6 +191,7 @@ export default {
 	.table thead th {
 		vertical-align: top;
 	}
+<<<<<<< HEAD
 	.checkrun-check-box {
 		vertical-align: sub; /* weird but this gives the best alignment */
 	}
@@ -174,4 +200,10 @@ export default {
 		padding: 0.4rem;
 		vertical-align: middle;
 	}
+=======
+	.table tr.selectedRow {
+		background-color: #ececec;
+	}
+
+>>>>>>> 0823fc56926e40b30060b97d661c622f06c5466e
 </style>
