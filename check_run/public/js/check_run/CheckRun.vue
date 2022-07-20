@@ -63,7 +63,7 @@
 						:data-mop-index="i"
 					>
 
-						<ADropdown v-model="state.transactions[i].mode_of_payment" :items="modeOfPaymentNames" v-if="state.docstatus < 1" :transactionIndex="i" :isOpen="state.transactions[i].mopIsOpen" @isOpenChanged="val => state.transactions[i].mopIsOpen = val"/>
+						<ADropdown ref="dropdowns" v-model="state.transactions[i].mode_of_payment" :items="modeOfPaymentNames" v-if="state.docstatus < 1" :transactionIndex="i" :isOpen="state.transactions[i].mopIsOpen" @isOpenChanged="val => state.transactions[i].mopIsOpen = val"/>
 
 						<span v-else>{{ transactions[i].mode_of_payment }}</span>
 					</td>
@@ -149,11 +149,28 @@ export default {
 			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
 			cur_frm.refresh_field("amount_check_run")
 			this.markDirty()
+		},
+		checkPay() {
+			if(this.state.docstatus >= 1 || !this.transactions.length) {
+				return
+			}
+			this.transactions[this.state.selectedRow].pay = !this.transactions[this.state.selectedRow].pay
+			this.onPayChange()
+		},
+		openMopWithSearch(keycode) {
+
+			if(!this.transactions.length) {
+				return
+			}
+
+			this.$refs.dropdowns[this.state.selectedRow].openWithSearch()
+
 		}
 	},
 	beforeMount() {
 		this.moment = moment;
 		this.format_currency = format_currency;
+		cur_frm.check_run_component = this;
 	}
 }
 </script>
