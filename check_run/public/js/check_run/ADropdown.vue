@@ -1,6 +1,7 @@
 <template>
   <div class="autocomplete" :class="{ 'isOpen': isOpen }">
     <input
+      ref="mopInput"
       type="text"
       :id="`mop-input-${transactionIndex}`"
       @input="onChange"
@@ -140,6 +141,11 @@
         this.closeResults()
         this.arrowCounter = 0;
       },
+      openWithSearch() {
+        this.search = ""
+        this.onChange()
+        this.$refs.mopInput.focus()
+      }
     },
   };
 </script>
