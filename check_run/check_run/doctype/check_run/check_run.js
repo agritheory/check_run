@@ -198,7 +198,7 @@ function reprint_checks(frm){
 			{
 				fieldname: 'reprint_check_number',
 				fieldtype: 'Data',
-				label: "New Intial Check Number",
+				label: "New Initial Check Number",
 			}
 		],
 		minimizable: false,

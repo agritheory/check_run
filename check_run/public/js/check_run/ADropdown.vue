@@ -151,17 +151,23 @@
 </script>
 
 <style>
+  /* variables taken from here: https://github.com/frappe/frappe/blob/version-13/frappe/public/scss/common/awesomeplete.scss */
   .autocomplete {
     position: relative;
   }
 
   .autocomplete-results {
+    position: absolute;
+    width: 100%;
+    z-index: 100;
     padding: 0;
     margin: 0;
-    border: 1px solid #eeeeee;
-    background-color: #f4f5f6;
-    border-bottom-left-radius: 10px;
-    border-bottom-right-radius: 10px;
+    color: var(--text-color);
+		box-shadow: var(--shadow-md);
+		border: 1px solid var(--border-color);
+    background-color: var(--fg-color);
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
   }
 
   .autocomplete-result {
@@ -174,7 +180,7 @@
 
   .autocomplete-result.is-active,
   .autocomplete-result:hover {
-    background-color: #4590e8;
-    color: white;
+    background-color: var(--awesomplete-hover-bg);
+    color: var(--text-color);
   }
 </style>

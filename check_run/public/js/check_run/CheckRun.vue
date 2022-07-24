@@ -191,7 +191,7 @@ export default {
 		vertical-align: middle;
 	}
 	.table tr.selectedRow {
-		background-color: #ececec;
+		background-color: var(--yellow-highlight-color);
 	}
 
 </style>
