@@ -62,7 +62,6 @@
 						class="mop-onclick"
 						:data-mop-index="i"
 					>
-<<<<<<< HEAD
 						<select
 							v-if="state.docstatus < 1"
 							:style="`outline: 1px solid ${ (item.mode_of_payment.length < 2 && item.pay) ? 'var(--danger)' : 'transparent' }`"
@@ -82,12 +81,6 @@
 						</template>
 						</select>
 						<span v-else>{{ item.mode_of_payment }}</span>
-=======
-
-						<ADropdown v-model="state.transactions[i].mode_of_payment" :items="modeOfPaymentNames" v-if="state.docstatus < 1" :transactionIndex="i" :isOpen="state.transactions[i].mopIsOpen" @isOpenChanged="val => state.transactions[i].mopIsOpen = val"/>
-
-						<span v-else>{{ transactions[i].mode_of_payment }}</span>
->>>>>>> 0823fc56926e40b30060b97d661c622f06c5466e
 					</td>
 					<td>{{ format_currency(item.amount, "USD", 2) }}</td>
 					<td>{{ moment(item.due_date).format("MM/DD/YY") }}</td>
@@ -167,14 +160,6 @@ export default {
 		markDirty() {
 			cur_frm.dirty()
 		},
-<<<<<<< HEAD
-=======
-		onPayChange() {
-			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
-			cur_frm.refresh_field("amount_check_run")
-			this.markDirty()
-		}
->>>>>>> 0823fc56926e40b30060b97d661c622f06c5466e
 	},
 	beforeMount() {
 		let amountInCheckRun = 0.0
@@ -191,7 +176,6 @@ export default {
 	.table thead th {
 		vertical-align: top;
 	}
-<<<<<<< HEAD
 	.checkrun-check-box {
 		vertical-align: sub; /* weird but this gives the best alignment */
 	}
@@ -200,10 +184,8 @@ export default {
 		padding: 0.4rem;
 		vertical-align: middle;
 	}
-=======
 	.table tr.selectedRow {
 		background-color: #ececec;
 	}
 
->>>>>>> 0823fc56926e40b30060b97d661c622f06c5466e
 </style>
