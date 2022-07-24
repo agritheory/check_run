@@ -159,7 +159,7 @@
   .autocomplete-results {
     position: absolute;
     width: 100%;
-    z-index: 100;
+    z-index: 1;
     padding: 0;
     margin: 0;
     color: var(--text-color);
@@ -175,7 +175,6 @@
     text-align: left;
     padding: 4px 6px;
     cursor: pointer;
-
   }
 
   .autocomplete-result.is-active,
