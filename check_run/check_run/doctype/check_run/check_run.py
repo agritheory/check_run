@@ -24,6 +24,7 @@ class CheckRun(Document):
 		gl_account = frappe.get_value('Bank Account', self.bank_account, 'account')
 		if not gl_account:
 			frappe.throw(frappe._("This Bank Account is not associated with a General Ledger Account."))
+		self.beg_balance = get_balance_on(gl_account, self.check_run_date)
 		if self.flags.in_insert:
 			if self.initial_check_number is None:
 				self.get_last_check_number()
@@ -118,13 +119,12 @@ class CheckRun(Document):
 				pe = frappe.new_doc("Payment Entry")
 				pe.payment_type = "Pay"
 				pe.posting_date = nowdate()
-				pe.cost_center = frappe.get_value('Account', self.pay_to_account, 'cost_center')
-				department = self.get_dimensions_from_references(group, 'department')
-				if department != 'None' and department:
-					pe.department = department
 				project = self.get_dimensions_from_references(group, 'project')
 				if project != 'None' and project:
 					pe.project = project
+				cost_center = self.get_dimensions_from_references(group, 'cost_center')
+				if cost_center != 'None' and project:
+					pe.cost_center = cost_center
 				pe.mode_of_payment = group[0].mode_of_payment
 				pe.company = self.company
 				pe.paid_from = gl_account
@@ -234,11 +234,12 @@ def print_checks(docname, reprint_check_number=None):
 
 
 @frappe.whitelist()
-def check_for_draft_check_run(company, bank_account):
+def check_for_draft_check_run(company, bank_account, payable_account):
 	existing = frappe.get_value(
 		'Check Run', {
 			'company': company,
 			'bank_account': bank_account,
+			'pay_to_account': payable_account,
 			'status': ['in', ['Draft', 'Submitted']],
 			'initial_check_number': ['!=', 0]
 		}
@@ -248,6 +249,7 @@ def check_for_draft_check_run(company, bank_account):
 	cr = frappe.new_doc('Check Run')
 	cr.company = company
 	cr.bank_account = bank_account
+	cr.pay_to_account = payable_account
 	cr.save()
 	return cr.name
 
@@ -269,6 +271,7 @@ def get_entries(doc):
 	(
 		SELECT
 			'Purchase Invoice' as doctype,
+			'Supplier' AS party_type,
 			`tabPurchase Invoice`.name,
 			`tabPurchase Invoice`.bill_no AS ref_number,
 			`tabPurchase Invoice`.supplier_name AS party,
@@ -289,6 +292,7 @@ def get_entries(doc):
 	(
 		SELECT
 			'Expense Claim' as doctype,
+			'Employee' AS party_type,
 			`tabExpense Claim`.name,
 			`tabExpense Claim`.name AS ref_number,
 			`tabExpense Claim`.employee_name AS party,
@@ -311,6 +315,7 @@ def get_entries(doc):
 			`tabJournal Entry`.name AS ref_number,
 			`tabJournal Entry Account`.party AS party,
 			`tabJournal Entry Account`.party AS party_ref,
+			`tabJournal Entry Account`.party_type,
 			`tabJournal Entry Account`.credit_in_account_currency AS amount,
 			`tabJournal Entry`.due_date AS due_date,
 			`tabJournal Entry`.posting_date,
@@ -338,7 +343,6 @@ def get_entries(doc):
 @frappe.whitelist()
 def get_balance(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
-	print(doc)
 	if not doc.bank_account or not doc.check_run_date:
 		return
 	gl_account = frappe.get_value('Bank Account', doc.bank_account, 'account')

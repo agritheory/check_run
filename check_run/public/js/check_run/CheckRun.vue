@@ -41,23 +41,23 @@
 			<tbody>
 				<template v-for="(item, i) in transactions">
 				<tr
-					v-if="partyIsInFilter(transactions[i].party)"
+					v-if="partyIsInFilter(item.party)"
 					:key=i
 					class="checkrun-row-container"
 					:class="{ selectedRow: state.selectedRow == i }"
 					tabindex="1"
 					@click="state.selectedRow = i"
 				>
-					<td style="text-align: left">{{ transactions[i].party }}</td>
+					<td style="text-align: left">{{ item.party }}</td>
 					<td>
 						<a
 							:href="transactionUrl(i)"
 							target="_blank"
 						>
-							{{ transactions[i].ref_number || transactions[i].name}}
+							{{ item.ref_number || item.name}}
 						</a>
 					</td>
-					<td> {{ transactions[i].posting_date }}	</td>
+					<td> {{ item.posting_date }}	</td>
 					<td
 						class="mop-onclick"
 						:data-mop-index="i"
@@ -67,8 +67,8 @@
 
 						<span v-else>{{ transactions[i].mode_of_payment }}</span>
 					</td>
-					<td>{{ format_currency(transactions[i].amount, "USD", 2) }}</td>
-					<td>{{ moment(transactions[i].due_date).format("MM/DD/YY") }}</td>
+					<td>{{ format_currency(item.amount, "USD", 2) }}</td>
+					<td>{{ moment(item.due_date).format("MM/DD/YY") }}</td>
 						<td v-if="state.docstatus < 1" style="text-align: left">
 							<input
 								type="checkbox"
@@ -76,12 +76,12 @@
 								data-fieldtype="Check"
 								@change="onPayChange()"
 								:data-checkbox-index="i"
-								v-model="transactions[i].pay"
-								:id="transactions[i].id" />Pay
+								v-model="item.pay"
+								:id="item.id" />Pay
 						</td>
 						<td v-else>
 							<a :href="paymentEntryUrl(i)" target="_blank">
-							{{ transactions[i].check_number }}</a></td>
+							{{ item.check_number }}</a></td>
 				</tr>
 				</template>
 			</tbody>
@@ -116,14 +116,14 @@ export default {
 			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
 			cur_frm.refresh_field("amount_check_run")
 			cur_frm.dirty();
-		}
+		},
 	},
 	methods: {
 		transactionUrl: transactionId => {
 			if(!this.transactions) {
 				return ""
 			}
-			return encodeURI(frappe.urllib.get_base_url() + "/app/" + this.transactions[transactionId].doctype.toLowerCase().replace(" ", "-") + "/" + thiis.transactions[transactionId].name );
+			return encodeURI(frappe.urllib.get_base_url() + "/app/" + this.transactions[transactionId].doctype.toLowerCase().replace(" ", "-") + "/" + this.transactions[transactionId].name)
 		},
 		paymentEntryUrl: transactionId => {
 			if(!this.transactions) {
@@ -168,6 +168,7 @@ export default {
 		}
 	},
 	beforeMount() {
+		let amountInCheckRun = 0.0
 		this.moment = moment;
 		this.format_currency = format_currency;
 		cur_frm.check_run_component = this;
@@ -180,6 +181,14 @@ export default {
 	}
 	.table thead th {
 		vertical-align: top;
+	}
+	.checkrun-check-box {
+		vertical-align: sub; /* weird but this gives the best alignment */
+	}
+	.check-run-table td, .check-run-table th {
+		max-height: 1.5rem;
+		padding: 0.4rem;
+		vertical-align: middle;
 	}
 	.table tr.selectedRow {
 		background-color: #ececec;
