@@ -2,6 +2,7 @@
 // For license information, please see license.txt
 frappe.ui.form.on("Check Run", {
 	validate: frm => {
+		validate_mode_of_payment_mandatory(frm)
 		if(frm.check_run_state.party_filter.length > 0) {
 			frm.check_run_state.party_filter = ""
 			frm.check_run_state.show_party_filter = false
@@ -45,6 +46,10 @@ frappe.ui.form.on("Check Run", {
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
 		permit_first_user(frm)
+		frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_balance', { doc: frm.doc })
+		.then(r => {
+			frm.set_value('beg_balance', r)
+		})
 	},
 	end_date: frm => {
 		get_entries(frm)
@@ -117,11 +122,6 @@ function get_defaults(frm){
 	if(!frm.is_new()){ return }
 	frm.set_value('start_date', moment().startOf('week').format())
 	frm.set_value('end_date', moment().endOf('week').format())
-	frappe.db.get_value('Company', frm.doc.company, ['default_bank_account', 'default_payable_account'])
-	.then(r => {
-		frm.set_value('bank_account', r.message.default_bank_account)
-		frm.set_value('pay_to_account', r.message.default_payable_account)
-	})
 }
 
 function get_last_check_number(frm){
@@ -198,7 +198,7 @@ function reprint_checks(frm){
 			{
 				fieldname: 'reprint_check_number',
 				fieldtype: 'Data',
-				label: "New Intial Check Number",
+				label: "New Initial Check Number",
 			}
 		],
 		minimizable: false,
@@ -211,4 +211,27 @@ function reprint_checks(frm){
 		d.hide()
 	})
 	d.show()
+}
+
+
+function validate_mode_of_payment_mandatory(frm){
+	let mode_of_payment_required = []
+	for(const index in frm.check_run_state.transactions){
+		let row = frm.check_run_state.transactions[index]
+		if (row.pay && row.mode_of_payment.length < 2){
+			mode_of_payment_required.push({ row: index + 1, party: row.party, ref_name: row.ref_number || row.name })
+		}
+	}
+	if (mode_of_payment_required.length == 0){ return }
+	let message = ''
+	for (const index in mode_of_payment_required) {
+		let row = mode_of_payment_required[index]
+		message += `<li>Row ${row.row}: ${row.party} - ${row.ref_name}</li>`
+	}
+	frappe.msgprint({
+		message: `<br><br><ul>${message}</ul>`,
+		indicator: 'red',
+		title: __('Mode of Payment Required'),
+		raise_exception: true,
+	})
 }

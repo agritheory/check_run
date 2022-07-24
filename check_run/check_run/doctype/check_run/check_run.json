@@ -81,6 +81,8 @@
   },
   {
    "allow_in_quick_entry": 1,
+   "fetch_from": "company.default_bank_account",
+   "fetch_if_empty": 1,
    "fieldname": "bank_account",
    "fieldtype": "Link",
    "label": "Paid From (Bank Account)",
@@ -89,6 +91,7 @@
    "reqd": 1
   },
   {
+   "default": "company.default_payable_account",
    "fieldname": "pay_to_account",
    "fieldtype": "Link",
    "label": "Accounts Payable",
@@ -155,7 +158,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2022-07-08 10:10:39.971682",
+ "modified": "2022-07-10 16:16:03.289288",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run",
