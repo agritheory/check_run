@@ -62,8 +62,14 @@
 						class="mop-onclick"
 						:data-mop-index="i"
 					>
-
-						<ADropdown ref="dropdowns" v-model="state.transactions[i].mode_of_payment" :items="modeOfPaymentNames" v-if="state.docstatus < 1" :transactionIndex="i" :isOpen="state.transactions[i].mopIsOpen" @isOpenChanged="val => state.transactions[i].mopIsOpen = val"/>
+						<ADropdown
+							ref="dropdowns"
+							v-model="state.transactions[i].mode_of_payment"
+							:items="modeOfPaymentNames"
+							v-if="state.docstatus < 1" :transactionIndex="i"
+							:isOpen="state.transactions[i].mopIsOpen"
+							@isOpenChanged="val => state.transactions[i].mopIsOpen = val"
+						/>
 
 						<span v-else>{{ transactions[i].mode_of_payment }}</span>
 					</td>
@@ -74,7 +80,7 @@
 								type="checkbox"
 								class="input-with-feedback checkrun-check-box"
 								data-fieldtype="Check"
-								@change="onPayChange()"
+								@change="onPayChange(i)"
 								:data-checkbox-index="i"
 								v-model="item.pay"
 								:id="item.id" />Pay
@@ -116,7 +122,7 @@ export default {
 			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
 			cur_frm.refresh_field("amount_check_run")
 			cur_frm.dirty();
-		},
+		}
 	},
 	methods: {
 		transactionUrl: transactionId => {
@@ -145,17 +151,21 @@ export default {
 		markDirty() {
 			cur_frm.dirty()
 		},
-		onPayChange() {
+		onPayChange(selectedRow) {
 			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
 			cur_frm.refresh_field("amount_check_run")
 			this.markDirty()
+			console.log(this.transactions[selectedRow].pay == true)
+			if(this.transactions[selectedRow].pay && !this.transactions[selectedRow].mode_of_payment){
+				frappe.show_alert(__('Please add a Mode of Payment for this row'))
+			}
 		},
 		checkPay() {
 			if(this.state.docstatus >= 1 || !this.transactions.length) {
 				return
 			}
 			this.transactions[this.state.selectedRow].pay = !this.transactions[this.state.selectedRow].pay
-			this.onPayChange()
+			this.onPayChange(this.state.selectedRow)
 		},
 		openMopWithSearch(keycode) {
 
