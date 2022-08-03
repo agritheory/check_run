@@ -44,6 +44,7 @@ tax_authority = [
 	("Local Tax Authority", "Payroll Taxes", "Check", 0.00),
 ]
 
+<<<<<<< Updated upstream:check_run/test_setup.py
 settings = frappe._dict({})
 
 def create_test_data():
@@ -61,9 +62,26 @@ def create_test_data():
 	create_employees()
 	create_expense_claim()
 	create_payroll_journal_entry()
+=======
+def create_test_data():
+	settings = frappe._dict({
+		'day': datetime.date(int(frappe.defaults.get_defaults().get('fiscal_year')), 1 ,1),
+		'company': frappe.defaults.get_defaults().get('company'),
+		'company_account': frappe.get_value("Account",
+			{"account_type": "Bank", "company": frappe.defaults.get_defaults().get('company'), "is_group": 0}),
+		})
+	create_bank_and_bank_account(settings)
+	create_suppliers(settings)
+	create_items(settings)
+	create_invoices(settings)
+	config_expense_claim(settings)
+	create_employees(settings)
+	create_expense_claim(settings)
+	create_payroll_journal_entry(settings)
+>>>>>>> Stashed changes:check_run/check_run/doctype/check_run/test_data.py
 
 
-def create_bank_and_bank_account():
+def create_bank_and_bank_account(settings):
 	if not frappe.db.exists('Mode of Payment', 'ACH/EFT'):
 		mop = frappe.new_doc('Mode of Payment')
 		mop.mode_of_payment = 'ACH/EFT'
@@ -94,12 +112,16 @@ def create_bank_and_bank_account():
 	doc.company = settings.company
 	opening_balance = 10000.00
 	doc.append("accounts", {"account": settings.company_account, "debit_in_account_currency": opening_balance})
+<<<<<<< Updated upstream:check_run/test_setup.py
 	retained_earnings = frappe.get_value('Account', {'account_name': "Retained Earnings"})
+=======
+	retained_earnings = frappe.get_value('Account', {'account_name': "Retained Earnings", 'company': settings.company})
+>>>>>>> Stashed changes:check_run/check_run/doctype/check_run/test_data.py
 	doc.append("accounts", {"account": retained_earnings, "credit_in_account_currency": opening_balance})
 	doc.save()
 	doc.submit()
 
-def create_suppliers():
+def create_suppliers(settings):
 	for supplier in suppliers + tax_authority:
 		biz = frappe.new_doc("Supplier")
 		biz.supplier_name = supplier[0]
@@ -110,7 +132,7 @@ def create_suppliers():
 		biz.default_price_list = "Standard Buying"
 		biz.save()
 
-def create_items():
+def create_items(settings):
 	for supplier in suppliers + tax_authority:
 		item = frappe.new_doc("Item")
 		item.item_code = item.item_name = supplier[1]
@@ -124,7 +146,7 @@ def create_items():
 		item.append("item_defaults", {"company": settings.company, "default_warehouse": "", "default_supplier": supplier[0]})
 		item.save()
 
-def create_invoices():
+def create_invoices(settings):
 	# first month - already paid
 	for supplier in suppliers:
 		pi = frappe.new_doc('Purchase Invoice')
@@ -183,7 +205,7 @@ def create_invoices():
 	pi.submit()
 
 
-def config_expense_claim():
+def config_expense_claim(settings):
 	try:
 		travel_expense_account = frappe.get_value('Account', {'account_name': 'Travel Expenses', 'company': settings.company})
 		travel = frappe.get_doc('Expense Claim Type', 'Travel')
@@ -203,7 +225,7 @@ def config_expense_claim():
 	pta.save()
 
 
-def create_employees():
+def create_employees(settings):
 	for employee_number in range(1, 13):
 		emp = frappe.new_doc('Employee')
 		emp.first_name = "Test"
@@ -222,7 +244,7 @@ def create_employees():
 		emp.save()
 
 
-def create_expense_claim():
+def create_expense_claim(settings):
 	# first month - paid
 	ec = frappe.new_doc('Expense Claim')
 	ec.employee = "Test Employee 2"
@@ -272,7 +294,11 @@ def create_expense_claim():
 	ec.submit()
 
 
+<<<<<<< Updated upstream:check_run/test_setup.py
 def create_payroll_journal_entry():
+=======
+def create_payroll_journal_entry(settings):
+>>>>>>> Stashed changes:check_run/check_run/doctype/check_run/test_data.py
 	emps = frappe.get_list('Employee', {'company': settings.company})
 	cost_center = frappe.get_value('Company', settings.company, 'cost_center')
 	payroll_account = frappe.get_value('Account', {'company': settings.company, 'account_name': 'Payroll Payable', 'is_group': 0})

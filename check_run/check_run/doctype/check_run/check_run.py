@@ -106,7 +106,6 @@ class CheckRun(Document):
 	def create_payment_entries(self, transactions):
 		check_count = 0
 		_transactions = []
-		account_currency = frappe.get_value('Account', self.pay_to_account, 'account_currency')
 		gl_account = frappe.get_value('Bank Account', self.bank_account, 'account')
 		for party_ref, _group in groupby(transactions, key=lambda x: x.party_ref):
 			_group = list(_group)
@@ -119,16 +118,12 @@ class CheckRun(Document):
 				pe = frappe.new_doc("Payment Entry")
 				pe.payment_type = "Pay"
 				pe.posting_date = nowdate()
-				project = self.get_dimensions_from_references(group, 'project')
-				if project != 'None' and project:
-					pe.project = project
-				cost_center = self.get_dimensions_from_references(group, 'cost_center')
-				if cost_center != 'None' and project:
-					pe.cost_center = cost_center
 				pe.mode_of_payment = group[0].mode_of_payment
 				pe.company = self.company
 				pe.paid_from = gl_account
 				pe.paid_to = self.pay_to_account
+				pe.paid_to_account_currency = frappe.db.get_value("Account", self.bank_account, "account_currency")
+				pe.paid_from_account_currency = pe.paid_to_account_currency
 				pe.reference_date = self.check_run_date
 				pe.party = party_ref
 				pe.party_type = 'Supplier' if group[0].doctype == 'Purchase Invoice' else 'Employee'
@@ -139,7 +134,7 @@ class CheckRun(Document):
 					check_count += 1
 				else:
 					pe.reference_no = self.name
-
+				
 				for reference in group:
 					if not reference:
 						continue
@@ -147,27 +142,24 @@ class CheckRun(Document):
 							"reference_doctype": reference.doctype,
 							"reference_name": reference.name or reference.ref_number,
 							"due_date": reference.get("due_date"),
-							"outstanding_amount": flt(reference.amount),
-							"allocated_amount": flt(reference.amount),
-							"total_amount": flt(reference.amount),
+							"outstanding_amount": flt(reference.outstanding_amount),
+							"allocated_amount": flt(reference.outstanding_amount),
+							"total_amount": flt(reference.outstanding_amount),
 					})
-					total_amount += reference.amount
+					total_amount += reference.outstanding_amount
 					reference.check_number = pe.reference_no
 					_references.append(reference)
 				pe.received_amount = total_amount
 				pe.base_received_amount = total_amount
 				pe.paid_amount = total_amount
 				pe.base_paid_amount = total_amount
-				pe.paid_from_account_currency = account_currency
-				pe.paid_to_account_currency = account_currency
-				pe.target_exchange_rate = 1.0
-				pe.source_exchange_rate = 1.0
 				pe.save()
 				pe.submit()
 				for reference in _references:
 					reference.payment_entry = pe.name
 					_transactions.append(reference)
 		return _transactions
+
 
 	def get_dimensions_from_references(self, references, dimension):
 		dimensions, default_dimensions = get_dimensions(with_cost_center_and_project=True)
