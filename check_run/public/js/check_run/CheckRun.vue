@@ -51,7 +51,7 @@
 					<td style="text-align: left">{{ item.party }}</td>
 					<td>
 						<a
-							:href="transactionUrl(i)"
+							:href="transactionUrl(item)"
 							target="_blank"
 						>
 							{{ item.ref_number || item.name}}
@@ -62,8 +62,14 @@
 						class="mop-onclick"
 						:data-mop-index="i"
 					>
-
-						<ADropdown ref="dropdowns" v-model="state.transactions[i].mode_of_payment" :items="modeOfPaymentNames" v-if="state.docstatus < 1" :transactionIndex="i" :isOpen="state.transactions[i].mopIsOpen" @isOpenChanged="val => state.transactions[i].mopIsOpen = val"/>
+						<ADropdown
+							ref="dropdowns"
+							v-model="state.transactions[i].mode_of_payment"
+							:items="modeOfPaymentNames"
+							v-if="state.docstatus < 1" :transactionIndex="i"
+							:isOpen="state.transactions[i].mopIsOpen"
+							@isOpenChanged="val => state.transactions[i].mopIsOpen = val"
+						/>
 
 						<span v-else>{{ transactions[i].mode_of_payment }}</span>
 					</td>
@@ -74,13 +80,13 @@
 								type="checkbox"
 								class="input-with-feedback checkrun-check-box"
 								data-fieldtype="Check"
-								@change="onPayChange()"
+								@change="onPayChange(i)"
 								:data-checkbox-index="i"
 								v-model="item.pay"
 								:id="item.id" />Pay
 						</td>
 						<td v-else>
-							<a :href="paymentEntryUrl(i)" target="_blank">
+							<a :href="paymentEntryUrl(item)" target="_blank">
 							{{ item.check_number }}</a></td>
 				</tr>
 				</template>
@@ -115,63 +121,57 @@ export default {
 			cur_frm.check_run_state.transactions.forEach(row => { row.pay = val })
 			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
 			cur_frm.refresh_field("amount_check_run")
-			cur_frm.dirty();
-		},
+			cur_frm.dirty()
+		}
 	},
 	methods: {
-		transactionUrl: transactionId => {
-			if(!this.transactions) {
-				return ""
-			}
-			return encodeURI(frappe.urllib.get_base_url() + "/app/" + this.transactions[transactionId].doctype.toLowerCase().replace(" ", "-") + "/" + this.transactions[transactionId].name)
+		transactionUrl: transaction => {
+			return encodeURI(`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(" ", "-")}/${transaction.name}`)
 		},
-		paymentEntryUrl: transactionId => {
-			if(!this.transactions) {
-				return "";
-			}
-			return encodeURI(frappe.urllib.get_base_url() + "/app/payment-entry/" + this.transactions[i].payment_entry );
+		paymentEntryUrl: transaction => {
+			if(transaction.payment_entry) { return "" }
+			return encodeURI(`${frappe.urllib.get_base_url()}/app/payment-entry/${transaction.payment_entry}`)
 		},
 		sortTransactions(key) {
-			this.transactions.sort((a, b) => (a[key] > b[key] ? this.sort_order[key] : this.sort_order[key] * -1));
-			this.sort_order[key] *= -1;
+			this.transactions.sort((a, b) => (a[key] > b[key] ? this.sort_order[key] : this.sort_order[key] * -1))
+			this.sort_order[key] *= -1
 		},
 		partyIsInFilter(party) {
-			return cur_frm.check_run_state.party_filter.length < 1 || party.toLowerCase().includes(cur_frm.check_run_state.party_filter.toLowerCase());
+			return cur_frm.check_run_state.party_filter.length < 1 || party.toLowerCase().includes(cur_frm.check_run_state.party_filter.toLowerCase())
 		},
 		toggleShowPartyFilter() {
-			cur_frm.check_run_state.party_filter = "";
-			cur_frm.check_run_state.show_party_filter = !cur_frm.check_run_state.show_party_filter;
+			cur_frm.check_run_state.party_filter = ""
+			cur_frm.check_run_state.show_party_filter = !cur_frm.check_run_state.show_party_filter
 		},
 		markDirty() {
 			cur_frm.dirty()
 		},
-		onPayChange() {
+		onPayChange(selectedRow) {
 			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
 			cur_frm.refresh_field("amount_check_run")
 			this.markDirty()
+			if(this.transactions[selectedRow].pay && !this.transactions[selectedRow].mode_of_payment){
+				frappe.show_alert(__('Please add a Mode of Payment for this row'))
+			}
 		},
 		checkPay() {
 			if(this.state.docstatus >= 1 || !this.transactions.length) {
 				return
 			}
 			this.transactions[this.state.selectedRow].pay = !this.transactions[this.state.selectedRow].pay
-			this.onPayChange()
+			this.onPayChange(this.state.selectedRow)
 		},
 		openMopWithSearch(keycode) {
-
 			if(!this.transactions.length) {
 				return
 			}
-
 			this.$refs.dropdowns[this.state.selectedRow].openWithSearch()
-
 		}
 	},
 	beforeMount() {
-		let amountInCheckRun = 0.0
-		this.moment = moment;
-		this.format_currency = format_currency;
-		cur_frm.check_run_component = this;
+		this.moment = moment
+		this.format_currency = format_currency
+		cur_frm.check_run_component = this
 	}
 }
 </script>
@@ -193,5 +193,4 @@ export default {
 	.table tr.selectedRow {
 		background-color: var(--yellow-highlight-color);
 	}
-
 </style>

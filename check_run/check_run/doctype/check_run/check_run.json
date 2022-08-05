@@ -22,7 +22,6 @@
   "pay_to_account",
   "section_break_9",
   "check_run_table",
-  "html_15",
   "transactions",
   "amended_from",
   "print_count",
@@ -48,6 +47,7 @@
    "allow_on_submit": 1,
    "fieldname": "initial_check_number",
    "fieldtype": "Int",
+   "in_list_view": 1,
    "label": "Initial Check Number"
   },
   {
@@ -74,6 +74,7 @@
    "allow_in_quick_entry": 1,
    "fieldname": "company",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Company",
    "options": "Company",
    "remember_last_selected_value": 1,
@@ -94,6 +95,7 @@
    "default": "company.default_payable_account",
    "fieldname": "pay_to_account",
    "fieldtype": "Link",
+   "in_standard_filter": 1,
    "label": "Accounts Payable",
    "options": "Account",
    "remember_last_selected_value": 1,
@@ -123,6 +125,8 @@
   {
    "fieldname": "check_run_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Check Run Date"
   },
   {
@@ -149,16 +153,11 @@
   {
    "fieldname": "check_run_table",
    "fieldtype": "HTML"
-  },
-  {
-   "default": "<span></span>",
-   "fieldname": "html_15",
-   "fieldtype": "HTML"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2022-07-10 16:16:03.289288",
+ "modified": "2022-08-03 16:34:50.373207",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run",

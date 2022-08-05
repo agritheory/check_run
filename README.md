@@ -43,33 +43,7 @@ nano site_config.json
  "developer_mode": 1
 ```
 
-Restore the database
+Setup demo data or test data
 ```
-mysql -u root -p {{ site name }} < {{data base file path}}.sql
-```
-Set a new password for the local Administrator that is not the same as the production Administrator password 
-```
-bench set-admin-password {{local password}}
-```
-
-Migrate, build and get the site ready
-```
-bench start
-```
-In a new terminal window
-```
-bench update
-```
-### Testing
-#### Running Cypress tests
-To set up local Cypress tests;
-```bash
-cd apps/check_run
-yarn
-```
-Additional steps may be required on WSL, use Nicky's guide:
-https://nickymeuleman.netlify.app/blog/gui-on-wsl2-cypress
-
-```bash
-yarn run cypress open
+bench execute 'check_run.check_run.doctype.check_run.test_data.create_test_data'
 ```

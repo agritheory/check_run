@@ -17,14 +17,14 @@ check_run.mount_table = frm => {
 		show_party_filter: false,
 		check_run_total: function() {
 			return this.transactions.reduce((partialSum, t) => {
-				return t.pay ? partialSum + t.amount : partialSum;
+				return t.pay ? partialSum + t.amount : partialSum
 			}, 0);
 		},
 		selectedRow: 0,
 		mopsOpen: 0
 	})
 	if (frm.$check_run instanceof Vue) {
-		frm.$check_run.$destroy();
+		frm.$check_run.$destroy()
 	}
 	$('#check-run-vue').remove()
 	$(frm.fields_dict['check_run_table'].wrapper).html($("<div id='check-run-vue'></div>").get(0));
@@ -71,7 +71,7 @@ check_run.keyDownHandler = e => {
 	if(e.keyCode == 32 && check_run.frm.check_run_state.selectedRow != null && check_run.frm.check_run_state.transactions.length){
 		e.preventDefault()
 		if(check_run.frm.check_run_component) {
-			check_run.frm.check_run_component.checkPay();
+			check_run.frm.check_run_component.checkPay()
 		}
 	}
 
@@ -81,5 +81,5 @@ check_run.keyDownHandler = e => {
 
 }
 
-window.removeEventListener('keydown', check_run.keyDownHandler);
-window.addEventListener('keydown', check_run.keyDownHandler);
+window.removeEventListener('keydown', check_run.keyDownHandler)
+window.addEventListener('keydown', check_run.keyDownHandler)
