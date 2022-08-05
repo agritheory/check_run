@@ -97,6 +97,7 @@ class CheckRun(Document):
 			ach_only.ach_only = False
 			ach_only.print_checks_only = False
 			return ach_only
+		# TODO: refactor to use bank flag on MoPs
 		if any([t.get('mode_of_payment') == 'Check' for t in transactions]):
 			ach_only.ach_only = False
 		if any([t.get('mode_of_payment') in ('ACH/EFT', 'ECheck') for t in transactions]):
@@ -107,7 +108,7 @@ class CheckRun(Document):
 		check_count = 0
 		_transactions = []
 		gl_account = frappe.get_value('Bank Account', self.bank_account, 'account')
-		for party_ref, _group in groupby(transactions, key=lambda x: x.party_ref):
+		for party, _group in groupby(transactions, key=lambda x: x.party):
 			_group = list(_group)
 			# split checks in groups of 5 if first reference is a check
 			groups = list(zip_longest(*[iter(_group)] * 5)) if _group[0].mode_of_payment == 'Check' else [_group]
@@ -125,8 +126,8 @@ class CheckRun(Document):
 				pe.paid_to_account_currency = frappe.db.get_value("Account", self.bank_account, "account_currency")
 				pe.paid_from_account_currency = pe.paid_to_account_currency
 				pe.reference_date = self.check_run_date
-				pe.party = party_ref
-				pe.party_type = 'Supplier' if group[0].doctype == 'Purchase Invoice' else 'Employee'
+				pe.party_type = group[0].party_type
+				pe.party = group[0].party
 				pe.check_run = self.name
 				total_amount = 0
 				if pe.mode_of_payment == 'Check':
@@ -142,17 +143,18 @@ class CheckRun(Document):
 							"reference_doctype": reference.doctype,
 							"reference_name": reference.name or reference.ref_number,
 							"due_date": reference.get("due_date"),
-							"outstanding_amount": flt(reference.outstanding_amount),
-							"allocated_amount": flt(reference.outstanding_amount),
-							"total_amount": flt(reference.outstanding_amount),
+							"outstanding_amount": flt(reference.amount),
+							"allocated_amount": flt(reference.amount),
+							"total_amount": flt(reference.amount),
 					})
-					total_amount += reference.outstanding_amount
+					total_amount += reference.amount
 					reference.check_number = pe.reference_no
 					_references.append(reference)
 				pe.received_amount = total_amount
 				pe.base_received_amount = total_amount
 				pe.paid_amount = total_amount
 				pe.base_paid_amount = total_amount
+				print(pe.as_json())
 				pe.save()
 				pe.submit()
 				for reference in _references:
@@ -267,7 +269,6 @@ def get_entries(doc):
 			`tabPurchase Invoice`.name,
 			`tabPurchase Invoice`.bill_no AS ref_number,
 			`tabPurchase Invoice`.supplier_name AS party,
-			`tabPurchase Invoice`.supplier AS party_ref,
 			`tabPurchase Invoice`.outstanding_amount AS amount,
 			`tabPurchase Invoice`.due_date,
 			`tabPurchase Invoice`.posting_date,
@@ -288,7 +289,6 @@ def get_entries(doc):
 			`tabExpense Claim`.name,
 			`tabExpense Claim`.name AS ref_number,
 			`tabExpense Claim`.employee_name AS party,
-			`tabExpense Claim`.employee AS party_ref,
 			`tabExpense Claim`.grand_total AS amount,
 			`tabExpense Claim`.posting_date AS due_date,
 			`tabExpense Claim`.posting_date,
@@ -303,13 +303,12 @@ def get_entries(doc):
 	UNION (
 		SELECT
 			'Journal Entry' AS doctype,
+			`tabJournal Entry Account`.party_type,
 			`tabJournal Entry`.name,
 			`tabJournal Entry`.name AS ref_number,
-			`tabJournal Entry Account`.party AS party,
-			`tabJournal Entry Account`.party AS party_ref,
-			`tabJournal Entry Account`.party_type,
+			`tabJournal Entry Account`.party,
 			`tabJournal Entry Account`.credit_in_account_currency AS amount,
-			`tabJournal Entry`.due_date AS due_date,
+			`tabJournal Entry`.due_date,
 			`tabJournal Entry`.posting_date,
 			COALESCE(`tabJournal Entry`.mode_of_payment, '\n') AS mode_of_payment
 		FROM `tabJournal Entry`, `tabJournal Entry Account`

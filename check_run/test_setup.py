@@ -44,25 +44,6 @@ tax_authority = [
 	("Local Tax Authority", "Payroll Taxes", "Check", 0.00),
 ]
 
-<<<<<<< Updated upstream:check_run/test_setup.py
-settings = frappe._dict({})
-
-def create_test_data():
-	settings.day = datetime.date(int(frappe.defaults.get_defaults().get('fiscal_year')), 1 ,1)
-	settings.company = frappe.defaults.get_defaults().get('company')
-	company_account = frappe.get_value("Account", {"account_type": "Bank", "company": settings.company, "is_group": 0})
-	settings.company_account = update_account_number(company_account, 'Primary Checking', account_number="1201", from_descendant=False)
-	payroll_account = frappe.get_value('Account', {'account_name': 'Payroll Payable'})
-	frappe.db.set_value('Account', payroll_account, 'account_type', 'Payable')
-	create_bank_and_bank_account()
-	create_suppliers()
-	create_items()
-	create_invoices()
-	config_expense_claim()
-	create_employees()
-	create_expense_claim()
-	create_payroll_journal_entry()
-=======
 def create_test_data():
 	settings = frappe._dict({
 		'day': datetime.date(int(frappe.defaults.get_defaults().get('fiscal_year')), 1 ,1),
@@ -78,7 +59,6 @@ def create_test_data():
 	create_employees(settings)
 	create_expense_claim(settings)
 	create_payroll_journal_entry(settings)
->>>>>>> Stashed changes:check_run/check_run/doctype/check_run/test_data.py
 
 
 def create_bank_and_bank_account(settings):
@@ -112,11 +92,7 @@ def create_bank_and_bank_account(settings):
 	doc.company = settings.company
 	opening_balance = 10000.00
 	doc.append("accounts", {"account": settings.company_account, "debit_in_account_currency": opening_balance})
-<<<<<<< Updated upstream:check_run/test_setup.py
-	retained_earnings = frappe.get_value('Account', {'account_name': "Retained Earnings"})
-=======
 	retained_earnings = frappe.get_value('Account', {'account_name': "Retained Earnings", 'company': settings.company})
->>>>>>> Stashed changes:check_run/check_run/doctype/check_run/test_data.py
 	doc.append("accounts", {"account": retained_earnings, "credit_in_account_currency": opening_balance})
 	doc.save()
 	doc.submit()
@@ -294,11 +270,7 @@ def create_expense_claim(settings):
 	ec.submit()
 
 
-<<<<<<< Updated upstream:check_run/test_setup.py
-def create_payroll_journal_entry():
-=======
 def create_payroll_journal_entry(settings):
->>>>>>> Stashed changes:check_run/check_run/doctype/check_run/test_data.py
 	emps = frappe.get_list('Employee', {'company': settings.company})
 	cost_center = frappe.get_value('Company', settings.company, 'cost_center')
 	payroll_account = frappe.get_value('Account', {'company': settings.company, 'account_name': 'Payroll Payable', 'is_group': 0})
@@ -360,3 +332,4 @@ def create_payroll_journal_entry(settings):
 	})
 	je.save()
 	je.submit()
+	

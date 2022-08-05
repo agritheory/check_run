@@ -58,7 +58,7 @@ frappe.ui.form.CheckRunQuickEntryForm = frappe.ui.form.QuickEntryForm.extend({
 		this.dialog.set_primary_action(__('Start Check Run'), () => {
 			let values = me.dialog.get_values()
 			frappe.xcall("check_run.check_run.doctype.check_run.check_run.check_for_draft_check_run",
-				{ company: values.company, bank_account: values.bank_account }
+				{ company: values.company, bank_account: values.bank_account, payable_account: values.pay_to_account }
 			).then(r => {
 				frappe.set_route("Form", "Check Run", r)
 			})
