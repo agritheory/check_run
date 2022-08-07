@@ -13,10 +13,15 @@ from frappe.model.document import Document
 from frappe.utils.data import flt
 from frappe.utils.data import date_diff, add_days, nowdate, getdate, now, get_datetime
 from frappe.utils.print_format import read_multi_pdf
+from frappe.permissions import has_permission
+from frappe.utils.file_manager import save_file, download_file
+from frappe.utils.password import get_decrypted_password
 
 from erpnext.accounts.utils import get_balance_on
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_dimensions
 
+
+from atnacha import ACHEntry, ACHBatch, NACHAFile
 
 class CheckRun(Document):
 	def validate(self):
@@ -89,6 +94,17 @@ class CheckRun(Document):
 			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 		return self
 
+	def build_nacha_file(self):
+		ach_payment_entries = list(set(
+			[e.get('payment_entry') for e in json.loads(self.transactions) if e.get('mode_of_payment') in ('ACH/EFT', 'ECheck')]
+		))
+		payment_entries = [frappe.get_doc('Payment Entry', pe) for pe in ach_payment_entries]
+		nacha_file = build_nacha_file_from_payment_entries(self, payment_entries)
+		ach_file = StringIO(nacha_file())
+		ach_file.seek(0)
+		return ach_file
+
+
 	@frappe.whitelist()
 	def ach_only(self):
 		transactions = json.loads(self.transactions) if self.transactions else []
@@ -97,10 +113,10 @@ class CheckRun(Document):
 			ach_only.ach_only = False
 			ach_only.print_checks_only = False
 			return ach_only
-		# TODO: refactor to use bank flag on MoPs
-		if any([t.get('mode_of_payment') == 'Check' for t in transactions]):
+		eft_mapping = {mop.name: mop.type for mop in frappe.get_all("Mode of Payment", {'enabled': True}, ['name', 'type'])}
+		if any([eft_mapping.get(t.get('mode_of_payment')) == 'Bank' for t in transactions]):
 			ach_only.ach_only = False
-		if any([t.get('mode_of_payment') in ('ACH/EFT', 'ECheck') for t in transactions]):
+		if any([eft_mapping.get(t.get('mode_of_payment')) == 'Electronic' for t in transactions]):
 			ach_only.print_checks_only = False
 		return ach_only
 
@@ -154,7 +170,6 @@ class CheckRun(Document):
 				pe.base_received_amount = total_amount
 				pe.paid_amount = total_amount
 				pe.base_paid_amount = total_amount
-				print(pe.as_json())
 				pe.save()
 				pe.submit()
 				for reference in _references:
@@ -173,11 +188,51 @@ class CheckRun(Document):
 
 
 	@frappe.whitelist()
-	def increment_print_count(self):
+	def increment_print_count(self, reprint_check_number=None):
 		self.print_count = self.print_count + 1
-		self.set_status('Confirm Print')
+		self.set_status('Submitted')
 		self.save()
+		frappe.enqueue_doc(self.doctype, self.name, 'render_check_pdf',	reprint_check_number=reprint_check_number, queue='short', now=True)
 		return
+
+
+	@frappe.whitelist()
+	def render_check_pdf(self, reprint_check_number=None):
+		if not frappe.db.exists('File', 'Home/Check Run'):
+			frappe.new_doc("File").update({"file_name":"Check Run", "is_folder": True, "folder":"Home"}).save()
+		initial_check_number = int(self.initial_check_number)
+		if reprint_check_number and reprint_check_number != 'undefined':
+			self.initial_check_number = int(reprint_check_number)
+		output = PdfFileWriter()
+		transactions = json.loads(self.transactions)
+		check_increment = 0
+		_transactions = []
+		for pe, group in groupby(transactions, key=lambda x: x.get('payment_entry')):
+			group = list(group)
+			if frappe.db.get_value('Payment Entry', pe, 'docstatus') == 1:
+				output = frappe.get_print(
+					'Payment Entry',
+					pe,
+					frappe.get_meta('Payment Entry').default_print_format,
+					as_pdf=True,
+					output=output,
+					no_letterhead=0,
+				)
+			if initial_check_number != reprint_check_number:
+				frappe.db.set_value('Payment Entry', pe, 'reference_no', self.initial_check_number + check_increment)
+				for ref in group:
+					ref['check_number'] = self.initial_check_number + check_increment
+					_transactions.append(ref)
+			check_increment += 1
+
+		if _transactions:
+			frappe.db.set_value('Check Run', self.name, 'transactions', json.dumps(_transactions))
+			frappe.db.set_value('Check Run', self.name, 'initial_check_number', self.initial_check_number)
+			frappe.db.set_value('Check Run', self.name, 'final_check_number', self.initial_check_number + check_increment -1)
+			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
+			frappe.db.set_value('Check Run', self.name, 'status', 'Ready to Print')
+
+		save_file(f"{self.name}.pdf", read_multi_pdf(output), None, self.name, 'Home/Check Run', False, 0)
 
 
 @frappe.whitelist()
@@ -343,6 +398,7 @@ def get_balance(doc):
 def mode_dimensions_from_doc_items(doc, dimension='cost_center'):
 	return mode_dimensions(doc.items, dimension)
 
+
 def mode_dimensions(data, dimension='cost_center'):
 	dimensions = frappe._dict()
 	for row in data:
@@ -360,3 +416,106 @@ def mode_dimensions(data, dimension='cost_center'):
 		return max(dimensions)
 	except TypeError:
 		return
+
+
+@frappe.whitelist()
+def download_checks(docname):
+	has_permission('Payment Entry', ptype="print", verbose=False, user=frappe.session.user, raise_exception=True)
+	file_name = frappe.get_value('File', {'attached_to_name': docname})
+	frappe.db.set_value('Check Run', docname, 'status', "Confirm Print")
+	return frappe.get_value('File', file_name, 'file_url')
+
+
+@frappe.whitelist()
+def download_nacha(docname):
+	doc = frappe.get_doc('Check Run', docname)
+	ach_file = doc.build_nacha_file()
+	frappe.local.response.filename = f'{docname.replace(" ", "-").replace("/", "-")}.ach'
+	frappe.local.response.type = "download"
+	frappe.local.response.filecontent = ach_file.read()
+	comment = frappe.new_doc('Comment')
+	comment.owner = "Administrator"
+	comment.comment_type = 'Info'
+	comment.reference_doctype = 'Check Run'
+	comment.reference_name = doc.name
+	comment.published = 1
+	comment.content = f"{frappe.session.user} created a NACHA file on {now()}"
+	comment.flags.ignore_permissions = True
+	comment.save()
+	frappe.db.commit()
+
+
+def build_nacha_file_from_payment_entries(doc, payment_entries):
+	ach_entries = []
+	exceptions = []
+	company_bank = frappe.db.get_value('Bank Account', doc.bank_account, 'bank')
+	if not company_bank:
+		exceptions.append(f'Company Bank missing for {doc.company}')
+	if company_bank:
+		company_bank_aba_number = frappe.db.get_value('Bank Account', doc.bank_account, 'branch_code')
+		company_bank_account_no = frappe.db.get_value('Bank Account', doc.bank_account, 'bank_account_no')
+		company_ach_id = frappe.db.get_value('Bank Account', doc.bank_account, 'company_ach_id')
+	if company_bank and not company_bank_aba_number:
+		exceptions.append(f'Company Bank ABA Number missing for {doc.bank_account}')
+	if company_bank and not company_bank_account_no:
+		exceptions.append(f'Company Bank Account Number missing for {doc.bank_account}')
+	if company_bank and not company_ach_id:
+		exceptions.append(f'Company Bank ACH ID missing for {doc.bank_account}')
+	for pe in payment_entries:
+		party_bank_account = get_decrypted_password('Employee', pe.party, fieldname='bank_account', raise_exception=False)
+		if not party_bank_account:
+			exceptions.append(f'Employee Bank Account missing for {pe.party_name}')
+		party_bank = frappe.db.get_value('Employee', pe.party, 'bank')
+		if not party_bank:
+			exceptions.append(f'Employee Bank missing for {pe.party_name}')
+			continue
+		if party_bank:
+			party_bank_routing_number = frappe.db.get_value('Bank', party_bank, 'aba_number')
+		if not party_bank_routing_number:
+			exceptions.append(f'Employee Bank Routing Number missing for {pe.party_name}/{employee_bank}')
+			continue
+		ach_entry = ACHEntry(
+			transaction_code=22, # checking account
+			receiving_dfi_identification=party_bank_routing_number,
+			check_digit=5,
+			dfi_account_number=party_bank_account,
+			amount=int(pe.paid_amount * 100),
+			individual_id_number='',
+			individual_name=pe.party_name,
+			discretionary_data='',
+			addenda_record_indicator=0,
+		)
+		ach_entries.append(ach_entry)
+	
+	if exceptions:
+		frappe.throw('<br>'.join(e for e in exceptions))
+
+	batch = ACHBatch(
+		service_class_code=220,
+		company_name=doc.get('company'),
+		company_discretionary_data='',
+		company_id=company_ach_id,
+		standard_class_code='PPD', # maybe this gets passed in? 
+		company_entry_description='DIRECTPAY', # maybe this gets passed in? 
+		company_descriptive_date=None,
+		effective_entry_date=getdate(),
+		settlement_date=None,
+		originator_status_code=1,
+		originiating_dfi_id=company_bank_account_no,
+		entries=ach_entries
+	)
+	nacha_file = NACHAFile(
+		priority_code=1,
+		immediate_destination=company_bank_aba_number,
+		immediate_origin=company_bank_aba_number,
+		file_creation_date=getdate(),
+		file_creation_time=get_datetime(),
+		file_id_modifier='0',
+		blocking_factor=10,
+		format_code=1,
+		immediate_destination_name=company_bank,
+		immediate_origin_name=company_bank,
+		reference_code='',
+		batches=[batch]
+	)
+	return nacha_file
