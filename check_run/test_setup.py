@@ -66,7 +66,7 @@ def create_bank_and_bank_account(settings):
 		mop = frappe.new_doc('Mode of Payment')
 		mop.mode_of_payment = 'ACH/EFT'
 		mop.enabled = 1
-		mop.type = 'Bank'
+		mop.type = 'Electronic'
 		mop.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
 		mop.save()
 
@@ -104,7 +104,10 @@ def create_suppliers(settings):
 		biz.supplier_group = "Services"
 		biz.country = "United States"
 		biz.supplier_default_mode_of_payment = supplier[2]
-		biz.currency = "USD" 
+		if biz.supplier_default_mode_of_payment == 'ACH/EFT':
+			biz.bank = 'Local Bank'
+			biz.bank_account = "123456789"
+		biz.currency = "USD"
 		biz.default_price_list = "Standard Buying"
 		biz.save()
 
