@@ -86,8 +86,8 @@
 								:id="item.id" />Pay
 						</td>
 						<td v-else>
-							<a :href="paymentEntryUrl(item)" target="_blank">
-							{{ item.check_number }}</a></td>
+							<a target="_blank" :href="paymentEntryUrl(item)">
+							{{ item.payment_entry }}</a></td>
 				</tr>
 				</template>
 			</tbody>
@@ -129,7 +129,7 @@ export default {
 			return encodeURI(`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(" ", "-")}/${transaction.name}`)
 		},
 		paymentEntryUrl: transaction => {
-			if(transaction.payment_entry) { return "" }
+			if(!transaction.payment_entry) { return "" }
 			return encodeURI(`${frappe.urllib.get_base_url()}/app/payment-entry/${transaction.payment_entry}`)
 		},
 		sortTransactions(key) {
@@ -192,5 +192,8 @@ export default {
 	}
 	.table tr.selectedRow {
 		background-color: var(--yellow-highlight-color);
+	}
+	.table tr {
+		height: 50px;
 	}
 </style>
