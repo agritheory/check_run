@@ -38,6 +38,10 @@ cd ../..
 bench get-app erpnext --branch version-13
 bench get-app check_run "${GITHUB_WORKSPACE}"
 
+bench use test_site
+bench install-app erpnext
+bench install-app check_run
+
 bench start &> bench_run_logs.txt &
 bench --site test_site reinstall --yes
 CI=Yes bench build
