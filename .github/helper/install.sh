@@ -7,7 +7,7 @@ cd ~ || exit
 sudo apt update && sudo apt install redis-server libcups2-dev
 
 pip install frappe-bench
-bench init --frappe-branch version-13 --python "$(which python)" frappe-bench --skip-assets 
+bench init --frappe-branch version-13 --python "$(which python)" --skip-assets frappe-bench 
 
 mkdir ~/frappe-bench/sites/test_site
 cp -r "${GITHUB_WORKSPACE}/.github/helper/site_config.json" ~/frappe-bench/sites/test_site
@@ -30,10 +30,10 @@ sed -i 's/^schedule:/# schedule:/g' Procfile
 sed -i 's/^socketio:/# socketio:/g' Procfile;
 sed -i 's/^redis_socketio:/# redis_socketio:/g' Procfile;
 
-bench setup requirements --node;
 
 bench get-app erpnext --branch version-13 --skip-assets
 bench get-app check_run "${GITHUB_WORKSPACE}"
 
 bench start &> bench_run_logs.txt &
+bench build --app frappe & 
 bench --site test_site reinstall --yes
