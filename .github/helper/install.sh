@@ -12,6 +12,7 @@ bench init --frappe-branch version-13 --python python3.9 frappe-bench --skip-ass
 cd ./frappe-bench || exit
 
 bench new-site test_site --admin-password admin
+echo.
 
 sed -i 's/^watch:/# watch:/g' Procfile
 sed -i 's/^schedule:/# schedule:/g' Procfile
