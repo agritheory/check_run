@@ -96,13 +96,9 @@ jobs:
           DB: mariadb
           TYPE: ui
 
-
-      - name: Restore Site
-        run: |
-          cd ~/frappe-bench/
-          wget https://frappeframework.com/files/v10-frappe.sql.gz
-          bench --site test_site --force restore ~/frappe-bench/v10-frappe.sql.gz
-          bench --site test_site migrate
+      - name: Site Setup
+        if: ${{ steps.check-build.outputs.build == 'strawberry' }}
+        run: cd ~/frappe-bench/ && bench --site test_site execute frappe.utils.install.complete_setup_wizard
 
       - name: UI Tests
         run: bench --site test_site run-ui-tests frappe --headless --parallel --ci-build-id $GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT

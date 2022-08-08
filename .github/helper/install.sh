@@ -29,9 +29,15 @@ sed -i 's/^schedule:/# schedule:/g' Procfile
 sed -i 's/^socketio:/# socketio:/g' Procfile;
 sed -i 's/^redis_socketio:/# redis_socketio:/g' Procfile;
 
+bench setup requirements --node
+
+cd ./apps/frappe || exit
+yarn add node-sass@4.13.1
+cd ../..
 
 bench get-app erpnext --branch version-13
 bench get-app check_run "${GITHUB_WORKSPACE}"
 
 bench start &> bench_run_logs.txt &
 bench --site test_site reinstall --yes
+CI=Yes bench build
