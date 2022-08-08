@@ -7,7 +7,7 @@ cd ~ || exit
 
 pip install frappe-bench
 
-bench init frappe-bench --skip-assets --python "$(which python)"
+bench init --frappe-branch version-13 --python python3.9 frappe-bench --skip-assets 
 
 cd ./frappe-bench || exit
 
