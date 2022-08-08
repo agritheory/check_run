@@ -18,7 +18,7 @@ jobs:
           ref: ${{ github.ref }}
           fetch-depth: 2
 
-      - name: Get changed JSON files
+      - name: Find changed json
         id: changed-json
         uses: tj-actions/changed-files@v23.1
         with:
@@ -26,7 +26,7 @@ jobs:
             **/*.json
           include_all_old_new_renamed_files: true
 
-      - name: Copy files and paths from Head
+      - name: Copy head paths files
         run: |
           mkdir head
           touch head/acmr.txt
@@ -47,10 +47,10 @@ jobs:
             cp --parents $file head/
           done
 
-      - name: Checkout Base
+      - name: Checkout base
         run: git checkout $(git --no-pager log --oneline -n 2 | awk 'NR==2 {print $1}')
 
-      - name: Copy paths from Base
+      - name: Copy base paths
         run: |
           mkdir base
           touch base/mrd.txt
@@ -64,11 +64,15 @@ jobs:
             echo "D,${file}" >> base/mrd.txt
           done
 
-      - name: Diff JSON
+      - name: Setup requirements and script
         run: |
           pip install rich
-          git clone https://gist.github.com/74017707b676c3ce947528fb00dd46d0.git frappe_json_diff
-          python3 frappe_json_diff/frappe_json_diff.py base/mrd.txt head/acmr.txt 
+          pip install json_source_map
+          git clone https://gist.github.com/74017707b676c3ce947528fb00dd46d0.git fsjd
+
+      - name: Diff table
+        run: python3 fsjd/frappe_schema_json_diff.py base/mrd.txt head/acmr.txt 1
+
 
   Release:
     needs: [ Validate_PY_JSON ]
