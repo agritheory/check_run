@@ -127,7 +127,8 @@ class CheckRun(Document):
 		for party, _group in groupby(transactions, key=lambda x: x.party):
 			_group = list(_group)
 			# split checks in groups of 5 if first reference is a check
-			groups = list(zip_longest(*[iter(_group)] * 5)) if _group[0].mode_of_payment == 'Check' else [_group]
+			# TODO: refactor split number into a settings page
+			groups = list(zip_longest(*[iter(_group)] * 5)) if frappe.db.get_value('Mode of Payment', _group[0].mode_of_payment, 'type') == 'Bank' else [_group]
 			if not groups:
 				continue
 			for group in groups:
@@ -141,16 +142,16 @@ class CheckRun(Document):
 				pe.paid_to = self.pay_to_account
 				pe.paid_to_account_currency = frappe.db.get_value("Account", self.bank_account, "account_currency")
 				pe.paid_from_account_currency = pe.paid_to_account_currency
-				pe.reference_date = self.check_run_date
+				pe.reference_date = self.posting_date
 				pe.party_type = group[0].party_type
 				pe.party = group[0].party
 				pe.check_run = self.name
 				total_amount = 0
-				if pe.mode_of_payment == 'Check':
+				if frappe.db.get_value('Mode of Payment', _group[0].mode_of_payment, 'type') == 'Bank':
 					pe.reference_no = int(self.initial_check_number) + check_count
 					check_count += 1
 				else:
-					pe.reference_no = self.name
+					pe.reference_no = frappe._(f"via {_group[0].mode_of_payment} {self.get_formatted('posting_date')}")
 				
 				for reference in group:
 					if not reference:
@@ -178,15 +179,6 @@ class CheckRun(Document):
 		return _transactions
 
 
-	def get_dimensions_from_references(self, references, dimension):
-		dimensions, default_dimensions = get_dimensions(with_cost_center_and_project=True)
-		parents = [reference.get('name') for reference in references if reference]
-		purchase_invoice_items = frappe.get_all('Purchase Invoice Item', {'parent': ['in', parents]})
-		expense_claim_details = frappe.get_all('Expense Claim Detail', {'parent': ['in', parents]})
-		children = purchase_invoice_items + expense_claim_details
-		return mode_dimensions(children, dimension)
-
-
 	@frappe.whitelist()
 	def increment_print_count(self, reprint_check_number=None):
 		self.print_count = self.print_count + 1
@@ -209,7 +201,8 @@ class CheckRun(Document):
 		_transactions = []
 		for pe, group in groupby(transactions, key=lambda x: x.get('payment_entry')):
 			group = list(group)
-			if frappe.db.get_value('Payment Entry', pe, 'docstatus') == 1:
+			mode_of_payment, docstatus = frappe.db.get_value('Payment Entry', pe, ['mode_of_payment', 'docstatus'])
+			if docstatus == 1 and frappe.db.get_value('Mode of Payment', mode_of_payment, 'type') == 'Bank':
 				output = frappe.get_print(
 					'Payment Entry',
 					pe,
@@ -218,20 +211,20 @@ class CheckRun(Document):
 					output=output,
 					no_letterhead=0,
 				)
-			if initial_check_number != reprint_check_number:
-				frappe.db.set_value('Payment Entry', pe, 'reference_no', self.initial_check_number + check_increment)
-				for ref in group:
-					ref['check_number'] = self.initial_check_number + check_increment
-					_transactions.append(ref)
-			check_increment += 1
+				if initial_check_number != reprint_check_number:
+					frappe.db.set_value('Payment Entry', pe, 'reference_no', self.initial_check_number + check_increment)
+					for ref in group:
+						ref['check_number'] = self.initial_check_number + check_increment
+						_transactions.append(ref)
+				check_increment += 1
 
-		if _transactions:
+		if _transactions and reprint_check_number:
 			frappe.db.set_value('Check Run', self.name, 'transactions', json.dumps(_transactions))
 			frappe.db.set_value('Check Run', self.name, 'initial_check_number', self.initial_check_number)
 			frappe.db.set_value('Check Run', self.name, 'final_check_number', self.initial_check_number + check_increment -1)
 			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
-			frappe.db.set_value('Check Run', self.name, 'status', 'Ready to Print')
-
+		
+		frappe.db.set_value('Check Run', self.name, 'status', 'Ready to Print')
 		save_file(f"{self.name}.pdf", read_multi_pdf(output), None, self.name, 'Home/Check Run', False, 0)
 
 
@@ -311,11 +304,14 @@ def confirm_print(docname):
 @frappe.whitelist()
 def get_entries(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+	if isinstance(doc.end_date, str):
+		doc.end_date = getdate(doc.end_date) 
 	modes_of_payment = frappe.get_all('Mode of Payment', order_by='name')
 	if frappe.db.exists('Check Run', doc.name):
 		db_doc = frappe.get_doc('Check Run', doc.name)
-		if db_doc.transactions and json.loads(db_doc.transactions):
+		if doc.end_date == db_doc.end_date and db_doc.transactions:
 			return {'transactions': json.loads(db_doc.transactions), 'modes_of_payment': modes_of_payment}
+	# TODO: introduce setting for excluding journal entries from settings
 	transactions =  frappe.db.sql("""
 	(
 		SELECT
@@ -324,6 +320,7 @@ def get_entries(doc):
 			`tabPurchase Invoice`.name,
 			`tabPurchase Invoice`.bill_no AS ref_number,
 			`tabPurchase Invoice`.supplier_name AS party,
+			`tabSupplier`.supplier_name AS party_name,
 			`tabPurchase Invoice`.outstanding_amount AS amount,
 			`tabPurchase Invoice`.due_date,
 			`tabPurchase Invoice`.posting_date,
@@ -335,6 +332,7 @@ def get_entries(doc):
 		AND `tabPurchase Invoice`.docstatus = 1
 		AND `tabPurchase Invoice`.credit_to = %(pay_to_account)s
 		AND `tabPurchase Invoice`.status != 'On Hold'
+		AND `tabPurchase Invoice`.due_date <= %(end_date)s
 	)
 	UNION
 	(
@@ -344,6 +342,7 @@ def get_entries(doc):
 			`tabExpense Claim`.name,
 			`tabExpense Claim`.name AS ref_number,
 			`tabExpense Claim`.employee_name AS party,
+			`tabEmployee`.employee_name AS party_name,
 			`tabExpense Claim`.grand_total AS amount,
 			`tabExpense Claim`.posting_date AS due_date,
 			`tabExpense Claim`.posting_date,
@@ -354,6 +353,7 @@ def get_entries(doc):
 		AND `tabExpense Claim`.company = %(company)s
 		AND `tabExpense Claim`.docstatus = 1
 		AND `tabExpense Claim`.payable_account = %(pay_to_account)s
+		AND `tabExpense Claim`.posting_date <= %(end_date)s
 	)
 	UNION (
 		SELECT
@@ -362,6 +362,7 @@ def get_entries(doc):
 			`tabJournal Entry`.name,
 			`tabJournal Entry`.name AS ref_number,
 			`tabJournal Entry Account`.party,
+			`tabJournal Entry Account`.party AS party_name,
 			`tabJournal Entry Account`.credit_in_account_currency AS amount,
 			`tabJournal Entry`.due_date,
 			`tabJournal Entry`.posting_date,
@@ -371,6 +372,7 @@ def get_entries(doc):
 		AND `tabJournal Entry`.company = %(company)s
 		AND `tabJournal Entry`.docstatus = 1
 		AND `tabJournal Entry Account`.account = %(pay_to_account)s
+		AND `tabJournal Entry`.due_date <= %(end_date)s
 		AND `tabJournal Entry`.name NOT in (
 			SELECT `tabPayment Entry Reference`.reference_name
 			FROM `tabPayment Entry`, `tabPayment Entry Reference`
@@ -379,43 +381,29 @@ def get_entries(doc):
 			AND `tabPayment Entry`.docstatus = 1
 		)
 	)
-	ORDER BY due_date
+	ORDER BY due_date, name
 	""", {
-		'company': doc.company, 'pay_to_account': doc.pay_to_account
+		'company': doc.company, 'pay_to_account': doc.pay_to_account, 'end_date': doc.end_date
 	}, as_dict=True)
+	for transaction in transactions:
+		if transaction.doctype == 'Journal Entry':
+			if transaction.party_type == 'Supplier':
+				transaction.party_name = frappe.get_value('Supplier', transaction.party, 'supplier_name')
+				transaction.mode_of_payment = frappe.get_value('Supplier', transaction.party, 'supplier_default_mode_of_payment')
+			if transaction.party_type == 'Employee':
+				transaction.party_name = frappe.get_value('Employee', transaction.party, 'employee_name')
+				transaction.mode_of_payment = frappe.get_value('Employee', transaction.party, 'mode_of_payment')
+
 	return {'transactions': transactions, 'modes_of_payment': modes_of_payment}
 
 
 @frappe.whitelist()
 def get_balance(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
-	if not doc.bank_account or not doc.check_run_date:
+	if not doc.bank_account or not doc.posting_date:
 		return
 	gl_account = frappe.get_value('Bank Account', doc.bank_account, 'account')
-	return get_balance_on(gl_account, doc.check_run_date)
-
-
-def mode_dimensions_from_doc_items(doc, dimension='cost_center'):
-	return mode_dimensions(doc.items, dimension)
-
-
-def mode_dimensions(data, dimension='cost_center'):
-	dimensions = frappe._dict()
-	for row in data:
-		if row.get(dimension) in dimensions:
-			if not row.get('amount'):
-				amount = frappe.get_value("Item", row.get('item_code'), 'last_purchase_rate') or 0
-			dimensions[row.get(dimension, 'None')] += row.get('amount') if row.get('amount') else amount
-		else:
-			if not row.get('amount'):
-				amount = frappe.get_value("Item", row.get('item_code'), 'last_purchase_rate') or 0
-			dimensions[row.get(dimension, 'None')] = row.get('amount') if row.get('amount') else amount
-	if not dimensions:
-		return
-	try:
-		return max(dimensions)
-	except TypeError:
-		return
+	return get_balance_on(gl_account, doc.posting_date)
 
 
 @frappe.whitelist()
@@ -428,6 +416,7 @@ def download_checks(docname):
 
 @frappe.whitelist()
 def download_nacha(docname):
+	has_permission('Payment Entry', ptype="print", verbose=False, user=frappe.session.user, raise_exception=True)
 	doc = frappe.get_doc('Check Run', docname)
 	ach_file = doc.build_nacha_file()
 	frappe.local.response.filename = f'{docname.replace(" ", "-").replace("/", "-")}.ach'
@@ -462,20 +451,20 @@ def build_nacha_file_from_payment_entries(doc, payment_entries):
 	if company_bank and not company_ach_id:
 		exceptions.append(f'Company Bank ACH ID missing for {doc.bank_account}')
 	for pe in payment_entries:
+		if pe.docstatus != 1 or frappe.db.get_value('Mode of Payment', pe.mode_of_payment, 'type') == 'Electronic':
+			continue
 		party_bank_account = get_decrypted_password('Employee', pe.party, fieldname='bank_account', raise_exception=False)
 		if not party_bank_account:
 			exceptions.append(f'Employee Bank Account missing for {pe.party_name}')
 		party_bank = frappe.db.get_value('Employee', pe.party, 'bank')
 		if not party_bank:
 			exceptions.append(f'Employee Bank missing for {pe.party_name}')
-			continue
 		if party_bank:
 			party_bank_routing_number = frappe.db.get_value('Bank', party_bank, 'aba_number')
 		if not party_bank_routing_number:
 			exceptions.append(f'Employee Bank Routing Number missing for {pe.party_name}/{employee_bank}')
-			continue
 		ach_entry = ACHEntry(
-			transaction_code=22, # checking account
+			transaction_code=22, # checking account 
 			receiving_dfi_identification=party_bank_routing_number,
 			check_digit=5,
 			dfi_account_number=party_bank_account,
@@ -495,8 +484,8 @@ def build_nacha_file_from_payment_entries(doc, payment_entries):
 		company_name=doc.get('company'),
 		company_discretionary_data='',
 		company_id=company_ach_id,
-		standard_class_code='PPD', # maybe this gets passed in? 
-		company_entry_description='DIRECTPAY', # maybe this gets passed in? 
+		standard_class_code='PPD', # TODO: pass in from settings
+		company_entry_description='DIRECTPAY', # TODO: pass in from settings
 		company_descriptive_date=None,
 		effective_entry_date=getdate(),
 		settlement_date=None,

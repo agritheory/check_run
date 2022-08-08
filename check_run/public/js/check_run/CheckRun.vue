@@ -48,7 +48,7 @@
 					tabindex="1"
 					@click="state.selectedRow = i"
 				>
-					<td style="text-align: left">{{ item.party }}</td>
+					<td style="text-align: left">{{ item.party_name || item.party }}</td>
 					<td>
 						<a
 							:href="transactionUrl(item)"

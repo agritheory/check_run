@@ -33,11 +33,11 @@ def before_test():
 suppliers = [
 	("Exceptional Grid", "Electricity", "ACH/EFT", 150.00),
 	("Liu & Loewen Accountants LLP", "Accounting Services", "ACH/EFT", 500.00),
-	("Mare Digitalis", "Cloud Services", "ACH/EFT", 200.00),
+	("Mare Digitalis", "Cloud Services", "Credit Card", 200.00),
 	("AgriTheory", "ERPNext Consulting", "Check", 1000.00),
 	("HIJ Telecom, Inc", "Internet Services", "Check", 150.00),
 	("Sphere Cellular", "Phone Services", "ACH/EFT", 250.00),
-	("Cooperative Ag Finance", "Financial Services", "Wire Transfer", 5000.00),
+	("Cooperative Ag Finance", "Financial Services", "Bank Draft", 5000.00),
 ]
 
 tax_authority = [
@@ -70,9 +70,13 @@ def create_bank_and_bank_account(settings):
 		mop.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
 		mop.save()
 
+	frappe.db.set_value('Mode of Payment', 'Wire Transfer', 'type', 'Electronic')
+	frappe.db.set_value('Mode of Payment', 'Credit Card', 'type', 'General')
+
 	if not frappe.db.exists('Bank', 'Local Bank'):
 		bank = frappe.new_doc('Bank')
 		bank.bank_name = "Local Bank"
+		bank.aba_number = '07200091'
 		bank.save()
 
 	if not frappe.db.exists('Bank Account', 'Primary Checking - Local Bank'):
@@ -84,6 +88,9 @@ def create_bank_and_bank_account(settings):
 		bank_account.company = settings.company
 		bank_account.account = settings.company_account
 		bank_account.check_number = 2500
+		bank_account.company_ach_id = '1381655417'
+		bank_account.bank_account_no = '072000915'
+		bank_account.branch_code = '07200091'
 		bank_account.save()
 
 	doc = frappe.new_doc("Journal Entry")
@@ -193,6 +200,10 @@ def config_expense_claim(settings):
 	except:
 		pass
 
+	payroll_payable = frappe.db.get_value('Account', {'account_name': 'Payroll Payable', 'company': settings.company})
+	if payroll_payable:
+		frappe.db.set_value('Account', payroll_payable, 'account_type', 'Payable')
+
 	if frappe.db.exists('Account', {'account_name': 'Payroll Taxes', 'company': settings.company}):
 		return
 	pta = frappe.new_doc('Account')
@@ -216,6 +227,7 @@ def create_employees(settings):
 		emp.date_of_birth = datetime.date(1990, 1, 1)
 		emp.date_of_joining = datetime.date(2020, 1, 1)
 		emp.mode_of_payment = 'Check' if employee_number % 3 == 0 else 'ACH/EFT'
+		emp.mode_of_payment = 'Cash' if employee_number == 10 else emp.mode_of_payment
 		emp.expense_approver = 'Administrator'
 		if emp.mode_of_payment == 'ACH/EFT':
 			emp.bank = 'Local Bank'
