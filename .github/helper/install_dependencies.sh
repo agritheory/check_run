@@ -9,6 +9,8 @@ if grep -lr --exclude-dir=node_modules "^<<<<<<< " "${GITHUB_WORKSPACE}"
     exit 1
 fi
 
+sudo apt update && sudo apt install redis-server
+
  # install wkhtmltopdf
 wget -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz
 tar -xf /tmp/wkhtmltox.tar.xz -C /tmp
