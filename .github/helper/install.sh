@@ -21,6 +21,6 @@ sed -i 's/^redis_socketio:/# redis_socketio:/g' Procfile;
 
 bench setup requirements --node;
 
-bench get-app erpnext --branch version-13
+bench get-app erpnext --branch version-13 --skip-assets
 
 bench start
