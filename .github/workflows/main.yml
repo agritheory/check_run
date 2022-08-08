@@ -82,7 +82,7 @@ jobs:
       - name: Release
         run: npx semantic-release
 
-  Validate_PY_JSON:
+  Validate_PY_JSON_MERGE:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -90,8 +90,16 @@ jobs:
       - name: Get validate_json
         run: git clone https://gist.github.com/f1bf2c11f78331b2417189c385022c28.git validate_json
 
-      - name: Validate JSON
+      - name: Validate json
         run: python3 validate_json/validate_json.py ./
 
       - name: Compile
         run: python3 -m compileall -q ./
+
+      - name: Check merge
+        run: |
+          if grep -lr --exclude-dir=node_modules "^<<<<<<< " "${GITHUB_WORKSPACE}"
+              then echo "Found merge conflicts"
+              exit 1
+          fi
+  
