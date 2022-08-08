@@ -2,21 +2,15 @@
 
 set -e
 
-cd ~ || exit
+# Check for merge conflicts before proceeding
+python -m compileall -f "${GITHUB_WORKSPACE}"
+if grep -lr --exclude-dir=node_modules "^<<<<<<< " "${GITHUB_WORKSPACE}"
+    then echo "Found merge conflicts"
+    exit 1
+fi
 
-pip install frappe-bench
-
-bench init frappe-bench --skip-assets --python "$(which python)" --frappe-path "${GITHUB_WORKSPACE}"
-
-cd ./frappe-bench || exit
-
-sed -i 's/^watch:/# watch:/g' Procfile
-sed -i 's/^schedule:/# schedule:/g' Procfile
-
-if [ "$TYPE" == "server" ]; then sed -i 's/^socketio:/# socketio:/g' Procfile; fi
-if [ "$TYPE" == "server" ]; then sed -i 's/^redis_socketio:/# redis_socketio:/g' Procfile; fi
-
-if [ "$TYPE" == "ui" ]; then bench setup requirements --node; fi
-
-bench start &
-bench --site test_site reinstall --yes
+ # install wkhtmltopdf
+wget -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/wkhtmltox-0.12.3_linux-generic-amd64.tar.xz
+tar -xf /tmp/wkhtmltox.tar.xz -C /tmp
+sudo mv /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf
+sudo chmod o+x /usr/local/bin/wkhtmltopdf
