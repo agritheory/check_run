@@ -5,9 +5,7 @@ import frappe
 import unittest
 
 
-def before_tests():
-	print('before tests')
-	
-
 class TestCheckRun(unittest.TestCase):
 	pass
+
+

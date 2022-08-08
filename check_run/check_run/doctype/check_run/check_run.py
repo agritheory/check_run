@@ -24,6 +24,7 @@ class CheckRun(Document):
 		gl_account = frappe.get_value('Bank Account', self.bank_account, 'account')
 		if not gl_account:
 			frappe.throw(frappe._("This Bank Account is not associated with a General Ledger Account."))
+		self.beg_balance = get_balance_on(gl_account, self.check_run_date)
 		if self.flags.in_insert:
 			if self.initial_check_number is None:
 				self.get_last_check_number()
@@ -96,6 +97,7 @@ class CheckRun(Document):
 			ach_only.ach_only = False
 			ach_only.print_checks_only = False
 			return ach_only
+		# TODO: refactor to use bank flag on MoPs
 		if any([t.get('mode_of_payment') == 'Check' for t in transactions]):
 			ach_only.ach_only = False
 		if any([t.get('mode_of_payment') in ('ACH/EFT', 'ECheck') for t in transactions]):
@@ -105,9 +107,8 @@ class CheckRun(Document):
 	def create_payment_entries(self, transactions):
 		check_count = 0
 		_transactions = []
-		account_currency = frappe.get_value('Account', self.pay_to_account, 'account_currency')
 		gl_account = frappe.get_value('Bank Account', self.bank_account, 'account')
-		for party_ref, _group in groupby(transactions, key=lambda x: x.party_ref):
+		for party, _group in groupby(transactions, key=lambda x: x.party):
 			_group = list(_group)
 			# split checks in groups of 5 if first reference is a check
 			groups = list(zip_longest(*[iter(_group)] * 5)) if _group[0].mode_of_payment == 'Check' else [_group]
@@ -118,20 +119,15 @@ class CheckRun(Document):
 				pe = frappe.new_doc("Payment Entry")
 				pe.payment_type = "Pay"
 				pe.posting_date = nowdate()
-				pe.cost_center = frappe.get_value('Account', self.pay_to_account, 'cost_center')
-				department = self.get_dimensions_from_references(group, 'department')
-				if department != 'None' and department:
-					pe.department = department
-				project = self.get_dimensions_from_references(group, 'project')
-				if project != 'None' and project:
-					pe.project = project
 				pe.mode_of_payment = group[0].mode_of_payment
 				pe.company = self.company
 				pe.paid_from = gl_account
 				pe.paid_to = self.pay_to_account
+				pe.paid_to_account_currency = frappe.db.get_value("Account", self.bank_account, "account_currency")
+				pe.paid_from_account_currency = pe.paid_to_account_currency
 				pe.reference_date = self.check_run_date
-				pe.party = party_ref
-				pe.party_type = 'Supplier' if group[0].doctype == 'Purchase Invoice' else 'Employee'
+				pe.party_type = group[0].party_type
+				pe.party = group[0].party
 				pe.check_run = self.name
 				total_amount = 0
 				if pe.mode_of_payment == 'Check':
@@ -139,7 +135,7 @@ class CheckRun(Document):
 					check_count += 1
 				else:
 					pe.reference_no = self.name
-
+				
 				for reference in group:
 					if not reference:
 						continue
@@ -158,16 +154,14 @@ class CheckRun(Document):
 				pe.base_received_amount = total_amount
 				pe.paid_amount = total_amount
 				pe.base_paid_amount = total_amount
-				pe.paid_from_account_currency = account_currency
-				pe.paid_to_account_currency = account_currency
-				pe.target_exchange_rate = 1.0
-				pe.source_exchange_rate = 1.0
+				print(pe.as_json())
 				pe.save()
 				pe.submit()
 				for reference in _references:
 					reference.payment_entry = pe.name
 					_transactions.append(reference)
 		return _transactions
+
 
 	def get_dimensions_from_references(self, references, dimension):
 		dimensions, default_dimensions = get_dimensions(with_cost_center_and_project=True)
@@ -234,11 +228,12 @@ def print_checks(docname, reprint_check_number=None):
 
 
 @frappe.whitelist()
-def check_for_draft_check_run(company, bank_account):
+def check_for_draft_check_run(company, bank_account, payable_account):
 	existing = frappe.get_value(
 		'Check Run', {
 			'company': company,
 			'bank_account': bank_account,
+			'pay_to_account': payable_account,
 			'status': ['in', ['Draft', 'Submitted']],
 			'initial_check_number': ['!=', 0]
 		}
@@ -248,6 +243,7 @@ def check_for_draft_check_run(company, bank_account):
 	cr = frappe.new_doc('Check Run')
 	cr.company = company
 	cr.bank_account = bank_account
+	cr.pay_to_account = payable_account
 	cr.save()
 	return cr.name
 
@@ -269,10 +265,10 @@ def get_entries(doc):
 	(
 		SELECT
 			'Purchase Invoice' as doctype,
+			'Supplier' AS party_type,
 			`tabPurchase Invoice`.name,
 			`tabPurchase Invoice`.bill_no AS ref_number,
 			`tabPurchase Invoice`.supplier_name AS party,
-			`tabPurchase Invoice`.supplier AS party_ref,
 			`tabPurchase Invoice`.outstanding_amount AS amount,
 			`tabPurchase Invoice`.due_date,
 			`tabPurchase Invoice`.posting_date,
@@ -289,10 +285,10 @@ def get_entries(doc):
 	(
 		SELECT
 			'Expense Claim' as doctype,
+			'Employee' AS party_type,
 			`tabExpense Claim`.name,
 			`tabExpense Claim`.name AS ref_number,
 			`tabExpense Claim`.employee_name AS party,
-			`tabExpense Claim`.employee AS party_ref,
 			`tabExpense Claim`.grand_total AS amount,
 			`tabExpense Claim`.posting_date AS due_date,
 			`tabExpense Claim`.posting_date,
@@ -307,12 +303,12 @@ def get_entries(doc):
 	UNION (
 		SELECT
 			'Journal Entry' AS doctype,
+			`tabJournal Entry Account`.party_type,
 			`tabJournal Entry`.name,
 			`tabJournal Entry`.name AS ref_number,
-			`tabJournal Entry Account`.party AS party,
-			`tabJournal Entry Account`.party AS party_ref,
+			`tabJournal Entry Account`.party,
 			`tabJournal Entry Account`.credit_in_account_currency AS amount,
-			`tabJournal Entry`.due_date AS due_date,
+			`tabJournal Entry`.due_date,
 			`tabJournal Entry`.posting_date,
 			COALESCE(`tabJournal Entry`.mode_of_payment, '\n') AS mode_of_payment
 		FROM `tabJournal Entry`, `tabJournal Entry Account`
@@ -338,7 +334,6 @@ def get_entries(doc):
 @frappe.whitelist()
 def get_balance(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
-	print(doc)
 	if not doc.bank_account or not doc.check_run_date:
 		return
 	gl_account = frappe.get_value('Bank Account', doc.bank_account, 'account')

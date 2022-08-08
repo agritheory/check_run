@@ -41,47 +41,53 @@
 			<tbody>
 				<template v-for="(item, i) in transactions">
 				<tr
-					v-if="partyIsInFilter(transactions[i].party)"
+					v-if="partyIsInFilter(item.party)"
 					:key=i
 					class="checkrun-row-container"
 					:class="{ selectedRow: state.selectedRow == i }"
 					tabindex="1"
 					@click="state.selectedRow = i"
 				>
-					<td style="text-align: left">{{ transactions[i].party }}</td>
+					<td style="text-align: left">{{ item.party }}</td>
 					<td>
 						<a
-							:href="transactionUrl(i)"
+							:href="transactionUrl(item)"
 							target="_blank"
 						>
-							{{ transactions[i].ref_number || transactions[i].name}}
+							{{ item.ref_number || item.name}}
 						</a>
 					</td>
-					<td> {{ transactions[i].posting_date }}	</td>
+					<td> {{ item.posting_date }}	</td>
 					<td
 						class="mop-onclick"
 						:data-mop-index="i"
 					>
-
-						<ADropdown v-model="state.transactions[i].mode_of_payment" :items="modeOfPaymentNames" v-if="state.docstatus < 1" :transactionIndex="i" :isOpen="state.transactions[i].mopIsOpen" @isOpenChanged="val => state.transactions[i].mopIsOpen = val"/>
+						<ADropdown
+							ref="dropdowns"
+							v-model="state.transactions[i].mode_of_payment"
+							:items="modeOfPaymentNames"
+							v-if="state.docstatus < 1" :transactionIndex="i"
+							:isOpen="state.transactions[i].mopIsOpen"
+							@isOpenChanged="val => state.transactions[i].mopIsOpen = val"
+						/>
 
 						<span v-else>{{ transactions[i].mode_of_payment }}</span>
 					</td>
-					<td>{{ format_currency(transactions[i].amount, "USD", 2) }}</td>
-					<td>{{ moment(transactions[i].due_date).format("MM/DD/YY") }}</td>
+					<td>{{ format_currency(item.amount, "USD", 2) }}</td>
+					<td>{{ moment(item.due_date).format("MM/DD/YY") }}</td>
 						<td v-if="state.docstatus < 1" style="text-align: left">
 							<input
 								type="checkbox"
 								class="input-with-feedback checkrun-check-box"
 								data-fieldtype="Check"
-								@change="onPayChange()"
+								@change="onPayChange(i)"
 								:data-checkbox-index="i"
-								v-model="transactions[i].pay"
-								:id="transactions[i].id" />Pay
+								v-model="item.pay"
+								:id="item.id" />Pay
 						</td>
 						<td v-else>
-							<a :href="paymentEntryUrl(i)" target="_blank">
-							{{ transactions[i].check_number }}</a></td>
+							<a target="_blank" :href="paymentEntryUrl(item)">
+							{{ item.payment_entry }}</a></td>
 				</tr>
 				</template>
 			</tbody>
@@ -115,45 +121,57 @@ export default {
 			cur_frm.check_run_state.transactions.forEach(row => { row.pay = val })
 			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
 			cur_frm.refresh_field("amount_check_run")
-			cur_frm.dirty();
+			cur_frm.dirty()
 		}
 	},
 	methods: {
-		transactionUrl: transactionId => {
-			if(!this.transactions) {
-				return ""
-			}
-			return encodeURI(frappe.urllib.get_base_url() + "/app/" + this.transactions[transactionId].doctype.toLowerCase().replace(" ", "-") + "/" + thiis.transactions[transactionId].name );
+		transactionUrl: transaction => {
+			return encodeURI(`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(" ", "-")}/${transaction.name}`)
 		},
-		paymentEntryUrl: transactionId => {
-			if(!this.transactions) {
-				return "";
-			}
-			return encodeURI(frappe.urllib.get_base_url() + "/app/payment-entry/" + this.transactions[i].payment_entry );
+		paymentEntryUrl: transaction => {
+			if(!transaction.payment_entry) { return "" }
+			return encodeURI(`${frappe.urllib.get_base_url()}/app/payment-entry/${transaction.payment_entry}`)
 		},
 		sortTransactions(key) {
-			this.transactions.sort((a, b) => (a[key] > b[key] ? this.sort_order[key] : this.sort_order[key] * -1));
-			this.sort_order[key] *= -1;
+			this.transactions.sort((a, b) => (a[key] > b[key] ? this.sort_order[key] : this.sort_order[key] * -1))
+			this.sort_order[key] *= -1
 		},
 		partyIsInFilter(party) {
-			return cur_frm.check_run_state.party_filter.length < 1 || party.toLowerCase().includes(cur_frm.check_run_state.party_filter.toLowerCase());
+			return cur_frm.check_run_state.party_filter.length < 1 || party.toLowerCase().includes(cur_frm.check_run_state.party_filter.toLowerCase())
 		},
 		toggleShowPartyFilter() {
-			cur_frm.check_run_state.party_filter = "";
-			cur_frm.check_run_state.show_party_filter = !cur_frm.check_run_state.show_party_filter;
+			cur_frm.check_run_state.party_filter = ""
+			cur_frm.check_run_state.show_party_filter = !cur_frm.check_run_state.show_party_filter
 		},
 		markDirty() {
 			cur_frm.dirty()
 		},
-		onPayChange() {
+		onPayChange(selectedRow) {
 			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
 			cur_frm.refresh_field("amount_check_run")
 			this.markDirty()
+			if(this.transactions[selectedRow].pay && !this.transactions[selectedRow].mode_of_payment){
+				frappe.show_alert(__('Please add a Mode of Payment for this row'))
+			}
+		},
+		checkPay() {
+			if(this.state.docstatus >= 1 || !this.transactions.length) {
+				return
+			}
+			this.transactions[this.state.selectedRow].pay = !this.transactions[this.state.selectedRow].pay
+			this.onPayChange(this.state.selectedRow)
+		},
+		openMopWithSearch(keycode) {
+			if(!this.transactions.length) {
+				return
+			}
+			this.$refs.dropdowns[this.state.selectedRow].openWithSearch()
 		}
 	},
 	beforeMount() {
-		this.moment = moment;
-		this.format_currency = format_currency;
+		this.moment = moment
+		this.format_currency = format_currency
+		cur_frm.check_run_component = this
 	}
 }
 </script>
@@ -164,8 +182,18 @@ export default {
 	.table thead th {
 		vertical-align: top;
 	}
-	.table tr.selectedRow {
-		background-color: #ececec;
+	.checkrun-check-box {
+		vertical-align: sub; /* weird but this gives the best alignment */
 	}
-
+	.check-run-table td, .check-run-table th {
+		max-height: 1.5rem;
+		padding: 0.4rem;
+		vertical-align: middle;
+	}
+	.table tr.selectedRow {
+		background-color: var(--yellow-highlight-color);
+	}
+	.table tr {
+		height: 50px;
+	}
 </style>

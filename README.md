@@ -43,31 +43,7 @@ nano site_config.json
  "developer_mode": 1
 ```
 
-Restore the database
+Setup demo data or test data
 ```
-mysql -u root -p {{ site name }} < {{data base file path}}.sql
+bench execute 'check_run.check_run.doctype.check_run.test_data.create_test_data'
 ```
-Set a new password for the local Administrator that is not the same as the production Administrator password 
-```
-bench set-admin-password {{local password}}
-```
-
-Migrate, build and get the site ready
-```
-bench start
-```
-In a new terminal window
-```
-bench update
-```
-
-### Printer Server setup
-```
-sudo apt-get install gcc cups python3-dev libcups2-dev -y
-bench pip install pycups
-sudo usermod -a -G lpadmin {username} # the "frappe" user in most installations
-```
-Go to `{server URL or localhost}:631` to access the CUPS web interface
-Configuration on a remote server will take extra steps to secure:
-https://askubuntu.com/questions/23936/how-do-you-administer-cups-remotely-using-the-web-interface
-

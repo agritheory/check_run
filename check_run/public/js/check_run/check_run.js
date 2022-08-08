@@ -7,6 +7,7 @@ check_run.mount_table = frm => {
 	check_run.frm = frm
 	frm.transactions.forEach(val => {
 		val.mopIsOpen = false
+		val.pay = val.pay ? val.pay : false
 	})
 	frm.check_run_state = Vue.observable({
 		transactions: frm.transactions,
@@ -16,14 +17,14 @@ check_run.mount_table = frm => {
 		show_party_filter: false,
 		check_run_total: function() {
 			return this.transactions.reduce((partialSum, t) => {
-				return t.pay ? partialSum + t.amount : partialSum;
+				return t.pay ? partialSum + t.amount : partialSum
 			}, 0);
 		},
 		selectedRow: 0,
 		mopsOpen: 0
 	})
 	if (frm.$check_run instanceof Vue) {
-		frm.$check_run.$destroy();
+		frm.$check_run.$destroy()
 	}
 	$('#check-run-vue').remove()
 	$(frm.fields_dict['check_run_table'].wrapper).html($("<div id='check-run-vue'></div>").get(0));
@@ -48,7 +49,6 @@ check_run.keyDownHandler = e => {
 	}
 
 	if(e.keyCode == 40 && check_run.frm.check_run_state.selectedRow < (check_run.frm.check_run_state.transactions.length - 1)){
-		console.log("state", check_run.frm.check_run_state)
 		for(let j=0;j<check_run.frm.check_run_state.transactions.length;j++) {
 			if(check_run.frm.check_run_state.transactions[j].mopIsOpen) {
 				return
@@ -70,11 +70,16 @@ check_run.keyDownHandler = e => {
 
 	if(e.keyCode == 32 && check_run.frm.check_run_state.selectedRow != null && check_run.frm.check_run_state.transactions.length){
 		e.preventDefault()
-		document.getElementById(`mop-input-${check_run.frm.check_run_state.selectedRow}`).focus()
+		if(check_run.frm.check_run_component) {
+			check_run.frm.check_run_component.checkPay()
+		}
+	}
 
+	if(e.keyCode && e.keyCode >= 65 && e.keyCode <= 90 && check_run.frm.check_run_state.selectedRow != null && check_run.frm.check_run_state.transactions.length){
+		check_run.frm.check_run_component.openMopWithSearch(e.keyCode)
 	}
 
 }
 
-window.removeEventListener('keydown', check_run.keyDownHandler);
-window.addEventListener('keydown', check_run.keyDownHandler);
+window.removeEventListener('keydown', check_run.keyDownHandler)
+window.addEventListener('keydown', check_run.keyDownHandler)
