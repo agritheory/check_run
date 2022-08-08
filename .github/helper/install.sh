@@ -5,8 +5,8 @@ set -e
 cd ~ || exit
 
 pip install frappe-bench
-git clone -b version-13 --single-branch https://github.com/frappe/frappe/
-bench init --frappe-path ~/frappe --python "$(which python)" --skip-assets frappe-bench
+git clone https://github.com/frappe/frappe --branch version-13 --depth 1
+bench init --skip-assets --frappe-path ~/frappe --python "$(which python)" frappe-bench
 
 mkdir ~/frappe-bench/sites/test_site
 cp -r "${GITHUB_WORKSPACE}/.github/helper/site_config.json" ~/frappe-bench/sites/test_site
