@@ -11,8 +11,7 @@ bench init --frappe-branch version-13 --python python3.9 frappe-bench --skip-ass
 
 cd ./frappe-bench || exit
 
-bench new-site test_site --admin-password admin
-echo.
+bench new-site test_site --mariadb-root-password 123 --admin-password admin
 
 sed -i 's/^watch:/# watch:/g' Procfile
 sed -i 's/^schedule:/# schedule:/g' Procfile
