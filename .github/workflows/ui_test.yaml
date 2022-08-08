@@ -83,12 +83,6 @@ jobs:
             ${{ runner.os }}-cypress-
             ${{ runner.os }}-
 
-      - name: Echo Helper folder
-        run: bash ${GITHUB_WORKSPACE}/.github/helper/ll
-        env:
-          DB: mariadb
-          TYPE: ui
-
       - name: Install Dependencies
         run: bash ${GITHUB_WORKSPACE}/.github/helper/install_dependencies.sh
         env:
