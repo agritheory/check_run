@@ -4,14 +4,25 @@ set -e
 
 cd ~ || exit
 
+sudo apt update && sudo apt install redis-server libcups2-dev
 
 pip install frappe-bench
+bench init --frappe-branch version-13 --python "$(which python)" frappe-bench --skip-assets 
 
-bench init --frappe-branch version-13 --python python3.9 frappe-bench --skip-assets 
+mkdir ~/frappe-bench/sites/test_site
+cp -r "${GITHUB_WORKSPACE}/.github/helper/site_config.json" ~/frappe-bench/sites/test_site
+
+mysql --host 127.0.0.1 --port 3306 -u root -e "SET GLOBAL character_set_server = 'utf8mb4'"
+mysql --host 127.0.0.1 --port 3306 -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
+
+mysql --host 127.0.0.1 --port 3306 -u root -e "CREATE USER 'test_frappe'@'localhost' IDENTIFIED BY 'test_frappe'"
+mysql --host 127.0.0.1 --port 3306 -u root -e "CREATE DATABASE test_frappe"
+mysql --host 127.0.0.1 --port 3306 -u root -e "GRANT ALL PRIVILEGES ON \`test_frappe\`.* TO 'test_frappe'@'localhost'"
+
+mysql --host 127.0.0.1 --port 3306 -u root -e "UPDATE mysql.user SET Password=PASSWORD('travis') WHERE User='root'"
+mysql --host 127.0.0.1 --port 3306 -u root -e "FLUSH PRIVILEGES"
 
 cd ./frappe-bench || exit
-
-bench new-site test_site --mariadb-root-password 123 --admin-password admin
 
 sed -i 's/^watch:/# watch:/g' Procfile
 sed -i 's/^schedule:/# schedule:/g' Procfile
@@ -22,5 +33,7 @@ sed -i 's/^redis_socketio:/# redis_socketio:/g' Procfile;
 bench setup requirements --node;
 
 bench get-app erpnext --branch version-13 --skip-assets
+bench get-app check_run "${GITHUB_WORKSPACE}"
 
-bench start
+bench start &> bench_run_logs.txt &
+bench --site test_site reinstall --yes
