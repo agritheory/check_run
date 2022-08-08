@@ -17,7 +17,7 @@ jobs:
       mysql:
         image: mariadb:10.5
         env:
-          MYSQL_ROOT_PASSWORD: 123
+          MYSQL_ALLOW_EMPTY_PASSWORD: YES
 
         ports:
           - 3306:3306
