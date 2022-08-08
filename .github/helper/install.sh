@@ -7,7 +7,7 @@ cd ~ || exit
 
 pip install frappe-bench
 
-bench init frappe-bench --skip-assets --python "$(which python)" --frappe-path "${GITHUB_WORKSPACE}"
+bench init frappe-bench --skip-assets --python "$(which python)"
 
 cd ./frappe-bench || exit
 
