@@ -45,5 +45,5 @@ nano site_config.json
 
 Setup demo data or test data
 ```
-bench execute 'check_run.check_run.doctype.check_run.test_data.create_test_data'
+bench execute 'check_run.test_setup.before_test'
 ```

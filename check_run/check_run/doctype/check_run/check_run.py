@@ -24,7 +24,7 @@ class CheckRun(Document):
 		gl_account = frappe.get_value('Bank Account', self.bank_account, 'account')
 		if not gl_account:
 			frappe.throw(frappe._("This Bank Account is not associated with a General Ledger Account."))
-		self.beg_balance = get_balance_on(gl_account, self.check_run_date)
+		self.beg_balance = get_balance_on(gl_account, self.posting_date)
 		if self.flags.in_insert:
 			if self.initial_check_number is None:
 				self.get_last_check_number()
@@ -55,10 +55,10 @@ class CheckRun(Document):
 		self.pay_to_account = frappe.get_value('Company', self.company, "default_payable_account")
 
 	def set_default_dates(self):
-		if not self.check_run_date:
-			self.check_run_date = getdate()
-			self.start_date = add_days(getdate(), -(getdate().weekday()) -1)
-			self.end_date = add_days(self.start_date, 6)
+		if not self.posting_date:
+			self.posting_date = getdate()
+		if not self.end_date:
+			self.end_date = getdate()
 
 	@frappe.whitelist()
 	def validate_last_check_number(self, check_number=None):
