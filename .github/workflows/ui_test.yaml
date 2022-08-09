@@ -97,7 +97,7 @@ jobs:
           TYPE: ui
 
       - name: Site Setup
-        run: cd ~/frappe-bench && bench --site test_site execute check_run.check_run.doctype.check_run.test_data.create_test_data
+        run: cd ~/frappe-bench && bench --site test_site execute check_run.check_run.test_setup.create_test_data
 
       - name: UI Tests
         run: bench --site test_site run-ui-tests check_run --headless --parallel --ci-build-id $GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT
