@@ -14,7 +14,7 @@ cp -r "${GITHUB_WORKSPACE}/.github/helper/site_config.json" ~/frappe-bench/sites
 mysql --host 127.0.0.1 --port 3306 -u root -e "SET GLOBAL character_set_server = 'utf8mb4'"
 mysql --host 127.0.0.1 --port 3306 -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
 
-mysql --host 127.0.0.1 --port 3306 -u root -e "CREATE USER 'test_frappe'@'localhost' IDENTIFIED BY 'test_frappe'"
+mysql --host 127.0.0.1 --port 3306 -u root -e "CREATE USER 'test_frappe'@'%' IDENTIFIED BY 'test_frappe'"
 mysql --host 127.0.0.1 --port 3306 -u root -e "CREATE DATABASE test_frappe"
 mysql --host 127.0.0.1 --port 3306 -u root -e "GRANT ALL PRIVILEGES ON \`test_frappe\`.* TO 'test_frappe'@'localhost'"
 
@@ -38,7 +38,7 @@ cd ../..
 bench get-app erpnext --branch version-13 --skip-assets
 bench get-app check_run "${GITHUB_WORKSPACE}" --skip-assets
 
-CI=yes bench --site test_site install-app check_run erpnext
+bench --site test_site install-app check_run erpnext
 
 bench start &> bench_run_logs.txt &
 bench --site test_site reinstall --yes
