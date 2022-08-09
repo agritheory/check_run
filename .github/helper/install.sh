@@ -38,7 +38,7 @@ cd ../..
 bench get-app erpnext --branch version-13 --skip-assets
 bench get-app check_run "${GITHUB_WORKSPACE}" --skip-assets
 
-bench --site test_site install-app check_run erpnext
+CI=yes bench --site test_site install-app check_run erpnext
 
 bench start &> bench_run_logs.txt &
 bench --site test_site reinstall --yes
