@@ -103,4 +103,5 @@ jobs:
 
       - name: UI Tests
         run: |
-          cd ./apps/check_run && yarn cypress run --headless
+          cd ~/frappe-bench/apps/check_run
+          yarn cypress run --headless
