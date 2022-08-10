@@ -22,17 +22,28 @@ frappe.ui.form.on("Check Run", {
 		permit_first_user(frm)
 		get_defaults(frm)
 		set_queries(frm)
+		if(frm.is_new()){
+			get_balance(frm)
+		}
 		frappe.call({
 			method: "ach_only",
 			doc: frm.doc,
 		}).done(r => {
-			if(!r.message.ach_only){
-				if(frm.doc.docstatus == 1) {
-					if(frm.doc.print_count > 0){
+			if (!r.message.ach_only) {
+				if (frm.doc.docstatus == 1) {
+					if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
 						frm.add_custom_button("Re-Print Checks", () => { reprint_checks(frm) })
-					} else {
-						frm.add_custom_button("Print Checks", () => { print_checks(frm) })
+					} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
+						render_checks(frm)
 					}
+				}
+				if (frm.doc.status == 'Ready to Print') {
+					frm.add_custom_button("Download Checks", () => { download_checks(frm) })
+				}
+			}
+			if (!r.message.print_checks_only) {
+				if (frm.doc.docstatus == 1) {
+					frm.add_custom_button("Download NACHA File", () => { download_nacha(frm) })
 				}
 			}
 		})
@@ -42,14 +53,11 @@ frappe.ui.form.on("Check Run", {
 			frm.set_df_property('initial_check_number', 'read_only', 1)
 			frm.set_df_property('final_check_number', 'read_only', 1)
 		}
+
 	},
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
 		permit_first_user(frm)
-		frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_balance', { doc: frm.doc })
-		.then(r => {
-			frm.set_value('beg_balance', r)
-		})
 	},
 	end_date: frm => {
 		get_entries(frm)
@@ -74,8 +82,19 @@ frappe.ui.form.on("Check Run", {
 	},
 	pay_to_account: frm => {
 		get_entries(frm)
+	},
+	bank_account: frm => {
+		get_balance(frm)
 	}
 })
+
+function get_balance(frm){
+	frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_balance', { doc: frm.doc })
+	.then(r => {
+		frm.set_value('beg_balance', r)
+	})
+}
+
 
 function set_queries(frm){
 	frm.set_query("bank_account", function() {
@@ -181,13 +200,13 @@ function confirm_print(frm){
 	d.wrapper.find('#reprint').on('click', () => {
 		d.fields_dict.reprint_check_number.df.reqd = 1
 		let values = cur_dialog.get_values()
-		print_checks(frm, values.reprint_check_number || undefined)
+		reprint_checks(frm, values.reprint_check_number || undefined)
 		d.hide()
 	})
 	d.show()
 }
 
-function reprint_checks(frm){
+function reprint_checks(frm) {
 	let d = new frappe.ui.Dialog({
 		title: __("Re-Print"),
 		fields: [
@@ -198,7 +217,7 @@ function reprint_checks(frm){
 			{
 				fieldname: 'reprint_check_number',
 				fieldtype: 'Data',
-				label: "New Initial Check Number",
+				label: "New Intial Check Number",
 			}
 		],
 		minimizable: false,
@@ -207,8 +226,11 @@ function reprint_checks(frm){
 	d.wrapper.find('#reprint').on('click', () => {
 		d.fields_dict.reprint_check_number.df.reqd = 1
 		let values = cur_dialog.get_values()
-		print_checks(frm, values.reprint_check_number || undefined)
+		render_checks(frm, values.reprint_check_number || undefined)
 		d.hide()
+		window.setTimeout(() => {
+			frm.reload_doc()
+		}, 1000)
 	})
 	d.show()
 }
@@ -234,4 +256,34 @@ function validate_mode_of_payment_mandatory(frm){
 		title: __('Mode of Payment Required'),
 		raise_exception: true,
 	})
+}
+
+function render_checks(frm, reprint_check_number = undefined) {
+	frappe.call({
+		method: "increment_print_count",
+		doc: frm.doc,
+		args: { reprint_check_number: reprint_check_number }
+	}).done(() => {
+		frm.reload_doc()
+		frm.add_custom_button("Re-Print Checks", () => { reprint_checks(frm) })
+	}).fail((r) => {
+		frm.reload_doc()
+	})
+}
+
+function download_checks(frm) {
+	frappe.xcall("check_run.check_run.doctype.check_run.check_run.download_checks", { docname: frm.doc.name })
+	.then(r => {
+		if (r) {
+			frm.reload_doc()
+			window.open(r)
+		}
+	})
+}
+
+function download_nacha(frm) {
+	window.open(`/api/method/check_run.check_run.doctype.check_run.check_run.download_nacha?docname=${frm.doc.name}`)
+	window.setTimeout(() => {
+		frm.reload_doc()
+	}, 1000)
 }
