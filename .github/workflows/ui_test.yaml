@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  cypress-run:
     runs-on: ubuntu-20.04
     timeout-minutes: 60
 
@@ -97,7 +97,14 @@ jobs:
           cd ~/frappe-bench
           bench --site test_site execute 'check_run.test_setup.before_test'
 
-      - name: UI Tests
-        run: |
-          cd ~/frappe-bench/apps/check_run
-          yarn cypress run
+      #- name: UI Tests
+      #  run: |
+      #    cd ~/frappe-bench/apps/check_run
+      #    yarn cypress run
+
+      - name: Cypress run
+        uses: cypress-io/gitub-action@v4
+        with:
+          wait-on: 'http://localhost:8000'
+          wait-on-timeout: 60
+          spec: cypress/integration/*
