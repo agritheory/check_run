@@ -103,7 +103,7 @@ jobs:
       #    yarn cypress run
 
       - name: Cypress run
-        uses: cypress-io/gitub-action@v4
+        uses: cypress-io/github-action@v4
         with:
           wait-on: 'http://localhost:8000'
           wait-on-timeout: 60
