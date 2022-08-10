@@ -105,6 +105,5 @@ jobs:
       - name: Cypress run
         uses: cypress-io/github-action@v4
         with:
-          wait-on: 'http://localhost:8000'
-          wait-on-timeout: 60
+          wait-on: 'http://localhost:8000/'
           spec: cypress/integration/*
