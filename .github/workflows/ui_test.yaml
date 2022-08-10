@@ -9,11 +9,7 @@ jobs:
     runs-on: ubuntu-20.04
     timeout-minutes: 60
 
-    strategy:
-      fail-fast: false
-
     name: UI Tests (Cypress)
-
     services:
       mysql:
         image: mariadb:10.3

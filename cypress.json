@@ -2,6 +2,7 @@
 	"baseUrl": "http://localhost:8000",
 	"adminPassword": "admin",
 	"defaultCommandTimeout": 20000,
+	"responseTimeout": 120e3,
 	"pageLoadTimeout": 15000,
 	"retries": {
 		"runMode": 2,
