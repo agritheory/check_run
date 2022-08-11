@@ -138,6 +138,7 @@ class CheckRun(Document):
 				pe.posting_date = nowdate()
 				pe.mode_of_payment = group[0].mode_of_payment
 				pe.company = self.company
+				pe.bank_account = self.bank_account
 				pe.paid_from = gl_account
 				pe.paid_to = self.pay_to_account
 				pe.paid_to_account_currency = frappe.db.get_value("Account", self.bank_account, "account_currency")
