@@ -30,7 +30,7 @@ context('Check Run List', () => {
 		cy.get('.indicator-pill').should('contain', 'Ready to Print').wait(15000)
 	})
 
-	it("Completes Second Check Run", () => {
+	it("Complete Second Check Run", () => {
 		cy.get('body').type('{ctrl+b}').wait(500)
 		cy.fill_field("end_date", "1/1").blur()
 		cy.fill_field("posting_date", "1/1").blur()

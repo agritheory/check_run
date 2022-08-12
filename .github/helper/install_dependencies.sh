@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 # Check for merge conflicts before proceeding
 python -m compileall -f "${GITHUB_WORKSPACE}"
 if grep -lr --exclude-dir=node_modules "^<<<<<<< " "${GITHUB_WORKSPACE}"
