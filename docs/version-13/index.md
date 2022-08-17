@@ -1,8 +1,8 @@
 # Check Run Documentation
 
-The check run application extends ERPNext[^1] with several payables-related utilities. These include a single-page payment mechanism, check printing, and bank-friendly reports.
+The Check Run application extends ERPNext[^1] with several payables-related utilities. These include the check run (a single-page payment mechanism), check printing, and a bank-friendly report.
 
-For installation help, see the [README page](../../README.md) for details on how to include the Check Run module in your ERPNext site. [TODO: move all installation instructions to a docs page and link to it on README?]
+For installation help, see the [README page](../../README.md) for details on how to include the Check Run module in your ERPNext site. [TODO: move all installation instructions to a docs page and link to that in the README?]
 
 The check run feature collects all outstanding payables for a given company and account head. It defaults to returning payables up to the current date, but this can be adjusted as needed. The user then selects the invoices to pay and the payment method. On submission, the form creates payment entries that post against the chosen bank account, and gives the user the option to print checks.
 
@@ -22,15 +22,15 @@ The user checks which payables to pay and the mode of payment for each one. Note
 
 When the user submits the check run, payment entries are automatically generated for each party. The user is also given the choice to print checks [(a print format must be in the system)] and save a PDF. [Files are automatically deleted after they have been downloaded.]
 
-Follow the links below for more information about check run's configuration, settings, and features:
+Follow the links below for more information about Check Run's configuration, settings, and features:
 
-- [Check Run Settings]()
-- [Configuring Mode of Payment for Employees and Suppliers]()
-- [ACH generation]()
-- [Example voucher check print format]()
-- [Render PDF sequence]()
+- [Check Run Settings](./settings.md)
+- [Configuring Mode of Payment for Employees and Suppliers](./configuration.md)
+- [ACH generation](./achgeneration.md)
+- [Render PDF sequence](./renderpdfsequence.md)
 - [Positive Pay Report](./postivepay.md)
-- [Using the Example Data]()
+- [Example: Voucher Check Print Format](./exampleprint.md)
+- [Using the Example Data](./exampledata.md)
 
 [^1]: [ERPNext](https://erpnext.com/) is an open-sourced Enterprise Resource Planning (ERP) software that provides a wide range of business management functionality. Its core features include support for accounting, inventory, manufacturing, customer relationship management (CRM), distribution, and retail.
 
