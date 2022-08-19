@@ -63,7 +63,7 @@ Launch your bench
 bench start
 ```
 
-Optional: install a demo Company and its data to test the Check Run module's functionality
+Optional: install a [demo Company and its data](./exampledata.md) to test the Check Run module's functionality
 ```shell
 bench execute 'check_run.test_setup.before_test'
 ```
