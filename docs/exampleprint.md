@@ -6,4 +6,4 @@ To take advantage of Check Run's check printing functionality, you'll need to se
 
 Additional resources:
 
-- [ERPNext print format documentation](https://docs.erpnext.com/docs/v13/user/manual/en/customize-erpnext/print-format)
+- [ERPNext print format documentation](https://docs.erpnext.com/docs/v14/user/manual/en/customize-erpnext/print-format)
