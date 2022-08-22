@@ -97,7 +97,7 @@ def create_bank_and_bank_account(settings):
 	doc.posting_date = settings.day
 	doc.voucher_type = "Opening Entry"
 	doc.company = settings.company
-	opening_balance = 10000.00
+	opening_balance = 50000.00
 	doc.append("accounts", {"account": settings.company_account, "debit_in_account_currency": opening_balance})
 	retained_earnings = frappe.get_value('Account', {'account_name': "Retained Earnings", 'company': settings.company})
 	doc.append("accounts", {"account": retained_earnings, "credit_in_account_currency": opening_balance})
