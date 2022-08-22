@@ -10,13 +10,17 @@ See the following pages for details on installation, settings, and configuration
 
 - [Installation Guide](./installationguide.md)
 - [Configuring Mode of Payment for Employees and Suppliers](./configuration.md)
+- [Default Permissions and Workflows](./permissions.md)
 - [Check Run Settings](./settings.md)
 
 ## Check Run Quick Start
 
-To initiate a check run, search for "Check Run List" in the AwesomeBar, and click the `Add Check Run` button. This opens a dialogue box where the user must select the company, the bank account from which to make the payments, and the payables account head.
+To initiate a check run, search for "Check Run List" in the AwesomeBar, and click the `Add Check Run` button. This opens a dialogue box where the user must select the company, the bank account from which to make the payments, and the payables account head. 
 
-Note that a user must have a permission level in ERPNext to create payment entries in order to perform a check run.
+<div style="font-weight: bold; font-size 140%; background-color: red; border: 1px solid red; padding-left: 0.5em;">Tip</div>
+<aside style="padding: 1em; border: 1px solid red">
+You can add a shortcut to the Check Run list by customizing the Accounts workspace. Instructions are hosted in the ERPNext documentation here: [Desk > Workspace > Customization](https://frappeframework.com/docs/v14/user/en/desk/workspace/customization)
+</aside><br>
 
 ![New Check Run dialogue box showing the mandatory fields the user must fill in for Company, Paid From (Bank Account), and Accounts Payable.](./assets/InitiatingCheckRunDialogue.png)
 
@@ -24,11 +28,24 @@ The check run then returns a list of all outstanding payables for the given acco
 
 ![Check run parameters and results. The user can edit the Check Run End Date, Posting Date, Initial Check Number, Company, Paid From (Bank Account), and Accounts Payable fields. The Beginning Bank Account Balance, Final Check Number, and Amount in Check Run are calculated. The table shows a list of outstanding payables, with columns for Party, Document, Document Date, Mode of Payment, Outstanding Amount, Due Date, and a check box to Pay.](./assets/CheckRunScreen.png)
 
-The user checks which payables to pay and the mode of payment for each one. The mode of payment dropdown options will correspond to the `Mode of Payment` documents you have set up in your system. You can configure a default mode of payment for each supplier and employee that will then automatically show as the selection in a check run.
+The user checks which payables to pay and the mode of payment for each one. The mode of payment dropdown options will correspond to the `Mode of Payment` documents you have set up in your system. You can configure a default mode of payment for each supplier and employee that will then automatically show as the selection in a check run. 
+
+<div style="font-weight: bold; font-size 140%; background-color: red; border: 1px solid red; padding-left: 0.5em;">Tip</div>
+// make this an aside component also
+
+This view supports the same keyboard shortcuts as the listview in Frappe.
+
+ - The up and down arrows navigate rows
+ - The space bar will select or de-select a row to pay
+ - Once a row is focused it, typing any letter key will auto complete the Mode of Payment
+
+<br>
 
 ![Detail view of the dropdown menu for the mode of payment. Options include ACH/EFT, Bank Draft, Cash, Check, Credit Card, and Wire Transfer.](./assets/ModeOfPayment.png)
 
 When the user submits the check run, payment entries are automatically generated for each party. The user is also given the choice to print checks [(a print format must be in the system)] and save a PDF. [Files are automatically deleted after they have been downloaded.]
+
+Individual payment entries are linked with a Check Run. You can set the number of invoices that are paid to party in Check Run Settings.
 
 ## Additional Check Run Features
 
@@ -36,7 +53,7 @@ Follow the links below for more information about Check Run's features:
 
 - [ACH Generation](./achgeneration.md)
 - [Render PDF Sequence](./renderpdfsequence.md)
-- [Positive Pay Report](./postivepay.md)
+- [Positive Pay Report](./positivepay.md)
 - [Example Print Format: Voucher Check](./exampleprint.md)
 - [Example Data: Experimenting with Check Run Using Demo Data](./exampledata.md)
 
