@@ -53,13 +53,35 @@ frappe.ui.form.on("Check Run", {
 			frm.set_df_property('initial_check_number', 'read_only', 1)
 			frm.set_df_property('final_check_number', 'read_only', 1)
 		}
-
+		if (frm.doc.docstatus < 1 && frm.doc.__onload && frm.doc.__onload.settings_missing){
+			frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', {doc: frm.doc})
+			.then(r => {
+				if(r == undefined){
+					frappe.confirm(
+						__(`No settings found for <b>${frm.doc.bank_account}</b> and <b>${frm.doc.pay_to_account}</b>`),
+						() => {
+							frappe.xcall("check_run.check_run.doctype.check_run_settings.check_run_settings.create",
+								{ company: frm.doc.company, bank_account: frm.doc.bank_account, pay_to_account: frm.doc.pay_to_account }
+							).then(r => {
+								frappe.set_route("Form", "Check Run Settings", r)
+							})
+						},
+						() => {}
+					)
+				} else {
+					frm.doc.__onload.settings_missing = false
+				}
+			})
+		}
 	},
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
 		permit_first_user(frm)
 	},
 	end_date: frm => {
+		get_entries(frm)
+	},
+	posting_date: frm => {
 		get_entries(frm)
 	},
 	start_date: frm => {
@@ -94,7 +116,6 @@ function get_balance(frm){
 		frm.set_value('beg_balance', r)
 	})
 }
-
 
 function set_queries(frm){
 	frm.set_query("bank_account", function() {

@@ -24,6 +24,11 @@ from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import g
 from atnacha import ACHEntry, ACHBatch, NACHAFile
 
 class CheckRun(Document):
+	def onload(self):
+		settings = get_check_run_settings(self)
+		if not settings:
+			self.set_onload('settings_missing', True)
+
 	def validate(self):
 		self.set_status()
 		gl_account = frappe.get_value('Bank Account', self.bank_account, 'account')
@@ -121,14 +126,19 @@ class CheckRun(Document):
 		return ach_only
 
 	def create_payment_entries(self, transactions):
+		settings = get_check_run_settings(self)
+		split = 5
+		if settings and settings.number_of_invoices_per_voucher:
+			split = settings.number_of_invoices_per_voucher
 		check_count = 0
 		_transactions = []
 		gl_account = frappe.get_value('Bank Account', self.bank_account, 'account')
 		for party, _group in groupby(transactions, key=lambda x: x.party):
 			_group = list(_group)
-			# split checks in groups of 5 if first reference is a check
-			# TODO: refactor split number into a settings page
-			groups = list(zip_longest(*[iter(_group)] * 5)) if frappe.db.get_value('Mode of Payment', _group[0].mode_of_payment, 'type') == 'Bank' else [_group]
+			if frappe.db.get_value('Mode of Payment', _group[0].mode_of_payment, 'type') == 'Bank':
+				groups = list(zip_longest(*[iter(_group)] * split)) 
+			else:
+				groups = [_group]
 			if not groups:
 				continue
 			for group in groups:
@@ -259,86 +269,112 @@ def get_entries(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	if isinstance(doc.end_date, str):
 		doc.end_date = getdate(doc.end_date) 
+		doc.posting_date = getdate(doc.posting_date) 
 	modes_of_payment = frappe.get_all('Mode of Payment', order_by='name')
+	if frappe.db.exists('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account}):
+		settings = frappe.get_doc('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account})
+	else:
+		settings = None
 	if frappe.db.exists('Check Run', doc.name):
 		db_doc = frappe.get_doc('Check Run', doc.name)
 		if doc.end_date == db_doc.end_date and db_doc.transactions:
 			return {'transactions': json.loads(db_doc.transactions), 'modes_of_payment': modes_of_payment}
-	# TODO: introduce setting for excluding journal entries from settings
-	transactions =  frappe.db.sql("""
-	(
-		SELECT
-			'Purchase Invoice' as doctype,
-			'Supplier' AS party_type,
-			`tabPurchase Invoice`.name,
-			`tabPurchase Invoice`.bill_no AS ref_number,
-			`tabPurchase Invoice`.supplier_name AS party,
-			`tabSupplier`.supplier_name AS party_name,
-			`tabPurchase Invoice`.outstanding_amount AS amount,
-			`tabPurchase Invoice`.due_date,
-			`tabPurchase Invoice`.posting_date,
-			COALESCE(`tabPurchase Invoice`.supplier_default_mode_of_payment, `tabSupplier`.supplier_default_mode_of_payment, '\n') AS mode_of_payment
-		FROM `tabPurchase Invoice`, `tabSupplier`
-		WHERE `tabPurchase Invoice`.outstanding_amount > 0
-		AND `tabPurchase Invoice`.supplier = `tabSupplier`.name
-		AND `tabPurchase Invoice`.company = %(company)s
-		AND `tabPurchase Invoice`.docstatus = 1
-		AND `tabPurchase Invoice`.credit_to = %(pay_to_account)s
-		AND `tabPurchase Invoice`.status != 'On Hold'
-		AND `tabPurchase Invoice`.due_date <= %(end_date)s
-	)
-	UNION
-	(
-		SELECT
-			'Expense Claim' as doctype,
-			'Employee' AS party_type,
-			`tabExpense Claim`.name,
-			`tabExpense Claim`.name AS ref_number,
-			`tabExpense Claim`.employee_name AS party,
-			`tabEmployee`.employee_name AS party_name,
-			`tabExpense Claim`.grand_total AS amount,
-			`tabExpense Claim`.posting_date AS due_date,
-			`tabExpense Claim`.posting_date,
-			COALESCE(`tabExpense Claim`.mode_of_payment, `tabEmployee`.mode_of_payment, '\n') AS mode_of_payment
-		FROM `tabExpense Claim`, `tabEmployee`
-		WHERE `tabExpense Claim`.grand_total > `tabExpense Claim`.total_amount_reimbursed
-		AND `tabExpense Claim`.employee = `tabEmployee`.name
-		AND `tabExpense Claim`.company = %(company)s
-		AND `tabExpense Claim`.docstatus = 1
-		AND `tabExpense Claim`.payable_account = %(pay_to_account)s
-		AND `tabExpense Claim`.posting_date <= %(end_date)s
-	)
-	UNION (
-		SELECT
-			'Journal Entry' AS doctype,
-			`tabJournal Entry Account`.party_type,
-			`tabJournal Entry`.name,
-			`tabJournal Entry`.name AS ref_number,
-			`tabJournal Entry Account`.party,
-			`tabJournal Entry Account`.party AS party_name,
-			`tabJournal Entry Account`.credit_in_account_currency AS amount,
-			`tabJournal Entry`.due_date,
-			`tabJournal Entry`.posting_date,
-			COALESCE(`tabJournal Entry`.mode_of_payment, '\n') AS mode_of_payment
-		FROM `tabJournal Entry`, `tabJournal Entry Account`
-		WHERE `tabJournal Entry`.name = `tabJournal Entry Account`.parent
-		AND `tabJournal Entry`.company = %(company)s
-		AND `tabJournal Entry`.docstatus = 1
-		AND `tabJournal Entry Account`.account = %(pay_to_account)s
-		AND `tabJournal Entry`.due_date <= %(end_date)s
-		AND `tabJournal Entry`.name NOT in (
-			SELECT `tabPayment Entry Reference`.reference_name
-			FROM `tabPayment Entry`, `tabPayment Entry Reference`
-			WHERE `tabPayment Entry Reference`.parent = `tabPayment Entry`.name
-			AND `tabPayment Entry Reference`.reference_doctype = 'Journal Entry'
-			AND `tabPayment Entry`.docstatus = 1
+
+	pi_select = """
+		(
+				SELECT
+					'Purchase Invoice' as doctype,
+					'Supplier' AS party_type,
+					`tabPurchase Invoice`.name,
+					`tabPurchase Invoice`.bill_no AS ref_number,
+					`tabPurchase Invoice`.supplier_name AS party,
+					`tabSupplier`.supplier_name AS party_name,
+					`tabPurchase Invoice`.outstanding_amount AS amount,
+					`tabPurchase Invoice`.due_date,
+					`tabPurchase Invoice`.posting_date,
+					COALESCE(`tabPurchase Invoice`.supplier_default_mode_of_payment, `tabSupplier`.supplier_default_mode_of_payment, '\n') AS mode_of_payment
+				FROM `tabPurchase Invoice`, `tabSupplier`
+				WHERE `tabPurchase Invoice`.outstanding_amount > 0
+				AND `tabPurchase Invoice`.supplier = `tabSupplier`.name
+				AND `tabPurchase Invoice`.company = %(company)s
+				AND `tabPurchase Invoice`.docstatus = 1
+				AND `tabPurchase Invoice`.credit_to = %(pay_to_account)s
+				AND `tabPurchase Invoice`.status != 'On Hold'
+				AND `tabPurchase Invoice`.due_date <= %(end_date)s
+			)
+	"""
+	ec_select = """
+		(
+			SELECT
+				'Expense Claim' as doctype,
+				'Employee' AS party_type,
+				`tabExpense Claim`.name,
+				`tabExpense Claim`.name AS ref_number,
+				`tabExpense Claim`.employee_name AS party,
+				`tabEmployee`.employee_name AS party_name,
+				`tabExpense Claim`.grand_total AS amount,
+				`tabExpense Claim`.posting_date AS due_date,
+				`tabExpense Claim`.posting_date,
+				COALESCE(`tabExpense Claim`.mode_of_payment, `tabEmployee`.mode_of_payment, '\n') AS mode_of_payment
+			FROM `tabExpense Claim`, `tabEmployee`
+			WHERE `tabExpense Claim`.grand_total > `tabExpense Claim`.total_amount_reimbursed
+			AND `tabExpense Claim`.employee = `tabEmployee`.name
+			AND `tabExpense Claim`.company = %(company)s
+			AND `tabExpense Claim`.docstatus = 1
+			AND `tabExpense Claim`.payable_account = %(pay_to_account)s
+			AND `tabExpense Claim`.posting_date <= %(end_date)s
 		)
-	)
-	ORDER BY due_date, name
-	""", {
+	"""
+
+	je_select = """
+		(
+			SELECT
+				'Journal Entry' AS doctype,
+				`tabJournal Entry Account`.party_type,
+				`tabJournal Entry`.name,
+				`tabJournal Entry`.name AS ref_number,
+				`tabJournal Entry Account`.party,
+				`tabJournal Entry Account`.party AS party_name,
+				`tabJournal Entry Account`.credit_in_account_currency AS amount,
+				`tabJournal Entry`.due_date,
+				`tabJournal Entry`.posting_date,
+				COALESCE(`tabJournal Entry`.mode_of_payment, '\n') AS mode_of_payment
+			FROM `tabJournal Entry`, `tabJournal Entry Account`
+			WHERE `tabJournal Entry`.name = `tabJournal Entry Account`.parent
+			AND `tabJournal Entry`.company = %(company)s
+			AND `tabJournal Entry`.docstatus = 1
+			AND `tabJournal Entry Account`.account = %(pay_to_account)s
+			AND `tabJournal Entry`.due_date <= %(end_date)s
+			AND `tabJournal Entry`.name NOT in (
+				SELECT `tabPayment Entry Reference`.reference_name
+				FROM `tabPayment Entry`, `tabPayment Entry Reference`
+				WHERE `tabPayment Entry Reference`.parent = `tabPayment Entry`.name
+				AND `tabPayment Entry Reference`.reference_doctype = 'Journal Entry'
+				AND `tabPayment Entry`.docstatus = 1
+			)
+		)
+	"""
+	query = ""
+	if not settings or settings.include_purchase_invoices:
+		query += pi_select
+	if not settings or settings.include_expense_claims:
+		if len(query) > 1:
+			query += "\nUNION\n"
+		query += ec_select
+	if not settings or settings.include_journal_entries:
+		if len(query) > 1:
+			query += "\nUNION\n"
+		query += je_select
+	query += "\nORDER BY due_date, name"
+
+	transactions =  frappe.db.sql(query, {
 		'company': doc.company, 'pay_to_account': doc.pay_to_account, 'end_date': doc.end_date
 	}, as_dict=True)
 	for transaction in transactions:
+		if settings and settings.pre_check_overdue_items:
+			print(transaction.due_date, doc.posting_date)
+			if transaction.due_date < doc.posting_date:
+				transaction.pay = 1
 		if transaction.doctype == 'Journal Entry':
 			if transaction.party_type == 'Supplier':
 				transaction.party_name = frappe.get_value('Supplier', transaction.party, 'supplier_name')
@@ -372,7 +408,9 @@ def download_nacha(docname):
 	has_permission('Payment Entry', ptype="print", verbose=False, user=frappe.session.user, raise_exception=True)
 	doc = frappe.get_doc('Check Run', docname)
 	ach_file = doc.build_nacha_file()
-	frappe.local.response.filename = f'{docname.replace(" ", "-").replace("/", "-")}.ach'
+	settings = get_check_run_settings(doc)
+	file_ext = settings.ach_file_extension if settings and settings.ach_file_extension else "ach"
+	frappe.local.response.filename = f'{docname.replace(" ", "-").replace("/", "-")}.{file_ext}'
 	frappe.local.response.type = "download"
 	frappe.local.response.filecontent = ach_file.read()
 	comment = frappe.new_doc('Comment')
@@ -405,7 +443,6 @@ def build_nacha_file_from_payment_entries(doc, payment_entries):
 		exceptions.append(f'Company Bank ACH ID missing for {doc.bank_account}')
 	for pe in payment_entries:
 		party_bank_account = get_decrypted_password(pe.party_type, pe.party, fieldname='bank_account', raise_exception=False)
-		print(party_bank_account)
 		if not party_bank_account:
 			exceptions.append(f'{pe.party_type} Bank Account missing for {pe.party_name}')
 		party_bank = frappe.db.get_value(pe.party_type, pe.party, 'bank')
@@ -432,7 +469,7 @@ def build_nacha_file_from_payment_entries(doc, payment_entries):
 		frappe.throw('<br>'.join(e for e in exceptions))
 
 	batch = ACHBatch(
-		service_class_code=220,
+		service_class_code=220, # TODO: pass in from settings
 		company_name=doc.get('company'),
 		company_discretionary_data='',
 		company_id=company_ach_id,
@@ -460,3 +497,10 @@ def build_nacha_file_from_payment_entries(doc, payment_entries):
 		batches=[batch]
 	)
 	return nacha_file
+
+
+@frappe.whitelist()
+def get_check_run_settings(doc):
+	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+	if frappe.db.exists('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account}):
+		return frappe.get_doc('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account})
