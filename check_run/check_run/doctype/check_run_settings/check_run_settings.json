@@ -112,9 +112,10 @@
    "fieldname": "ach_service_class_code",
    "fieldtype": "Select",
    "label": "ACH Service Class Code",
-   "options": "220"
+   "options": "200\n220\n225"
   },
   {
+   "description": "PPD is only supported Entry format at this time",
    "fieldname": "ach_standard_class_code",
    "fieldtype": "Select",
    "label": "ACH Standard Class Code",
@@ -127,7 +128,7 @@
   }
  ],
  "links": [],
- "modified": "2022-08-22 17:43:14.904814",
+ "modified": "2022-08-22 19:30:11.238397",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",
