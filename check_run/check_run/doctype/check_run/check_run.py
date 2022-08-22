@@ -43,6 +43,21 @@ class CheckRun(Document):
 		else:
 			self.validate_last_check_number()
 
+	def on_cancel(self):
+		settings = get_check_run_settings(self)
+		if not settings.allow_cancellation:
+			frappe.throw(frappe._('The settings for this Check Run do not allow cancellation'))
+		if settings.allow_cancellation and settings.cascade_cancellation:
+			# cancel all PEs linked to this check run
+			pes = frappe.get_all('Payment Entry', {'check_run': self.name, 'docstatus': 1})
+			for pe in pes:
+				frappe.get_doc('Payment Entry', pe).cancel()
+		if settings.allow_cancellation and not settings.cascade_cancellation:
+			# unlink all PE's linked to this check run
+			pes = frappe.get_all('Payment Entry', {'check_run': self.name, 'docstatus': 1})
+			for pe in pes:
+				frappe.db.set_value('Payment Entry', pe, 'check_run', '')
+
 	def set_status(self, status=None):
 		if status:
 			self.status = status
