@@ -121,6 +121,7 @@ class CheckRun(Document):
 		payment_entries = [frappe.get_doc('Payment Entry', pe) for pe in ach_payment_entries]
 		nacha_file = build_nacha_file_from_payment_entries(self, payment_entries, settings)
 		ach_file = StringIO(nacha_file())
+		print(ach_file)
 		ach_file.seek(0)
 		return ach_file
 
@@ -489,8 +490,8 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 		company_name=doc.get('company'),
 		company_discretionary_data='',
 		company_id=company_ach_id,
-		standard_class_code=settings.standard_class_code,
-		company_entry_description=settings.ach_description,
+		standard_class_code=settings.ach_standard_class_code,
+		company_entry_description=settings.ach_description or "",
 		company_descriptive_date=None,
 		effective_entry_date=getdate(),
 		settlement_date=None,
