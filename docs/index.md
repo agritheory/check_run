@@ -58,4 +58,3 @@ Follow the links below for more information about Check Run's features:
 - [Example Data: Experimenting with Check Run Using Demo Data](./exampledata.md)
 
 [^1]: [ERPNext](https://erpnext.com/) is an open-sourced Enterprise Resource Planning (ERP) software that provides a wide range of business management functionality. Its core features include support for accounting, inventory, manufacturing, customer relationship management (CRM), distribution, and retail.
-
