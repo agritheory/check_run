@@ -236,51 +236,59 @@ def create_employees(settings):
 
 
 def create_expense_claim(settings):
+	cost_center = frappe.get_value('Company', settings.company, 'cost_center')
+	payable_acct = frappe.get_value('Company', settings.company, 'default_payable_account')
 	# first month - paid
 	ec = frappe.new_doc('Expense Claim')
-	ec.employee = "Test Employee 2"
+	ec.employee = "HR-EMP-00002"
 	ec.expense_approver = "Administrator"
 	ec.approval_status = 'Approved'
 	ec.append('expenses', {
 		'expense_date': settings.day,
 		'expense_type': 'Travel',
-		'amount': 50.0
+		'amount': 50.0,
+		'sanctioned_amount': 50.0,
+		'cost_center': cost_center
 	})
 	ec.posting_date = settings.day
 	ec.company = settings.company
-	ec.payable_account = frappe.get_value('Company', settings.company, 'default_payable_account')
+	ec.payable_account = payable_acct
 	ec.save()
 	ec.submit()
 	# second month - open
 	next_day = settings.day + datetime.timedelta(days=31)
 
 	ec = frappe.new_doc('Expense Claim')
-	ec.employee = "Test Employee 2"
+	ec.employee = "HR-EMP-00002"
 	ec.expense_approver = "Administrator"
 	ec.approval_status = 'Approved'
 	ec.append('expenses', {
 		'expense_date': next_day,
 		'expense_type': 'Travel',
-		'amount': 50.0
+		'amount': 50.0,
+		'sanctioned_amount': 50.0,
+		'cost_center': cost_center
 	})
 	ec.posting_date = next_day
 	ec.company = settings.company
-	ec.payable_account = frappe.get_value('Company', settings.company, 'default_payable_account')
+	ec.payable_account = payable_acct
 	ec.save()
 	ec.submit()
 	# two expense claims to test aggregation
 	ec = frappe.new_doc('Expense Claim')
-	ec.employee = "Test Employee 2"
+	ec.employee = "HR-EMP-00002"
 	ec.expense_approver = "Administrator"
 	ec.approval_status = 'Approved'
 	ec.append('expenses', {
 		'expense_date': next_day,
 		'expense_type': 'Travel',
-		'amount': 50.0
+		'amount': 50.0,
+		'sanctioned_amount': 50.0,
+		'cost_center': cost_center
 	})
 	ec.posting_date = next_day
 	ec.company = settings.company
-	ec.payable_account = frappe.get_value('Company', settings.company, 'default_payable_account')
+	ec.payable_account = payable_acct
 	ec.save()
 	ec.submit()
 
