@@ -327,7 +327,7 @@ def get_entries(doc):
 				'Employee' AS party_type,
 				`tabExpense Claim`.name,
 				`tabExpense Claim`.name AS ref_number,
-				`tabExpense Claim`.employee_name AS party,
+				`tabExpense Claim`.employee AS party,
 				`tabEmployee`.employee_name AS party_name,
 				`tabExpense Claim`.grand_total AS amount,
 				`tabExpense Claim`.posting_date AS due_date,
