@@ -70,8 +70,9 @@ def create_bank_and_bank_account(settings):
 		mop.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
 		mop.save()
 
-	frappe.db.set_value('Mode of Payment', 'Wire Transfer', 'type', 'Electronic')
+	frappe.db.set_value('Mode of Payment', 'Wire Transfer', 'type', 'General')
 	frappe.db.set_value('Mode of Payment', 'Credit Card', 'type', 'General')
+	frappe.db.set_value('Mode of Payment', 'Bank Draft', 'type', 'General')
 
 	if not frappe.db.exists('Bank', 'Local Bank'):
 		bank = frappe.new_doc('Bank')
