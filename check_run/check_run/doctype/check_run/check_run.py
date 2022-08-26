@@ -25,6 +25,8 @@ from atnacha import ACHEntry, ACHBatch, NACHAFile
 
 class CheckRun(Document):
 	def onload(self):
+		if self.is_new():
+			return
 		settings = get_check_run_settings(self)
 		if not settings:
 			self.set_onload('settings_missing', True)
@@ -77,7 +79,8 @@ class CheckRun(Document):
 		self.initial_check_number = int(check_number or 0) + 1
 
 	def get_default_payable_account(self):
-		self.pay_to_account = frappe.get_value('Company', self.company, "default_payable_account")
+		if not self.pay_to_account:
+			self.pay_to_account = frappe.get_value('Company', self.company, "default_payable_account")
 
 	def set_default_dates(self):
 		if not self.posting_date:
@@ -220,6 +223,7 @@ class CheckRun(Document):
 	def render_check_pdf(self, reprint_check_number=None):
 		if not frappe.db.exists('File', 'Home/Check Run'):
 			frappe.new_doc("File").update({"file_name":"Check Run", "is_folder": True, "folder":"Home"}).save()
+		settings = get_check_run_settings(self)
 		initial_check_number = int(self.initial_check_number)
 		if reprint_check_number and reprint_check_number != 'undefined':
 			self.initial_check_number = int(reprint_check_number)
@@ -234,7 +238,7 @@ class CheckRun(Document):
 				output = frappe.get_print(
 					'Payment Entry',
 					pe,
-					frappe.get_meta('Payment Entry').default_print_format,
+					settings.print_format or frappe.get_meta('Payment Entry').default_print_format,
 					as_pdf=True,
 					output=output,
 					no_letterhead=0,
@@ -245,6 +249,10 @@ class CheckRun(Document):
 						ref['check_number'] = self.initial_check_number + check_increment
 						_transactions.append(ref)
 				check_increment += 1
+			elif docstatus == 1:
+				for ref in group:
+					_transactions.append(ref)
+
 		if _transactions and reprint_check_number:
 			frappe.db.set_value('Check Run', self.name, 'transactions', json.dumps(_transactions))
 			frappe.db.set_value('Check Run', self.name, 'initial_check_number', self.initial_check_number)
@@ -367,6 +375,7 @@ def get_entries(doc):
 				FROM `tabPayment Entry`, `tabPayment Entry Reference`
 				WHERE `tabPayment Entry Reference`.parent = `tabPayment Entry`.name
 				AND `tabPayment Entry Reference`.reference_doctype = 'Journal Entry'
+				AND `tabPayment Entry`.party = `tabJournal Entry Account`.party
 				AND `tabPayment Entry`.docstatus = 1
 			)
 		)
@@ -467,8 +476,8 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 			exceptions.append(f'{pe.party_type} Bank missing for {pe.party_name}')
 		if party_bank:
 			party_bank_routing_number = frappe.db.get_value('Bank', party_bank, 'aba_number')
-		if not party_bank_routing_number:
-			exceptions.append(f'{pe.party_type} Bank Routing Number missing for {pe.party_name}/{employee_bank}')
+			if not party_bank_routing_number:
+				exceptions.append(f'{pe.party_type} Bank Routing Number missing for {pe.party_name}/{employee_bank}')
 		ach_entry = ACHEntry(
 			transaction_code=22, # checking account 
 			receiving_dfi_identification=party_bank_routing_number,

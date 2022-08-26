@@ -19,6 +19,7 @@ frappe.ui.form.on("Check Run", {
 	},
 	refresh: frm => {
 		frm.layout.show_message('')
+		settings_button(frm)
 		permit_first_user(frm)
 		get_defaults(frm)
 		set_queries(frm)
@@ -307,4 +308,13 @@ function download_nacha(frm) {
 	window.setTimeout(() => {
 		frm.reload_doc()
 	}, 1000)
+}
+
+function settings_button(frm){
+	frm.add_custom_button("Modify Settings", () => { 
+		frappe.xcall("check_run.check_run.doctype.check_run.check_run.get_check_run_settings", { doc: frm.doc }
+		).then(r => {
+			frappe.set_route("Form", "Check Run Settings", r.name)
+		})
+	})
 }
