@@ -10,6 +10,7 @@
   "bank_account",
   "column_break_3",
   "pay_to_account",
+  "print_format",
   "section_break_4",
   "include_purchase_invoices",
   "include_journal_entries",
@@ -125,10 +126,16 @@
    "fieldname": "ach_description",
    "fieldtype": "Data",
    "label": "ACH Description"
+  },
+  {
+   "fieldname": "print_format",
+   "fieldtype": "Link",
+   "label": "Print Format",
+   "options": "Print Format"
   }
  ],
  "links": [],
- "modified": "2022-08-22 19:30:11.238397",
+ "modified": "2022-08-26 16:54:08.327344",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",

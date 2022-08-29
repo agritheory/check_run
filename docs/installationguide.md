@@ -1,10 +1,10 @@
 # Check Run Installation Guide
 
 ## Production Environment
-To install this app in a production environment
+To install this app in a production environment, see the following steps:
 
 ```shell
-# TO COME
+# Coming soon!
 ```
 
 ## Developer Setup
