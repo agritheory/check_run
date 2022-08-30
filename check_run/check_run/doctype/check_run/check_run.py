@@ -14,7 +14,7 @@ from frappe.utils.data import flt
 from frappe.utils.data import date_diff, add_days, nowdate, getdate, now, get_datetime
 from frappe.utils.print_format import read_multi_pdf
 from frappe.permissions import has_permission
-from frappe.utils.file_manager import save_file, download_file
+from frappe.utils.file_manager import save_file, remove_all, download_file
 from frappe.utils.password import get_decrypted_password
 
 from erpnext.accounts.utils import get_balance_on
@@ -260,7 +260,7 @@ class CheckRun(Document):
 			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 		
 		frappe.db.set_value('Check Run', self.name, 'status', 'Ready to Print')
-		save_file(f"{self.name}.pdf", read_multi_pdf(output), None, self.name, 'Home/Check Run', False, 0)
+		save_file(f"{self.name}.pdf", read_multi_pdf(output), 'Check Run', self.name, 'Home/Check Run', False, 0)
 
 
 @frappe.whitelist()
@@ -286,6 +286,10 @@ def check_for_draft_check_run(company, bank_account, payable_account):
 
 @frappe.whitelist()
 def confirm_print(docname):
+	# Remove PDF file(s)
+	remove_all('Check Run', docname, from_delete=False, delete_permanently=False)
+	
+	# Reset status
 	return frappe.db.set_value('Check Run', docname, 'status', 'Printed')
 
 
