@@ -172,3 +172,9 @@ after_migrate = 'check_run.customize.load_customizations'
 # Recommended only for DocTypes which have limited documents with untranslated names
 # For example: Role, Gender, etc.
 # translated_search_doctypes = []
+
+jenv = {
+	"methods": [
+		"get_default_address:frappe.contacts.doctype.address.address.get_default_address"
+	]
+}
