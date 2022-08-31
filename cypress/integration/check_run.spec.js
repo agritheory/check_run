@@ -14,6 +14,11 @@ context('Check Run List', () => {
 		cy.get('.btn-primary').contains('Start Check Run').should('be.visible').click()
 	})
 
+	// Incorporate new 'Confirm settings' prompt
+	it("Confirm Settings", () => {
+		cy.get_open_dialog().contains('Yes').should('be.visible').click()
+	})
+
 	it("Complete First Check Run", () => {
 		cy.visit('/app/check-run/ACC-CR-2022-00001')
 		cy.fill_field("end_date", "1/1").blur()
