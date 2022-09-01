@@ -22,11 +22,10 @@ For any existing or new `Mode of Payment` document, you can specify one of the f
 
 Only Modes of Payment marked as "Electronic" will be included in ACH file generation. This should be reserved for methods like "ACH/EFT" or "Employee Direct Deposit". ACH files are intended to represent electronic inter-bank transactions.
 
-<div style="font-weight: bold; font-size 140%; background-color: red; border: 1px solid red; padding-left: 0.5em;">Warning</div>
-<aside style="padding: 1em; border: 1px solid red">
+<markdown-tip class="warning" label="Warning">
 Only Modes of Payment marked as "Bank" will be included in the Check Print and Reprint features. Bank Drafts and Wire Transfers should not be configured as "Bank" but "General" instead.<br><br>
 Only Modes of Payment marked as "Electronic" will be included in an ACH file. Credit Cards should not be configured as "Electronic" but should use "General" instead.
-</aside>
+</markdown-tip>
 
 ## Default Mode of Payment
 
