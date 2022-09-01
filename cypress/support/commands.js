@@ -150,7 +150,7 @@ Cypress.Commands.add('fill_field', (fieldname, value, fieldtype = 'Data') => {
 	cy.get_field(fieldname, fieldtype).as('input');
 
 	if (['Date', 'Time', 'Datetime'].includes(fieldtype)) {
-		cy.get('@input').click().wait(200);
+		cy.get('@input').clear().wait(200);
 		cy.get('.datepickers-container .datepicker.active').should('exist');
 	}
 	if (fieldtype === 'Time') {
