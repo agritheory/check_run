@@ -17,10 +17,9 @@ There is some required prerequisite setup to get the Check Run application up an
 
 To initiate a check run, search for "Check Run List" in the AwesomeBar, and click the `Add Check Run` button. This opens a dialogue box where the user must select the company, the bank account from which to make the payments, and the payables account head. 
 
-<div style="font-weight: bold; font-size 140%; background-color: red; border: 1px solid red; padding-left: 0.5em;">Tip</div>
-<aside style="padding: 1em; border: 1px solid red">
+<markdown-tip>
 You can add a shortcut to the Check Run list by customizing the Accounts workspace. Instructions are hosted in the ERPNext documentation here: <a href="https://frappeframework.com/docs/v14/user/en/desk/workspace/customization">Desk > Workspace > Customization</a>
-</aside><br>
+</markdown-tip>
 
 ![New Check Run dialogue box showing the mandatory fields the user must fill in for Company, Paid From (Bank Account), and Accounts Payable.](./assets/InitiatingCheckRunDialogue.png)
 
@@ -30,8 +29,7 @@ The check run then returns a list of all outstanding payables for the given acco
 
 The user checks which payables to pay and the mode of payment for each one. The mode of payment dropdown options will correspond to the `Mode of Payment` documents you have set up in your system. You can configure a default mode of payment for each supplier and employee that will then automatically show as the selection in a check run. 
 
-<div style="font-weight: bold; font-size 140%; background-color: red; border: 1px solid red; padding-left: 0.5em;">Tip</div>
-<aside style="padding: 1em; border: 1px solid red">
+<markdown-tip>
 
 This view supports the same keyboard shortcuts as the listview in Frappe.
 
@@ -39,7 +37,7 @@ This view supports the same keyboard shortcuts as the listview in Frappe.
  - The space bar will select or de-select a row to pay
  - Once a row has focus, typing any letter key will auto-complete the Mode of Payment
 
-</aside><br>
+</markdown-tip>
 
 ![Detail view of the dropdown menu for the mode of payment. Options include ACH/EFT, Bank Draft, Cash, Check, Credit Card, and Wire Transfer. The options will depend on what Mode of Payment documents are defined in the ERPNext site.](./assets/ModeOfPayment.png)
 
