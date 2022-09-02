@@ -50,10 +50,11 @@ context('Check Run List', () => {
 		cy.get('.indicator-pill').should('contain', 'Submitted').wait(250)
 		cy.get('.indicator-pill').should('contain', 'Ready to Print').wait(15000)
 	})
-	// 403 Forbidden errors crop up when following tests try to navigate when run in sequence:
+
 	it("Create Check Run Settings From List", () => {  // TEST WORKS
-		cy.wait(3000)
-		cy.go_to_list('Check Run Settings')  // throwing 403 Forbidden error when run in sequence
+		cy.visit('/login')  // Re-login to avoid 403 Forbidden errors
+		cy.login()
+		cy.go_to_list('Check Run Settings')
 		cy.wait(1000)
 		cy.get('.primary-action').contains('Add Check Run Settings').should('be.visible').click()
 		cy.wait(1000)
@@ -64,7 +65,7 @@ context('Check Run List', () => {
 
 	it("Complete Payroll Check Run", () => {  // TEST WORKS
 		cy.wait(3000)
-		cy.go_to_list('Check Run')  // throwing 403 Forbidden error when run in sequence
+		cy.go_to_list('Check Run')
 		cy.get('.primary-action').contains('Add Check Run').should('be.visible').click()
 		cy.wait(1000)
 		cy.get('.modal [data-fieldname="pay_to_account"] input').clear().type('2120 - Payroll Payable - CFC').blur()
