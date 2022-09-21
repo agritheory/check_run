@@ -1,12 +1,12 @@
-frappe.provide('frappe.ui.form')
+frappe.provide('frappe.ui.form');
 
-frappe.ui.form.CheckRunQuickEntryForm = frappe.ui.form.QuickEntryForm.extend({
-	init: function (doctype, after_insert) {
-		this._super(doctype, after_insert)
-	},
-	render_dialog: function () {
+frappe.ui.form.CheckRunQuickEntryForm = class CheckRunQuickEntryForm extends frappe.ui.form.QuickEntryForm {
+	constructor(doctype, after_insert, init_callback, doc, force) {
+		super(doctype, after_insert, init_callback, doc, force)
+	}
+	render_dialog() {
 		this.mandatory = this.get_fields()
-		this._super()
+		super.render_dialog();
 		this.dialog.$wrapper.find('.btn-secondary').hide()
 		this.dialog.fields_dict["bank_account"].get_query = () => {
 			return {
@@ -27,8 +27,8 @@ frappe.ui.form.CheckRunQuickEntryForm = frappe.ui.form.QuickEntryForm.extend({
 			this.default_accounts()
 		}
 		this.default_accounts()
-	},
-	get_fields: function () {
+	}
+	get_fields() {
 		return [
 			{
 				label: __("Company"),
@@ -52,8 +52,8 @@ frappe.ui.form.CheckRunQuickEntryForm = frappe.ui.form.QuickEntryForm.extend({
 				reqd: 1
 			}
 		]
-	},
-	default_accounts: function () {
+	}
+	default_accounts() {
 		if (frappe.get_route() && frappe.get_route()[0] == 'Form') {
 			this.dialog.fields_dict["company"] = cur_frm.doc.company
 			this.dialog.fields_dict["pay_to_account"].set_value(cur_frm.doc.pay_to_account)
@@ -69,8 +69,8 @@ frappe.ui.form.CheckRunQuickEntryForm = frappe.ui.form.QuickEntryForm.extend({
 					this.dialog.fields_dict["bank_account"].set_value(r.message.name)
 				})
 		}
-	},
-	register_primary_action: function () {
+	}
+	register_primary_action() {
 		const me = this
 		this.dialog.set_primary_action(__('Start Check Run'), () => {
 			let values = me.dialog.get_values()
@@ -80,5 +80,5 @@ frappe.ui.form.CheckRunQuickEntryForm = frappe.ui.form.QuickEntryForm.extend({
 				frappe.set_route("Form", "Check Run", r)
 			})
 		})
-	},
-})
+	}
+}
