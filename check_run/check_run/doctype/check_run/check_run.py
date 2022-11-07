@@ -202,6 +202,7 @@ class CheckRun(Document):
 				pe.base_received_amount = total_amount
 				pe.paid_amount = total_amount
 				pe.base_paid_amount = total_amount
+				pe.base_grand_total = total_amount
 				pe.save()
 				pe.submit()
 				for reference in _references:
@@ -522,7 +523,7 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 		blocking_factor=10,
 		format_code=1,
 		immediate_destination_name=company_bank,
-		immediate_origin_name=company_bank,
+		immediate_origin_name=doc.company,
 		reference_code='',
 		batches=[batch]
 	)
