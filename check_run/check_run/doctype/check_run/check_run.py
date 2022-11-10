@@ -16,6 +16,8 @@ from frappe.utils.print_format import read_multi_pdf
 from frappe.permissions import has_permission
 from frappe.utils.file_manager import save_file, remove_all, download_file
 from frappe.utils.password import get_decrypted_password
+from frappe.query_builder.custom import ConstantColumn
+from frappe.query_builder.functions import Coalesce
 
 from erpnext.accounts.utils import get_balance_on
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_dimensions
@@ -310,96 +312,119 @@ def get_entries(doc):
 		if doc.end_date == db_doc.end_date and db_doc.transactions:
 			return {'transactions': json.loads(db_doc.transactions), 'modes_of_payment': modes_of_payment}
 
-	pi_select = """
-		(
-				SELECT
-					'Purchase Invoice' as doctype,
-					'Supplier' AS party_type,
-					`tabPurchase Invoice`.name,
-					`tabPurchase Invoice`.bill_no AS ref_number,
-					`tabPurchase Invoice`.supplier_name AS party,
-					`tabSupplier`.supplier_name AS party_name,
-					`tabPurchase Invoice`.outstanding_amount AS amount,
-					`tabPurchase Invoice`.due_date,
-					`tabPurchase Invoice`.posting_date,
-					COALESCE(`tabPurchase Invoice`.supplier_default_mode_of_payment, `tabSupplier`.supplier_default_mode_of_payment, '\n') AS mode_of_payment
-				FROM `tabPurchase Invoice`, `tabSupplier`
-				WHERE `tabPurchase Invoice`.outstanding_amount > 0
-				AND `tabPurchase Invoice`.supplier = `tabSupplier`.name
-				AND `tabPurchase Invoice`.company = %(company)s
-				AND `tabPurchase Invoice`.docstatus = 1
-				AND `tabPurchase Invoice`.credit_to = %(pay_to_account)s
-				AND `tabPurchase Invoice`.status != 'On Hold'
-				AND `tabPurchase Invoice`.due_date <= %(end_date)s
-			)
-	"""
-	ec_select = """
-		(
-			SELECT
-				'Expense Claim' as doctype,
-				'Employee' AS party_type,
-				`tabExpense Claim`.name,
-				`tabExpense Claim`.name AS ref_number,
-				`tabExpense Claim`.employee AS party,
-				`tabEmployee`.employee_name AS party_name,
-				`tabExpense Claim`.grand_total AS amount,
-				`tabExpense Claim`.posting_date AS due_date,
-				`tabExpense Claim`.posting_date,
-				COALESCE(`tabExpense Claim`.mode_of_payment, `tabEmployee`.mode_of_payment, '\n') AS mode_of_payment
-			FROM `tabExpense Claim`, `tabEmployee`
-			WHERE `tabExpense Claim`.grand_total > `tabExpense Claim`.total_amount_reimbursed
-			AND `tabExpense Claim`.employee = `tabEmployee`.name
-			AND `tabExpense Claim`.company = %(company)s
-			AND `tabExpense Claim`.docstatus = 1
-			AND `tabExpense Claim`.payable_account = %(pay_to_account)s
-			AND `tabExpense Claim`.posting_date <= %(end_date)s
-		)
-	"""
+	company = doc.company
+	pay_to_account = doc.pay_to_account
+	end_date = doc.end_date
 
-	je_select = """
-		(
-			SELECT
-				'Journal Entry' AS doctype,
-				`tabJournal Entry Account`.party_type,
-				`tabJournal Entry`.name,
-				`tabJournal Entry`.name AS ref_number,
-				`tabJournal Entry Account`.party,
-				`tabJournal Entry Account`.party AS party_name,
-				`tabJournal Entry Account`.credit_in_account_currency AS amount,
-				`tabJournal Entry`.due_date,
-				`tabJournal Entry`.posting_date,
-				COALESCE(`tabJournal Entry`.mode_of_payment, '\n') AS mode_of_payment
-			FROM `tabJournal Entry`, `tabJournal Entry Account`
-			WHERE `tabJournal Entry`.name = `tabJournal Entry Account`.parent
-			AND `tabJournal Entry`.company = %(company)s
-			AND `tabJournal Entry`.docstatus = 1
-			AND `tabJournal Entry Account`.account = %(pay_to_account)s
-			AND `tabJournal Entry`.due_date <= %(end_date)s
-			AND `tabJournal Entry`.name NOT in (
-				SELECT `tabPayment Entry Reference`.reference_name
-				FROM `tabPayment Entry`, `tabPayment Entry Reference`
-				WHERE `tabPayment Entry Reference`.parent = `tabPayment Entry`.name
-				AND `tabPayment Entry Reference`.reference_doctype = 'Journal Entry'
-				AND `tabPayment Entry`.party = `tabJournal Entry Account`.party
-				AND `tabPayment Entry`.docstatus = 1
+	# Build purchase invoices query
+	purchase_invoices = frappe.qb.DocType('Purchase Invoice')
+	suppliers = frappe.qb.DocType('Supplier')
+	pi_qb = (
+		frappe.qb.from_(purchase_invoices)
+			.inner_join(suppliers)
+			.on(purchase_invoices.supplier == suppliers.name)
+			.select(
+				ConstantColumn('Purchase Invoice').as_('doctype'),
+				ConstantColumn('Supplier').as_('party_type'),
+				purchase_invoices.name,
+				(purchase_invoices.bill_no).as_('ref_number'),
+				(purchase_invoices.supplier_name).as_('party'),
+				(suppliers.supplier_name).as_('party_name'),
+				(purchase_invoices.outstanding_amount).as_('amount'),
+				purchase_invoices.due_date,
+				purchase_invoices.posting_date,
+				Coalesce(purchase_invoices.supplier_default_mode_of_payment, suppliers.supplier_default_mode_of_payment, '\n').as_('mode_of_payment')
 			)
-		)
-	"""
-	query = ""
-	if not settings or settings.include_purchase_invoices:
-		query += pi_select
-	if not settings or settings.include_expense_claims:
-		if len(query) > 1:
-			query += "\nUNION\n"
-		query += ec_select
-	if not settings or settings.include_journal_entries:
-		if len(query) > 1:
-			query += "\nUNION\n"
-		query += je_select
-	query += "\nORDER BY due_date, name"
+			.where(purchase_invoices.outstanding_amount > 0)
+			.where(purchase_invoices.company == company)
+			.where(purchase_invoices.docstatus == 1)
+			.where(purchase_invoices.credit_to == pay_to_account)
+			.where(purchase_invoices.status != 'On Hold')
+			.where(purchase_invoices.due_date <= end_date)
+	)
+
+	# Build expense claims query
+	exp_claims = frappe.qb.DocType('Expense Claim')
+	employees = frappe.qb.DocType('Employee')
+	ec_qb = (
+		frappe.qb.from_(exp_claims)
+			.inner_join(employees)
+			.on(exp_claims.employee == employees.name)
+			.select(
+				ConstantColumn('Expense Claim').as_('doctype'),
+				ConstantColumn('Employee').as_('party_type'),
+				exp_claims.name,
+				(exp_claims.name).as_('ref_number'),
+				(exp_claims.employee).as_('party'),
+				(employees.employee_name).as_('party_name'),
+				(exp_claims.grand_total).as_('amount'),
+				(exp_claims.posting_date).as_('due_date'),
+				exp_claims.posting_date,
+				Coalesce(exp_claims.mode_of_payment, employees.mode_of_payment, '\n').as_('mode_of_payment')
+			)
+			.where(exp_claims.grand_total > exp_claims.total_amount_reimbursed)
+			.where(exp_claims.company == company)
+			.where(exp_claims.docstatus == 1)
+			.where(exp_claims.payable_account == pay_to_account)
+			.where(exp_claims.posting_date <= end_date)
+	)
+
+	# Build journal entries query
+	journal_entries = frappe.qb.DocType('Journal Entry')
+	je_accounts = frappe.qb.DocType('Journal Entry Account')
+	payment_entries = frappe.qb.DocType('Payment Entry')
+	pe_ref = frappe.qb.DocType('Payment Entry Reference')
+	
+	sub_q = (
+		frappe.qb.from_(payment_entries)
+			.inner_join(pe_ref)
+			.on(payment_entries.name == pe_ref.parent)
+			.select(pe_ref.reference_name)
+			.where(pe_ref.reference_doctype == 'Journal Entry')
+			.where(payment_entries.party == je_accounts.party)
+			.where(payment_entries.docstatus == 1)
+	)
+
+	je_qb = (
+		frappe.qb.from_(journal_entries)
+			.inner_join(je_accounts)
+			.on(journal_entries.name == je_accounts.parent)
+			.select(
+				ConstantColumn('Journal Entry').as_('doctype'),
+				je_accounts.party_type,
+				journal_entries.name,
+				(journal_entries.name).as_('ref_number'),
+				je_accounts.party,
+				(je_accounts.party).as_('party_name'),
+				(je_accounts.credit_in_account_currency).as_('amount'),
+				journal_entries.due_date,
+				journal_entries.posting_date,
+				Coalesce(journal_entries.mode_of_payment, '\n').as_('mode_of_payment')
+			)
+			.where(journal_entries.company == company)
+			.where(journal_entries.docstatus == 1)
+			.where(je_accounts.account == pay_to_account)
+			.where(journal_entries.due_date <= end_date)
+			.where((journal_entries.name).notin(sub_q))
+	)
+	
+	if not settings:
+		query = pi_qb.union(ec_qb).union(je_qb)
+	else:
+		query = ""
+		flags = (settings.include_purchase_invoices, settings.include_expense_claims, settings.include_journal_entries)
+		for flag, qb in zip(flags, (pi_qb, ec_qb, je_qb)):
+			if not flag:
+				continue
+			if not query:
+				query = qb
+			else:
+				query = query.union(qb)
+	if query:
+		query = query.orderby('due_date', 'name').get_sql()
 
 	transactions =  frappe.db.sql(query, {
-		'company': doc.company, 'pay_to_account': doc.pay_to_account, 'end_date': doc.end_date
+		'company': company, 'pay_to_account': pay_to_account, 'end_date': end_date
 	}, as_dict=True)
 	for transaction in transactions:
 		if settings and settings.pre_check_overdue_items:
