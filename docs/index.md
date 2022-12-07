@@ -41,7 +41,7 @@ This view supports the same keyboard shortcuts as the listview in Frappe.
 
 ![Detail view of the dropdown menu for the mode of payment. Options include ACH/EFT, Bank Draft, Cash, Check, Credit Card, and Wire Transfer. The options will depend on what Mode of Payment documents are defined in the ERPNext site.](./assets/ModeOfPayment.png)
 
-When the user submits the Check Run, payment entries are automatically generated for each party. The user is also given the choice to print checks (a print format must be in the system for this to work properly) and save a PDF.
+When the user submits the Check Run, payment entries are automatically generated for each party. The user is also given the choice to print checks (a print format must be in the system for this to work properly) and save a PDF. In Version 14, ERPNext will update the new Payment Ledger to show the payment as well.
 
 ![Screen shot showing buttons with available actions after the Check Run successfully submits. The status shows "Ready to Print", and there are buttons to "Download Checks" and "Download NACHA File".](./assets/PostSubmissionOptions.png)
 

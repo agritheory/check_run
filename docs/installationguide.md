@@ -1,12 +1,5 @@
 # Check Run Installation Guide
 
-## Production Environment
-To install this app in a production environment, see the following steps:
-
-```shell
-# Coming soon!
-```
-
 ## Developer Setup
 First, set up a new bench and substitute a path to the python version to use. Python should be 3.8 latest for V13 and 3.10 latest for V14. These instructions use [pyenv](https://github.com/pyenv/pyenv) for managing environments.
 
@@ -30,7 +23,9 @@ Download the ERPNext app
 bench get-app erpnext --branch version-13
 
 # Version 14
+bench get-app payments
 bench get-app erpnext --branch version-14
+bench get-app hrms
 ```
 
 Download the Check Run application
@@ -40,7 +35,7 @@ bench get-app check_run git@github.com:agritheory/check_run.git
 
 Install the apps to your site
 ```shell
-bench --site {{site name}} install-app erpnext check_run
+bench --site {{ site name }} install-app erpnext hrms check_run
 
 # Optional: Check that all apps installed on your site
 bench --site {{ site name }} list-apps
@@ -58,7 +53,7 @@ Add the site to your computer's hosts file to be able to access it via: `http://
 bench --site {{site name}} add-to-hosts
 ```
 
-Launch your bench
+Launch your bench (note you should be using Node.js v14 for a Version 13 bench and Node.js v16 for a Version 14 bench)
 ```shell
 bench start
 ```
