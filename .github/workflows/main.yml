@@ -1,4 +1,4 @@
-name: Validate Diff Release
+name: Validate, Schema Diff and Release
 on:
   push:
     branches: [ version-13 ]
@@ -10,7 +10,7 @@ env:
 
 jobs:
   Diff:
-    needs: [ Validate_PY_JSON_MERGE ]
+    needs: [ Validate_Python_JSON_syntax ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -75,14 +75,14 @@ jobs:
 
 
   Release:
-    needs: [ Validate_PY_JSON_MERGE ]
+    needs: [ Validate_Python_JSON_syntax ]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Release
         run: npx semantic-release
 
-  Validate_PY_JSON_MERGE:
+  Validate_Python_JSON_syntax:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
