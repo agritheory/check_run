@@ -1,6 +1,4 @@
 import datetime
-from mimesis import Address
-from mimesis.locales import Locale
 import random
 
 import frappe
