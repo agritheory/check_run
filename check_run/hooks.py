@@ -8,6 +8,7 @@ app_icon = "octicon octicon-file-directory"
 app_color = "grey"
 app_email = "support@agritheory.dev"
 app_license = "MIT"
+required_apps = ["erpnext", "hrms"]
 
 # Includes in <head>
 # ------------------
@@ -15,7 +16,7 @@ app_license = "MIT"
 # include js, css files in header of desk.html
 # app_include_css = "/assets/check_run/css/check_run.css"
 app_include_js = [
-	"/assets/js/check_run.min.js"
+	"check_run.bundle.js",
 ]
 
 # include js, css files in header of web template
