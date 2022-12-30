@@ -16,10 +16,10 @@ from frappe.utils.print_format import read_multi_pdf
 from frappe.permissions import has_permission
 from frappe.utils.file_manager import save_file, remove_all, download_file
 from frappe.utils.password import get_decrypted_password
+from frappe.contacts.doctype.address.address import	get_default_address
 
 from erpnext.accounts.utils import get_balance_on
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_dimensions
-
 
 from atnacha import ACHEntry, ACHBatch, NACHAFile
 
@@ -39,8 +39,8 @@ class CheckRun(Document):
 		self.beg_balance = get_balance_on(gl_account, self.posting_date)
 		if self.flags.in_insert:
 			if self.initial_check_number is None:
-				self.get_last_check_number()
-				self.get_default_payable_account()
+				self.set_last_check_number()
+				self.set_default_payable_account()
 				self.set_default_dates()
 		else:
 			self.validate_last_check_number()
@@ -72,13 +72,13 @@ class CheckRun(Document):
 		elif self.docstatus == 1:
 			self.status = 'Submitted'
 
-	def get_last_check_number(self):
+	def set_last_check_number(self):
 		if self.ach_only().ach_only:
 			return
 		check_number = frappe.get_value('Bank Account', self.bank_account, "check_number")
 		self.initial_check_number = int(check_number or 0) + 1
 
-	def get_default_payable_account(self):
+	def set_default_payable_account(self):
 		if not self.pay_to_account:
 			self.pay_to_account = frappe.get_value('Company', self.company, "default_payable_account")
 
@@ -124,7 +124,6 @@ class CheckRun(Document):
 		payment_entries = [frappe.get_doc('Payment Entry', pe) for pe in ach_payment_entries]
 		nacha_file = build_nacha_file_from_payment_entries(self, payment_entries, settings)
 		ach_file = StringIO(nacha_file())
-		print(ach_file)
 		ach_file.seek(0)
 		return ach_file
 
@@ -152,7 +151,14 @@ class CheckRun(Document):
 		check_count = 0
 		_transactions = []
 		gl_account = frappe.get_value('Bank Account', self.bank_account, 'account')
-		for party, _group in groupby(transactions, key=lambda x: x.party):
+		key_lookup = lambda x: x.party
+		if settings and settings.split_by_address:
+			key_lookup = lambda x: (x.get('party'), x.get('address'))
+			for transaction in transactions:
+				transaction['address'] = get_address(
+					transaction.get('party'), transaction.get('party_type'), transaction.get('doctype'), transaction.get('name')
+				)
+		for party, _group in groupby(transactions, key=key_lookup):
 			_group = list(_group)
 			if frappe.db.get_value('Mode of Payment', _group[0].mode_of_payment, 'type') == 'Bank':
 				groups = list(zip_longest(*[iter(_group)] * split)) 
@@ -403,7 +409,6 @@ def get_entries(doc):
 	}, as_dict=True)
 	for transaction in transactions:
 		if settings and settings.pre_check_overdue_items:
-			print(transaction.due_date, doc.posting_date)
 			if transaction.due_date < doc.posting_date:
 				transaction.pay = 1
 		if transaction.doctype == 'Journal Entry':
@@ -535,3 +540,15 @@ def get_check_run_settings(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	if frappe.db.exists('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account}):
 		return frappe.get_doc('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account})
+
+
+def get_address(party, party_type, doctype, name):
+	if doctype == 'Purchase Invoice':
+		return frappe.get_value('Purchase Invoice', name, 'supplier_address')
+	elif doctype == 'Expense Claim':
+		return frappe.get_value('Employee', name, 'permanent_address')
+	elif doctype == 'Journal Entry':
+		if party_type == 'Supplier':
+			return get_default_address('Supplier', party)
+		elif party_type == 'Employee':
+			return frappe.get_value('Employee', name, 'permanent_address')
