@@ -35,7 +35,7 @@ yarn add node-sass@4.13.1
 cd ../..
 
 bench get-app erpnext --branch version-13
-bench get-app check_run "${GITHUB_WORKSPACE}" --branch "${GITHUB_WORKSPACE}"
+bench get-app check_run "${GITHUB_WORKSPACE}" --branch "${GITHUB_REF##*/}"
 
 bench start &> bench_run_logs.txt &
 bench --site test_site reinstall --yes
