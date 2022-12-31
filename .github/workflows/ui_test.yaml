@@ -84,6 +84,8 @@ jobs:
         run: bash ${GITHUB_WORKSPACE}/.github/helper/install_dependencies.sh
 
       - name: Install
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
         run: bash ${GITHUB_WORKSPACE}/.github/helper/install.sh
 
       - name: Check Run Setup
