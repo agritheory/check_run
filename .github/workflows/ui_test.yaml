@@ -1,8 +1,10 @@
 name: UI Tests
-
 on:
+  push:
+    branches: [ version-13, version-14 ]
   pull_request:
-  workflow_dispatch:
+    branches: [ version-13, version-14 ]
+
 
 jobs:
   cypress-run:
