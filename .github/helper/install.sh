@@ -34,8 +34,15 @@ cd ./apps/frappe || exit
 yarn add node-sass@4.13.1
 cd ../..
 
-bench get-app erpnext --branch version-13
+bench get-app https://github.com/frappe/erpnext --branch version-13
+bench setup requirements --dev
 
 bench start &> bench_run_logs.txt &
+CI=Yes bench build --app frappe &
 bench --site test_site reinstall --yes
-CI=Yes bench build
+
+bench get-app check_run "${GITHUB_WORKSPACE}"
+bench --site test_site install-app check_run
+bench setup requirements --dev
+
+
