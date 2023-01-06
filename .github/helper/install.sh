@@ -39,4 +39,5 @@ bench get-app check_run "${GITHUB_WORKSPACE}" --branch "${ BRANCH_NAME }"
 
 bench start &> bench_run_logs.txt &
 bench --site test_site reinstall --yes
+bench install-app check_run
 CI=Yes bench build
