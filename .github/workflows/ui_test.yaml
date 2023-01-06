@@ -89,10 +89,11 @@ jobs:
         run: bash ${GITHUB_WORKSPACE}/.github/helper/install.sh
 
       - name: Check Run Setup
+        env:
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
         run: |
-          echo "Branch Name" ${{ env.rollbackartifact }}
           cd ~/frappe-bench
-          bench get-app check_run "${GITHUB_WORKSPACE}" --branch ${{ env.rollbackartifact }}
+          bench get-app check_run "${GITHUB_WORKSPACE}" --branch "${{ BRANCH_NAME }}"
           bench --site test_site install-app check_run
           bench --site test_site execute 'check_run.test_setup.before_test'
 
