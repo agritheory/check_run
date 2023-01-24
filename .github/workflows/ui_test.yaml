@@ -1,9 +1,9 @@
 name: UI Tests
 on:
   push:
-    branches: [ version-13, version-14 ]
+    branches: [ version-13 ]
   pull_request:
-    branches: [ version-13, version-14 ]
+    branches: [ version-13 ]
 
 
 jobs:
