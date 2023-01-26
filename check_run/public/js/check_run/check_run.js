@@ -44,7 +44,12 @@ check_run.mount_table = frm => {
 }
 
 check_run.keyDownHandler = e => {
+
 	if(!check_run.frm) {
+		return
+	}
+
+	if(document.activeElement.tagName == "INPUT" || document.activeElement.tagName == "TEXTAREA") {
 		return
 	}
 
