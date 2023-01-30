@@ -526,7 +526,7 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 	)
 	nacha_file = NACHAFile(
 		priority_code=1,
-		immediate_destination=company_bank_aba_number,
+		immediate_destination=company_bank_aba_number if not settings.omit_destination else "",
 		immediate_origin=company_bank_aba_number,
 		file_creation_date=getdate(),
 		file_creation_time=get_datetime(),

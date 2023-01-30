@@ -25,7 +25,9 @@
   "ach_file_extension",
   "ach_service_class_code",
   "ach_standard_class_code",
-  "ach_description"
+  "ach_description",
+  "column_break_21",
+  "omit_destination"
  ],
  "fields": [
   {
@@ -145,10 +147,20 @@
    "fieldname": "ach_settings_section",
    "fieldtype": "Section Break",
    "label": "ACH Settings"
+  },
+  {
+   "default": "0",
+   "fieldname": "omit_destination",
+   "fieldtype": "Check",
+   "label": "Omit Destination"
+  },
+  {
+   "fieldname": "column_break_21",
+   "fieldtype": "Column Break"
   }
  ],
  "links": [],
- "modified": "2022-12-29 16:00:54.418367",
+ "modified": "2023-01-30 13:16:46.862111",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",
