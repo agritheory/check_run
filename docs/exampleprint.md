@@ -1,6 +1,8 @@
 # Example Print Format: Voucher Check
 
-To take advantage of Check Run's check printing functionality, you'll need to set up a print format in ERPNext. Print formats are as unique as the organizations using ERPNext, so a voucher check print format (coming soon) serves as an example template. It can be a starting point from which to customize to suit your needs.
+To take advantage of Check Run's check printing functionality, you'll need to set up a print format in ERPNext. Print formats are as unique as the organizations using ERPNext, so a voucher check print format serves as an example template. It can be a starting point from which to customize to suit your needs.
+
+The example print format included with this application can be found in the Print Format List under Example Voucher. It is disabled by default.
 
 The example print format included with this application can be found at in the Print Format List under Example Voucher. It is disabled by default.
 
