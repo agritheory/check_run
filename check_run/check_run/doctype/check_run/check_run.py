@@ -46,6 +46,14 @@ class CheckRun(Document):
 				self.set_default_dates()
 		else:
 			self.validate_last_check_number()
+		# Check all selected invoices have correct docstatus (saved/submitted)
+		selected = [txn for txn in json.loads(self.get('transactions')) if txn['pay']]
+		wrong_status = []
+		for t in selected:
+			if frappe.get_value(t['doctype'], filters=t['name'], fieldname='docstatus') != 1:
+				wrong_status.append(t['name'])
+		if len(wrong_status) > 0:
+			frappe.throw(frappe._(f'The follow document(s) have been cancelled, please remove them from Check Run to continue:<br>{"<br>".join(wrong_status)}'))
 
 	def on_cancel(self):
 		settings = get_check_run_settings(self)
