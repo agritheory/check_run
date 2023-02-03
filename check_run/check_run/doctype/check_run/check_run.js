@@ -33,13 +33,13 @@ frappe.ui.form.on("Check Run", {
 			if (!r.message.ach_only) {
 				if (frm.doc.docstatus == 1) {
 					if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
-						frm.add_custom_button("Re-Print Checks", () => { reprint_checks(frm) })
+						frm.add_custom_button(__("Re-Print Checks"), () => { reprint_checks(frm) })
 					} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
 						render_checks(frm)
 					}
 				}
 				if (frm.doc.status == 'Ready to Print') {
-					frm.add_custom_button("Download Checks", () => { download_checks(frm) })
+					frm.add_custom_button(__("Download Checks"), () => { download_checks(frm) })
 				}
 			}
 			if (!r.message.print_checks_only) {
@@ -206,7 +206,7 @@ function confirm_print(frm){
 			{
 				fieldname: 'reprint_check_number',
 				fieldtype: 'Data',
-				label: "New Intial Check Number",
+				label: __("New Intial Check Number"),
 			}
 		],
 		minimizable: false,
@@ -239,7 +239,7 @@ function reprint_checks(frm) {
 			{
 				fieldname: 'reprint_check_number',
 				fieldtype: 'Data',
-				label: "New Intial Check Number",
+				label: __("New Intial Check Number"),
 			}
 		],
 		minimizable: false,
