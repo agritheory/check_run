@@ -199,14 +199,14 @@ function confirm_print(frm){
 		title: __("Confirm Print"),
 		fields: [
 			{ fieldname: 'ht', fieldtype: 'HTML', options:
-			`<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">Confirm Print</button>
-			<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">Re-Print Checks</button>
+			`<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">${__('Confirm Print')}</button>
+			<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">${__('Re-Print Checks')}</button>
 			<br><br>`
 			},
 			{
 				fieldname: 'reprint_check_number',
 				fieldtype: 'Data',
-				label: __("New Intial Check Number"),
+				label: __("New Initial Check Number"),
 			}
 		],
 		minimizable: false,
@@ -234,12 +234,12 @@ function reprint_checks(frm) {
 		fields: [
 			{
 				fieldname: 'ht', fieldtype: 'HTML', options:
-					`<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">Re-Print Checks</button><br><br>`
+				`<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">${__('Re-Print Checks')}</button><br><br>`
 			},
 			{
 				fieldname: 'reprint_check_number',
 				fieldtype: 'Data',
-				label: __("New Intial Check Number"),
+				label: __("New Initial Check Number"),
 			}
 		],
 		minimizable: false,

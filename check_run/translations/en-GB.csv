@@ -14,6 +14,5 @@ The settings for this Check Run do not allow cancellation, The settings for this
 Company Bank ABA Number missing for {}, Company Bank DFI Routing Number missing for {},
 This Bank is linked to at least one Canadian address. Canadian banking institutions require the ABA Number must not exceed 8 characters., This Bank is linked to at least one Canadian address. Canadian banking institutions require the DFI Routing Number must not exceed 8 characters.,
 Download Checks, Download Cheques,
-New Intial Check Number, New Initial Cheque Number,
+New Initial Check Number, New Initial Cheque Number,
 Re-Print Checks, Re-Print Cheques,
-`<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">Confirm Print</button><button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">Re-Print Checks</button><br><br>`, `<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">Confirm Print</button><button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">Re-Print Cheques</button><br><br>`,
