@@ -99,9 +99,15 @@ class CheckRun(Document):
 		wrong_status = []
 		for t in selected:
 			if frappe.get_value(t['doctype'], filters=t['name'], fieldname='docstatus') != 1:
-				wrong_status.append(t['name'])
-		if len(wrong_status) > 0:
-			frappe.throw(frappe._(f'The follow document(s) have been cancelled, please remove them from Check Run to continue:<br>{"<br>".join(wrong_status)}'))
+				wrong_status.append({'party_name': t['party_name'], 'ref_number': t['ref_number'], 'name': t['name']})
+		if len(wrong_status) < 1:
+			return
+		invalid_records = ''
+		for invalid_record in wrong_status:
+			invalid_records = ' '.join(invalid_record.values())
+		frappe.throw(frappe._(
+			f"The follow document(s) have been cancelled, please remove them from Check Run to continue:<br>{invalid_records}"
+		))
 
 	@frappe.whitelist()
 	def validate_last_check_number(self, check_number=None):
