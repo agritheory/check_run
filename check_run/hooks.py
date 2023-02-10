@@ -94,9 +94,9 @@ after_migrate = 'check_run.customize.load_customizations'
 # ---------------
 # Override standard doctype classes
 
-# override_doctype_class = {
-# 	"ToDo": "custom_app.overrides.CustomToDo"
-# }
+override_doctype_class = {
+	"Bank": "check_run.overrides.bank.CustomBank"
+}
 
 # Document Events
 # ---------------
