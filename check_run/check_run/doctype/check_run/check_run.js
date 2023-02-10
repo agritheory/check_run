@@ -33,18 +33,18 @@ frappe.ui.form.on("Check Run", {
 			if (!r.message.ach_only) {
 				if (frm.doc.docstatus == 1) {
 					if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
-						frm.add_custom_button("Re-Print Checks", () => { reprint_checks(frm) })
+						frm.add_custom_button(__("Re-Print Checks"), () => { reprint_checks(frm) })
 					} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
 						render_checks(frm)
 					}
 				}
 				if (frm.doc.status == 'Ready to Print') {
-					frm.add_custom_button("Download Checks", () => { download_checks(frm) })
+					frm.add_custom_button(__("Download Checks"), () => { download_checks(frm) })
 				}
 			}
 			if (!r.message.print_checks_only) {
 				if (frm.doc.docstatus == 1) {
-					frm.add_custom_button("Download NACHA File", () => { download_nacha(frm) })
+					frm.add_custom_button(__("Download NACHA File"), () => { download_nacha(frm) })
 				}
 			}
 		})
@@ -199,14 +199,14 @@ function confirm_print(frm){
 		title: __("Confirm Print"),
 		fields: [
 			{ fieldname: 'ht', fieldtype: 'HTML', options:
-			`<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">Confirm Print</button>
-			<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">Re-Print Checks</button>
+			`<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">${__('Confirm Print')}</button>
+			<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">${__('Re-Print Checks')}</button>
 			<br><br>`
 			},
 			{
 				fieldname: 'reprint_check_number',
 				fieldtype: 'Data',
-				label: "New Intial Check Number",
+				label: __("New Initial Check Number"),
 			}
 		],
 		minimizable: false,
@@ -234,12 +234,12 @@ function reprint_checks(frm) {
 		fields: [
 			{
 				fieldname: 'ht', fieldtype: 'HTML', options:
-					`<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">Re-Print Checks</button><br><br>`
+					`<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">${__('Re-Print Checks')}</button><br><br>`
 			},
 			{
 				fieldname: 'reprint_check_number',
 				fieldtype: 'Data',
-				label: "New Intial Check Number",
+				label: __("New Initial Check Number"),
 			}
 		],
 		minimizable: false,
@@ -287,7 +287,7 @@ function render_checks(frm, reprint_check_number = undefined) {
 		args: { reprint_check_number: reprint_check_number }
 	}).done(() => {
 		frm.reload_doc()
-		frm.add_custom_button("Re-Print Checks", () => { reprint_checks(frm) })
+		frm.add_custom_button(__("Re-Print Checks"), () => { reprint_checks(frm) })
 	}).fail((r) => {
 		frm.reload_doc()
 	})
@@ -311,7 +311,7 @@ function download_nacha(frm) {
 }
 
 function settings_button(frm){
-	frm.add_custom_button("Modify Settings", () => { 
+	frm.add_custom_button(__("Modify Settings"), () => { 
 		frappe.xcall("check_run.check_run.doctype.check_run.check_run.get_check_run_settings", { doc: frm.doc }
 		).then(r => {
 			frappe.set_route("Form", "Check Run Settings", r.name)
