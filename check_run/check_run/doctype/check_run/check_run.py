@@ -45,12 +45,8 @@ class CheckRun(Document):
 				self.get_default_payable_account()
 				self.set_default_dates()
 		else:
+			self.validate_transactions()
 			self.validate_last_check_number()
-		# Check all selected invoices have correct docstatus (saved/submitted)
-		selected = [txn for txn in json.loads(self.get('transactions')) if txn['pay']]
-		wrong_status = [t['name'] for t in selected if frappe.get_value(t['doctype'], filters=t['name'], fieldname='docstatus') != 1]
-		if len(wrong_status) > 0:
-			frappe.throw(frappe._(f'The following document(s) have been cancelled, please remove them to continue:<br>{"<br>".join(wrong_status)}'))
 
 	def on_cancel(self):
 		settings = get_check_run_settings(self)
@@ -94,6 +90,23 @@ class CheckRun(Document):
 			self.posting_date = getdate()
 		if not self.end_date:
 			self.end_date = getdate()
+
+	def validate_transactions(self):
+		if not self.get('transactions'):
+			return
+		selected = [txn for txn in json.loads(self.get('transactions')) if txn['pay']]
+		wrong_status = []
+		for t in selected:
+			if frappe.get_value(t['doctype'], filters=t['name'], fieldname='docstatus') != 1:
+				wrong_status.append({'party_name': t['party_name'], 'ref_number': t['ref_number'] or '', 'name': t['name']})
+		if len(wrong_status) < 1:
+			return
+		invalid_records = ''
+		for invalid_record in wrong_status:
+			invalid_records += ' '.join(invalid_record.values()) + '<br>'
+		frappe.throw(frappe._(
+			f"The following document(s) have been cancelled, please remove them from Check Run to continue:<br>{invalid_records}"
+		))
 
 	@frappe.whitelist()
 	def validate_last_check_number(self, check_number=None):
