@@ -20,10 +20,14 @@
   "cascade_cancellation",
   "column_break_9",
   "number_of_invoices_per_voucher",
+  "split_by_address",
+  "ach_settings_section",
   "ach_file_extension",
   "ach_service_class_code",
   "ach_standard_class_code",
-  "ach_description"
+  "ach_description",
+  "column_break_21",
+  "omit_destination"
  ],
  "fields": [
   {
@@ -132,10 +136,31 @@
    "fieldtype": "Link",
    "label": "Print Format",
    "options": "Print Format"
-  }
+  },
+  {
+    "default": "0",
+    "fieldname": "split_by_address",
+    "fieldtype": "Check",
+    "label": "Split Invoices by Address"
+   },
+   {
+    "fieldname": "ach_settings_section",
+    "fieldtype": "Section Break",
+    "label": "ACH Settings"
+   },
+   {
+    "default": "0",
+    "fieldname": "omit_destination",
+    "fieldtype": "Check",
+    "label": "Omit Destination"
+   },
+   {
+    "fieldname": "column_break_21",
+    "fieldtype": "Column Break"
+   }
  ],
  "links": [],
- "modified": "2022-08-26 16:54:08.327344",
+ "modified": "2022-02-13 15:33:15.269467",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",
