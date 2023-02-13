@@ -44,10 +44,15 @@ check_run.mount_table = frm => {
 }
 
 check_run.keyDownHandler = e => {
+
 	if(!check_run.frm) {
 		return
 	}
 
+	if(document.activeElement.tagName == "INPUT" || document.activeElement.tagName == "TEXTAREA") {
+		return
+	}
+	
 	if(e.keyCode == 40 && check_run.frm.check_run_state.selectedRow < (check_run.frm.check_run_state.transactions.length - 1)){
 		for(let j=0;j<check_run.frm.check_run_state.transactions.length;j++) {
 			if(check_run.frm.check_run_state.transactions[j].mopIsOpen) {
