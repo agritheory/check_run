@@ -31,17 +31,65 @@ def before_test():
 	create_test_data()
 
 suppliers = [
-	("Exceptional Grid", "Electricity", "ACH/EFT", 150.00),
-	("Liu & Loewen Accountants LLP", "Accounting Services", "ACH/EFT", 500.00),
-	("Mare Digitalis", "Cloud Services", "Credit Card", 200.00),
-	("AgriTheory", "ERPNext Consulting", "Check", 1000.00),
-	("HIJ Telecom, Inc", "Internet Services", "Check", 150.00),
-	("Sphere Cellular", "Phone Services", "ACH/EFT", 250.00),
-	("Cooperative Ag Finance", "Financial Services", "Bank Draft", 5000.00),
+	("Exceptional Grid", "Electricity", "ACH/EFT", 150.00, {
+		'address_line1': '2 Cosmo Point',
+		'city': 'Summerville',
+		'state': 'MA',
+		'country': 'United States',
+		'pincode': '34791'
+	}),
+	("Liu & Loewen Accountants LLP", "Accounting Services", "ACH/EFT", 500.00, {
+		'address_line1': '138 Wanda Square',
+		'city': 'Chino',
+		'state': 'ME',
+		'country': 'United States',
+		'pincode': '90953'
+	}),
+	("Mare Digitalis", "Cloud Services", "Credit Card", 200.00, {
+		'address_line1': '1000 Toll Plaza Tunnel Alley',
+		'city': 'Joplin',
+		'state': 'CT',
+		'country': 'United States',
+		'pincode': '51485'
+	}),
+	("AgriTheory", "ERPNext Consulting", "Check", 1000.00, {
+		'address_line1': '1293 Bannan Road',
+		'city': 'New Brighton',
+		'state': 'NH',
+		'country': 'United States',
+		'pincode': '55932'
+	}),
+	("HIJ Telecom, Inc", "Internet Services", "Check", 150.00, {
+		'address_line1': '955 Winding Highway',
+		'city': 'Glassboro',
+		'state': 'NY',
+		'country': 'United States',
+		'pincode': '28026'
+	}),
+	("Sphere Cellular", "Phone Services", "ACH/EFT", 250.00, {
+		'address_line1': '1198 Carpenter Road',
+		'city': 'Rolla',
+		'state': 'VT',
+		'country': 'United States',
+		'pincode': '94286'
+	}),
+	("Cooperative Ag Finance", "Financial Services", "Bank Draft", 5000.00, {
+		'address_line1': '629 Loyola Landing',
+		'city': 'Warner Robins',
+		'state': 'CT',
+		'country': 'United States',
+		'pincode': '28989'
+	}),
 ]
 
 tax_authority = [
-	("Local Tax Authority", "Payroll Taxes", "Check", 0.00),
+	("Local Tax Authority", "Payroll Taxes", "Check", 0.00, {
+		'address_line1': '18 Spooner Stravenue',
+		'city': 'Danbury',
+		'state': 'RI',
+		'country': 'United States',
+		'pincode': '07165'
+	}),
 ]
 
 def create_test_data():
@@ -106,6 +154,7 @@ def create_bank_and_bank_account(settings):
 	doc.submit()
 
 def create_suppliers(settings):
+	addresses = frappe._dict({})
 	for supplier in suppliers + tax_authority:
 		biz = frappe.new_doc("Supplier")
 		biz.supplier_name = supplier[0]
@@ -118,6 +167,35 @@ def create_suppliers(settings):
 		biz.currency = "USD"
 		biz.default_price_list = "Standard Buying"
 		biz.save()
+
+		addr = frappe.new_doc('Address')
+		addr.address_title = f"{supplier[0]} - {supplier[4]['city']}"
+		addr.address_type = 'Billing'
+		addr.address_line1 = supplier[4]['address_line1']
+		addr.city = supplier[4]['city']
+		addr.state = supplier[4]['state']
+		addr.country = supplier[4]['country']
+		addr.pincode = supplier[4]['pincode']
+		addr.append('links', {
+			'link_doctype': 'Supplier',
+			'link_name': supplier[0]
+		})
+		addr.save()
+
+	addr = frappe.new_doc('Address')
+	addr.address_type = 'Billing'
+	addr.address_title = "HIJ Telecom - Burlingame"
+	addr.address_line1 = '167 Auto Terrace'
+	addr.city = 'Burlingame'
+	addr.state = "ME"
+	addr.country = "United States"
+	addr.pincode = '79749'
+	addr.append('links', {
+		'link_doctype': 'Supplier',
+		'link_name': 'HIJ Telecom, Inc'
+	})
+	addr.save()
+
 
 def create_items(settings):
 	for supplier in suppliers + tax_authority:
@@ -161,6 +239,22 @@ def create_invoices(settings):
 	})
 	pi.save()
 	pi.submit()
+
+	# two phone bills / test address splitting
+	pi = frappe.new_doc('Purchase Invoice')
+	pi.company = settings.company
+	pi.set_posting_time = 1
+	pi.posting_date = settings.day
+	pi.supplier = suppliers[4][0]
+	pi.append('items', {
+		'item_code': suppliers[4][1],
+		'rate': 122.50,
+		'qty': 1,
+	})
+	pi.supplier_address = "HIJ Telecom - Burlingame-Billing"
+	pi.save()
+	pi.submit()
+
 	# second month - unpaid
 	next_day = settings.day + datetime.timedelta(days=31)
 
@@ -188,6 +282,21 @@ def create_invoices(settings):
 		'rate': 75.00,
 		'qty': 1,
 	})
+	pi.save()
+	pi.submit()
+
+	# two phone bills / test address splitting
+	pi = frappe.new_doc('Purchase Invoice')
+	pi.company = settings.company
+	pi.set_posting_time = 1
+	pi.posting_date = settings.day
+	pi.supplier = suppliers[4][0]
+	pi.append('items', {
+		'item_code': suppliers[4][1],
+		'rate': 122.50,
+		'qty': 1,
+	})
+	pi.supplier_address = "HIJ Telecom - Burlingame-Billing"
 	pi.save()
 	pi.submit()
 
