@@ -5,6 +5,7 @@ frappe.listview_settings['Check Run'] = {
 	get_indicator: doc => {
 		return [__(doc.status), {
 			"Draft": "red",
+			"Submitting": "orange",
 			"Submitted": "blue",
 			"Ready to Print": "purple",
 			"Confirm Print": "yellow",

@@ -135,7 +135,7 @@
    "fieldname": "status",
    "fieldtype": "Select",
    "hidden": 1,
-   "options": "Draft\nSubmitted\nReady to Print\nConfirm Print\nPrinted"
+   "options": "Draft\nSubmitting\nSubmitted\nReady to Print\nConfirm Print\nPrinted"
   },
   {
    "fieldname": "check_run_table",
@@ -151,7 +151,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2022-08-07 15:37:57.183907",
+ "modified": "2023-02-15 13:33:21.040894",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run",

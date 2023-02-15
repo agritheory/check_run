@@ -120,22 +120,34 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	def before_submit(self):
-		self.payment_entries = []
-		self.dt_pes = []
 		transactions = self.transactions
 		transactions = json.loads(transactions)
 		if len(transactions) < 1:
 			frappe.throw("You must select at least one Invoice to pay.")
-		transactions = sorted([frappe._dict(item) for item in transactions if item.get("pay")], key=lambda x: x.party)
-		_transactions = self.create_payment_entries(transactions)
 		self.print_count = 0
-		self.transactions = json.dumps(_transactions)
 		if self.ach_only().ach_only:
 			self.initial_check_number = ""
 			self.final_check_number = ""
+
+		if len(transactions) < 25:
+			self._before_submit()
 		else:
-			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
-		return self
+			self.status = 'Submitting'
+			frappe.enqueue_doc(self.doctype, self.name, "_before_submit", save=True, queue="short", timeout=3600)
+
+	def _before_submit(self, save=False):
+		try:
+			transactions = self.transactions
+			transactions = json.loads(transactions)
+			transactions = sorted([frappe._dict(item) for item in transactions if item.get("pay")], key=lambda x: x.party)
+			_transactions = self.create_payment_entries(transactions)
+			
+			self.db_set('transactions', json.dumps(_transactions))
+			self.db_set('status', 'Submitted')
+			if self.final_check_number:
+				frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
+		except Exception as e:
+			frappe.log_error(title=f"{self.name} Check Run Error", message=e)
 
 	def build_nacha_file(self, settings=None):
 		electronic_mop = frappe.get_all('Mode of Payment', {'type': 'Electronic', 'enabled': 1}, 'name', pluck="name")
@@ -264,7 +276,7 @@ class CheckRun(Document):
 		_transactions = []
 		for pe, group in groupby(transactions, key=lambda x: x.get('payment_entry')):
 			group = list(group)
-			mode_of_payment, docstatus = frappe.db.get_value('Payment Entry', pe, ['mode_of_payment', 'docstatus'])
+			mode_of_payment, docstatus = frappe.db.get_value('Payment Entry', pe, ['mode_of_payment', 'docstatus']) or (None, None)
 			if docstatus == 1 and frappe.db.get_value('Mode of Payment', mode_of_payment, 'type') == 'Bank':
 				output = frappe.get_print(
 					'Payment Entry',
