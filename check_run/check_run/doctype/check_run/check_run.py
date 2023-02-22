@@ -213,6 +213,9 @@ class CheckRun(Document):
 				for reference in group:
 					if not reference:
 						continue
+					if settings.automatically_release_on_hold_invoices and reference.doctype == 'Purchase Invoice':
+						if frappe.get_value(reference.doctype, reference.name, 'on_hold'):
+							frappe.db.set_value(reference.doctype, reference.name, 'on_hold', 0)
 					pe.append('references', {
 							"reference_doctype": reference.doctype,
 							"reference_name": reference.name or reference.ref_number,

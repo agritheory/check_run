@@ -21,6 +21,7 @@
   "column_break_9",
   "number_of_invoices_per_voucher",
   "split_by_address",
+  "automatically_release_on_hold_invoices",
   "ach_settings_section",
   "ach_file_extension",
   "ach_service_class_code",
@@ -138,29 +139,35 @@
    "options": "Print Format"
   },
   {
-    "default": "0",
-    "fieldname": "split_by_address",
-    "fieldtype": "Check",
-    "label": "Split Invoices by Address"
-   },
-   {
-    "fieldname": "ach_settings_section",
-    "fieldtype": "Section Break",
-    "label": "ACH Settings"
-   },
-   {
-    "default": "0",
-    "fieldname": "omit_destination",
-    "fieldtype": "Check",
-    "label": "Omit Destination"
-   },
-   {
-    "fieldname": "column_break_21",
-    "fieldtype": "Column Break"
-   }
+   "default": "0",
+   "fieldname": "split_by_address",
+   "fieldtype": "Check",
+   "label": "Split Invoices by Address"
+  },
+  {
+   "fieldname": "ach_settings_section",
+   "fieldtype": "Section Break",
+   "label": "ACH Settings"
+  },
+  {
+   "default": "0",
+   "fieldname": "omit_destination",
+   "fieldtype": "Check",
+   "label": "Omit Destination"
+  },
+  {
+   "fieldname": "column_break_21",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "automatically_release_on_hold_invoices",
+   "fieldtype": "Check",
+   "label": "Automatically Release On Hold Invoices"
+  }
  ],
  "links": [],
- "modified": "2022-02-13 15:33:15.269467",
+ "modified": "2023-02-22 14:14:52.852738",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",
