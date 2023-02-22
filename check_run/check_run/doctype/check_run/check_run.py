@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
+import datetime
 import json
 from itertools import groupby, zip_longest
 from io import StringIO
@@ -366,8 +367,8 @@ def get_entries(doc):
 			.where(purchase_invoices.company == company)
 			.where(purchase_invoices.docstatus == 1)
 			.where(purchase_invoices.credit_to == pay_to_account)
-			.where(purchase_invoices.status != 'On Hold')
 			.where(purchase_invoices.due_date <= end_date)
+			.where(Coalesce(purchase_invoices.release_date, datetime.date(1900, 1, 1)) <= end_date)
 	)
 
 	# Build expense claims query
