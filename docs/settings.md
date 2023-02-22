@@ -31,6 +31,11 @@ If the system doesn't find settings for the account combination you're using in 
     - Default value shows 0, which tells the system this setting is unmodified and it will use 5 invoices per voucher
     - This setting is an upper limit for the number of invoices per party to group into each voucher to that party
     - The screen shot below shows the output of a submitted Check Run where the Number of Invoices per Voucher setting was set to 2. Out of the four invoices paid to Exceptional Grid, they are grouped so two are paid under one voucher, then the other two are paid under a different voucher
+- **Split Invoices By Address:**
+    - If checked, this will validate if the same vendor is being paid to different addresses and split the payments entries appropriately
+- **Automatically Release On Hold Invoices:**
+    - By default, on hold invoices will not show if their 'release date' is not within the Check Run period. The checkbox allows invoices that _are_ on hold to be automatically released and paid in the Check Run.
+
 
 ![Check Run output table showing a row for eight invoices paid (two for AgriTheory, two for Cooperative Ag Finance, and four for Exception Grid). The first two Exceptional Grid invoices have Check Reference Number ACC-PAY-2022-00003 and the next set of two invoices have Check Reference Number ACC-PAY-2022-00004. They were split into different vouchers because the setting limited two invoices per voucher.](./assets/VoucherGroup.png)
 
