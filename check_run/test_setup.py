@@ -1,4 +1,5 @@
 import datetime
+import types
 
 import frappe
 from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
@@ -300,6 +301,26 @@ def create_invoices(settings):
 	pi.save()
 	pi.submit()
 
+	# test on-hold invoice
+	pi = frappe.new_doc('Purchase Invoice')
+	pi.company = settings.company
+	pi.set_posting_time = 1
+	pi.posting_date = settings.day
+	pi.supplier = suppliers[1][0]
+	pi.append('items', {
+		'item_code': suppliers[1][1],
+		'rate': 4000.00,
+		'qty': 1,
+	})
+	pi.on_hold =1
+	pi.release_date = settings.day + datetime.timedelta(days=30)
+	pi.hold_comment = 'Testing for on hold invoices'
+	pi.validate_release_date = types.MethodType(validate_release_date, pi) # allow date to be backdated for testing
+	pi.save()
+	pi.submit()
+
+def validate_release_date(self):
+	pass
 
 def config_expense_claim(settings):
 	try:
