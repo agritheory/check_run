@@ -21,6 +21,7 @@
   "column_break_9",
   "number_of_invoices_per_voucher",
   "split_by_address",
+  "automatically_release_on_hold_invoices",
   "ach_settings_section",
   "ach_file_extension",
   "ach_service_class_code",
@@ -157,10 +158,16 @@
   {
    "fieldname": "column_break_21",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "automatically_release_on_hold_invoices",
+   "fieldtype": "Check",
+   "label": "Automatically Release On Hold Invoices"
   }
  ],
  "links": [],
- "modified": "2023-01-30 13:16:46.862111",
+ "modified": "2023-02-22 14:14:52.852738",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",

@@ -214,6 +214,9 @@ class CheckRun(Document):
 				for reference in group:
 					if not reference:
 						continue
+					if settings.automatically_release_on_hold_invoices and reference.doctype == 'Purchase Invoice':
+						if frappe.get_value(reference.doctype, reference.name, 'on_hold'):
+							frappe.db.set_value(reference.doctype, reference.name, 'on_hold', 0)
 					pe.append('references', {
 							"reference_doctype": reference.doctype,
 							"reference_name": reference.name or reference.ref_number,
@@ -361,6 +364,7 @@ def get_entries(doc):
 				AND `tabPurchase Invoice`.credit_to = %(pay_to_account)s
 				AND `tabPurchase Invoice`.status != 'On Hold'
 				AND `tabPurchase Invoice`.due_date <= %(end_date)s
+				AND COALESCE(`tabPurchase Invoice`.release_date, '1900-1-1') < %(end_date)s
 			)
 	"""
 	ec_select = """
