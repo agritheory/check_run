@@ -355,7 +355,7 @@ def create_invoices(settings):
 		'qty': 1,
 	})
 	pi.on_hold =1
-	pi.release_date = settings.day + datetime.timedelta(days=30)
+	pi.release_date = settings.day + datetime.timedelta(days=60)
 	pi.hold_comment = 'Testing for on hold invoices'
 	pi.validate_release_date = types.MethodType(validate_release_date, pi) # allow date to be backdated for testing
 	pi.save()
