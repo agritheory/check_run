@@ -30,51 +30,54 @@ def before_test():
 	set_defaults_for_tests()
 	frappe.db.commit()
 	create_test_data()
+	for modu in frappe.get_all('Module Onboarding'):
+		frappe.db.set_value('Module Onboarding', modu, 'is_complete', 1)
+	frappe.db.commit()
 
 suppliers = [
-	("Exceptional Grid", "Electricity", "ACH/EFT", 150.00, {
+	("Exceptional Grid", "Electricity", "ACH/EFT", 150.00, "Net 14", {
 		'address_line1': '2 Cosmo Point',
 		'city': 'Summerville',
 		'state': 'MA',
 		'country': 'United States',
 		'pincode': '34791'
 	}),
-	("Liu & Loewen Accountants LLP", "Accounting Services", "ACH/EFT", 500.00, {
+	("Liu & Loewen Accountants LLP", "Accounting Services", "ACH/EFT", 500.00, "Net 30", {
 		'address_line1': '138 Wanda Square',
 		'city': 'Chino',
 		'state': 'ME',
 		'country': 'United States',
 		'pincode': '90953'
 	}),
-	("Mare Digitalis", "Cloud Services", "Credit Card", 200.00, {
+	("Mare Digitalis", "Cloud Services", "Credit Card", 200.00, "Due on Receipt", {
 		'address_line1': '1000 Toll Plaza Tunnel Alley',
 		'city': 'Joplin',
 		'state': 'CT',
 		'country': 'United States',
 		'pincode': '51485'
 	}),
-	("AgriTheory", "ERPNext Consulting", "Check", 1000.00, {
+	("AgriTheory", "ERPNext Consulting", "Check", 1000.00, "Net 14", {
 		'address_line1': '1293 Bannan Road',
 		'city': 'New Brighton',
 		'state': 'NH',
 		'country': 'United States',
 		'pincode': '55932'
 	}),
-	("HIJ Telecom, Inc", "Internet Services", "Check", 150.00, {
+	("HIJ Telecom, Inc", "Internet Services", "Check", 150.00, "Net 30", {
 		'address_line1': '955 Winding Highway',
 		'city': 'Glassboro',
 		'state': 'NY',
 		'country': 'United States',
 		'pincode': '28026'
 	}),
-	("Sphere Cellular", "Phone Services", "ACH/EFT", 250.00, {
+	("Sphere Cellular", "Phone Services", "ACH/EFT", 250.00, "Net 30", {
 		'address_line1': '1198 Carpenter Road',
 		'city': 'Rolla',
 		'state': 'VT',
 		'country': 'United States',
 		'pincode': '94286'
 	}),
-	("Cooperative Ag Finance", "Financial Services", "Bank Draft", 5000.00, {
+	("Cooperative Ag Finance", "Financial Services", "Bank Draft", 5000.00, "Net 30", {
 		'address_line1': '629 Loyola Landing',
 		'city': 'Warner Robins',
 		'state': 'CT',
@@ -84,7 +87,7 @@ suppliers = [
 ]
 
 tax_authority = [
-	("Local Tax Authority", "Payroll Taxes", "Check", 0.00, {
+	("Local Tax Authority", "Payroll Taxes", "Check", 0.00, "Due on Receipt", {
 		'address_line1': '18 Spooner Stravenue',
 		'city': 'Danbury',
 		'state': 'RI',
@@ -101,6 +104,8 @@ def create_test_data():
 			{"account_type": "Bank", "company": frappe.defaults.get_defaults().get('company'), "is_group": 0}),
 		})
 	create_bank_and_bank_account(settings)
+	set_up_accounts(settings)
+	create_payment_terms_templates(settings)
 	create_suppliers(settings)
 	create_items(settings)
 	create_invoices(settings)
@@ -154,6 +159,42 @@ def create_bank_and_bank_account(settings):
 	doc.save()
 	doc.submit()
 
+def set_up_accounts(settings):
+	frappe.rename_doc('Account', '1000 - Application of Funds (Assets) - CFC', '1000 - Assets - CFC', force=True)
+	frappe.rename_doc('Account', '2000 - Source of Funds (Liabilities) - CFC', '2000 - Liabilities - CFC', force=True)
+	frappe.rename_doc('Account', '1310 - Debtors - CFC', '1310 - Accounts Payable - CFC', force=True)
+	frappe.rename_doc('Account', '2110 - Creditors - CFC', '2110 - Accounts Receivable - CFC', force=True)
+
+
+def create_payment_terms_templates(settings):
+	if not frappe.db.exists("Payment Terms Template", "Net 30"):
+		doc = frappe.new_doc("Payment Terms Template")
+		doc.template_name = "Net 30"
+		doc.append("terms", {
+			"payment_term": "Net 30",
+			"invoice_portion": 100,
+			"due_date_based_on": "Day(s) after invoice date",
+			"credit_days": 30})
+		doc.save()
+	if not frappe.db.exists("Payment Terms Template", "Due on Receipt"):
+		doc = frappe.new_doc("Payment Terms Template")
+		doc.template_name = "Due on Receipt"
+		doc.append("terms", {
+			"payment_term": "Due on Receipt",
+			"invoice_portion": 100,
+			"due_date_based_on": "Day(s) after invoice date",
+			"credit_days": 0})
+		doc.save()
+	if not frappe.db.exists("Payment Terms Template", "Net 14"):
+		doc = frappe.new_doc("Payment Terms Template")
+		doc.template_name = "Net 14"
+		doc.append("terms", {
+			"payment_term": "Net 14",
+			"invoice_portion": 100,
+			"due_date_based_on": "Day(s) after invoice date",
+			"credit_days": 0})
+		doc.save()
+
 def create_suppliers(settings):
 	addresses = frappe._dict({})
 	for supplier in suppliers + tax_authority:
@@ -167,16 +208,17 @@ def create_suppliers(settings):
 			biz.bank_account = "123456789"
 		biz.currency = "USD"
 		biz.default_price_list = "Standard Buying"
+		biz.payment_terms = supplier[4]
 		biz.save()
 
 		addr = frappe.new_doc('Address')
-		addr.address_title = f"{supplier[0]} - {supplier[4]['city']}"
+		addr.address_title = f"{supplier[0]} - {supplier[5]['city']}"
 		addr.address_type = 'Billing'
-		addr.address_line1 = supplier[4]['address_line1']
-		addr.city = supplier[4]['city']
-		addr.state = supplier[4]['state']
-		addr.country = supplier[4]['country']
-		addr.pincode = supplier[4]['pincode']
+		addr.address_line1 = supplier[5]['address_line1']
+		addr.city = supplier[5]['city']
+		addr.state = supplier[5]['state']
+		addr.country = supplier[5]['country']
+		addr.pincode = supplier[5]['pincode']
 		addr.append('links', {
 			'link_doctype': 'Supplier',
 			'link_name': supplier[0]
