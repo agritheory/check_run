@@ -3,6 +3,5 @@
 
 frappe.ui.form.on('Check Run Settings', {
 	// refresh: function(frm) {
-
 	// }
-});
+})
