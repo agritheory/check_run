@@ -26,28 +26,7 @@ frappe.ui.form.on("Check Run", {
 		if(frm.is_new()){
 			get_balance(frm)
 		}
-		frappe.call({
-			method: "ach_only",
-			doc: frm.doc,
-		}).done(r => {
-			if (!r.message.ach_only) {
-				if (frm.doc.docstatus == 1) {
-					if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
-						frm.add_custom_button(__("Re-Print Checks"), () => { reprint_checks(frm) })
-					} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
-						render_checks(frm)
-					}
-				}
-				if (frm.doc.status == 'Ready to Print') {
-					frm.add_custom_button(__("Download Checks"), () => { download_checks(frm) })
-				}
-			}
-			if (!r.message.print_checks_only) {
-				if (frm.doc.docstatus == 1) {
-					frm.add_custom_button("Download NACHA File", () => { download_nacha(frm) })
-				}
-			}
-		})
+		ach_only(frm)
 		get_entries(frm)
 		confirm_print(frm)
 		if(frm.doc.docstatus > 0){
@@ -193,70 +172,120 @@ function permit_first_user(frm){
 	}
 }
 
-function confirm_print(frm){
-	if(frm.doc.status != 'Confirm Print') {return}
+function confirm_print(frm) {
+	if (frm.doc.status != "Confirm Print") {
+		return;
+	}
 	let d = new frappe.ui.Dialog({
 		title: __("Confirm Print"),
 		fields: [
-			{ fieldname: 'ht', fieldtype: 'HTML', options:
-			`<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">${__('Confirm Print')}</button>
-			<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">${__('Re-Print Checks')}</button>
-			<br><br>`
+			{
+				fieldname: "ht",
+				fieldtype: "HTML",
+				options: `<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">${__(
+					"Confirm Print"
+				)}</button>
+			<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">${__(
+					"Re-Print Checks"
+				)}</button>
+			<br><br>`,
 			},
 			{
-				fieldname: 'reprint_check_number',
-				fieldtype: 'Data',
+				fieldname: "reprint_check_number",
+				fieldtype: "Data",
 				label: __("New Initial Check Number"),
-			}
+			},
 		],
 		minimizable: false,
 		static: true,
-	})
-	d.wrapper.find('#confirm-print').on('click', () => {
-		frappe.xcall("check_run.check_run.doctype.check_run.check_run.confirm_print", {docname: frm.doc.name})
-		.then(() => {
-			d.hide()
-			frm.reload_doc()
-		})
-	})
-	d.wrapper.find('#reprint').on('click', () => {
-		d.fields_dict.reprint_check_number.df.reqd = 1
-		let values = cur_dialog.get_values()
-		reprint_checks(frm, values.reprint_check_number || undefined)
-		d.hide()
-	})
-	d.show()
+	});
+	d.wrapper.find("#confirm-print").on("click", () => {
+		frappe
+			.xcall("check_run.check_run.doctype.check_run.check_run.confirm_print", {
+				docname: frm.doc.name,
+			})
+			.then(() => {
+				d.hide();
+				frm.reload_doc();
+			});
+	});
+	d.wrapper.find("#reprint").on("click", () => {
+		d.fields_dict.reprint_check_number.df.reqd = 1;
+		let values = cur_dialog.get_values();
+		render_checks(frm, values.reprint_check_number || undefined);
+		frm.doc.status = "Submitted";
+		frm.page.set_indicator(__("Submitted"), "blue");
+		d.hide();
+	});
+	d.show();
 }
 
 function reprint_checks(frm) {
+	frm.set_value("status", "Submitted");
 	let d = new frappe.ui.Dialog({
 		title: __("Re-Print"),
 		fields: [
 			{
-				fieldname: 'ht', fieldtype: 'HTML', options:
-				`<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">${__('Re-Print Checks')}</button><br><br>`
+				fieldname: "ht",
+				fieldtype: "HTML",
+				options: `<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">${__(
+					"Re-Print Checks"
+				)}</button><br><br>`,
 			},
 			{
-				fieldname: 'reprint_check_number',
-				fieldtype: 'Data',
+				fieldname: "reprint_check_number",
+				fieldtype: "Data",
 				label: __("New Initial Check Number"),
-			}
+			},
 		],
 		minimizable: false,
 		static: true,
-	})
-	d.wrapper.find('#reprint').on('click', () => {
-		d.fields_dict.reprint_check_number.df.reqd = 1
-		let values = cur_dialog.get_values()
-		render_checks(frm, values.reprint_check_number || undefined)
-		d.hide()
-		window.setTimeout(() => {
-			frm.reload_doc()
-		}, 1000)
-	})
-	d.show()
+	});
+	d.wrapper.find("#reprint").on("click", () => {
+		d.fields_dict.reprint_check_number.df.reqd = 1;
+		let values = cur_dialog.get_values();
+		render_checks(frm, values.reprint_check_number || undefined);
+		d.hide();
+		frm.reload_doc();
+		frm.set_value("status", "Submitted");
+	});
+	d.show();
 }
 
+function ach_only(frm) {
+	frappe
+		.xcall("check_run.check_run.doctype.check_run.check_run.ach_only", {
+			docname: frm.doc.name,
+		})
+		.then((r) => {
+			if (!r.ach_only) {
+				if (frm.doc.docstatus == 1) {
+					if (frm.doc.print_count > 0 && frm.doc.status != "Ready to Print") {
+						frm.add_custom_button(__("Re-Print Checks"), () => {
+							reprint_checks(frm);
+						});
+					} else if (
+						frm.doc.print_count == 0 &&
+						frm.doc.status == "Submitted"
+					) {
+						render_checks(frm);
+					}
+				}
+				if (frm.doc.status == "Ready to Print") {
+					frm.add_custom_button(__("Download Checks"), () => {
+						download_checks(frm);
+					});
+				}
+			}
+			if (!r.print_checks_only) {
+				if (frm.doc.docstatus == 1) {
+					frm.add_custom_button(__("Download NACHA File"), () => {
+						download_nacha(frm);
+					});
+				}
+			}
+		});
+}
 
 function validate_mode_of_payment_mandatory(frm){
 	let mode_of_payment_required = []

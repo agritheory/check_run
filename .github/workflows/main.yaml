@@ -1,24 +1,40 @@
-name: Validate Diff Release
+name: Linters
 on:
   push:
-    branches: [ version-13 ]
+    branches: [ version-13, version-14 ]
   pull_request:
-    branches: [ version-13 ]
+    branches: [ version-13, version-14 ]
 
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  Diff:
-    needs: [ Validate_PY_JSON_MERGE ]
+  prettier:
+    needs: [ py_json_merge ]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 2
+
+      - name: Prettify code
+        uses: creyD/prettier_action@v4.3
+        with:
+          commit_message: "style: prettify code"
+
+  json_diff:
+    needs: [ py_json_merge ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.ref }}
           fetch-depth: 2
 
-      - name: Find changed json
+      - name: Find JSON changes
         id: changed-json
         uses: tj-actions/changed-files@v23.1
         with:
@@ -68,29 +84,20 @@ jobs:
         run: |
           pip install rich
           pip install json_source_map
-          git clone --depth 1 https://gist.github.com/74017707b676c3ce947528fb00dd46d0.git fsjd
+          git clone --depth 1 https://gist.github.com/3eea518743067f1b971114f1a2016f69 fsjd
 
       - name: Diff table
         run: python3 fsjd/frappe_schema_json_diff.py base/mrd.txt head/acmr.txt 1
 
-
-  Release:
-    needs: [ Validate_PY_JSON_MERGE ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Release
-        run: npx semantic-release
-
-  Validate_PY_JSON_MERGE:
+  py_json_merge:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
 
-      - name: Get validate_json
+      - name: Fetch validator
         run: git clone --depth 1 https://gist.github.com/f1bf2c11f78331b2417189c385022c28.git validate_json
 
-      - name: Validate json
+      - name: Validate JSON
         run: python3 validate_json/validate_json.py ./
 
       - name: Compile
@@ -102,4 +109,3 @@ jobs:
               then echo "Found merge conflicts"
               exit 1
           fi
-  
