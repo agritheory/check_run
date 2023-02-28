@@ -211,7 +211,9 @@ def create_test_data():
 	config_expense_claim(settings)
 	create_employees(settings)
 	create_expense_claim(settings)
-	create_payroll_journal_entry(settings)
+	for month in range(1,13):
+		create_payroll_journal_entry(settings)
+		settings.day = settings.day.replace(month=month)
 
 
 def create_bank_and_bank_account(settings):

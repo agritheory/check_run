@@ -26,6 +26,8 @@ from erpnext.accounts.utils import get_balance_on
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_dimensions
 
 from atnacha import ACHEntry, ACHBatch, NACHAFile
+from check_run.check_run.doctype.check_run_settings.check_run_settings import create
+
 
 class CheckRun(Document):
 	def onload(self):
@@ -99,6 +101,8 @@ class CheckRun(Document):
 		selected = [txn for txn in json.loads(self.get('transactions')) if txn['pay']]
 		wrong_status = []
 		for t in selected:
+			if not t['mode_of_payment']:
+				frappe.throw(frappe._(f"Mode of Payment Required: {t['party_name']} {t['ref_number']}"))
 			if frappe.get_value(t['doctype'], filters=t['name'], fieldname='docstatus') != 1:
 				wrong_status.append({'party_name': t['party_name'], 'ref_number': t['ref_number'] or '', 'name': t['name']})
 		if len(wrong_status) < 1:
@@ -148,9 +152,7 @@ class CheckRun(Document):
 			if self.final_check_number:
 				frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 			frappe.db.commit()
-			js = "console.log('_before_submit'); setTimeout(function(){cur_frm.reload_doc()}, 500)"
-			frappe.emit_js(js, user=self.owner)
-			frappe.emit_js(js, user=frappe.session.user)
+			frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 		except Exception as e:
 			frappe.log_error(title=f"{self.name} Check Run Error", message=e)
 
@@ -314,9 +316,7 @@ class CheckRun(Document):
 		frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 		save_file(f"{self.name}.pdf", read_multi_pdf(output), 'Check Run', self.name, 'Home/Check Run', False, 0)
 		frappe.db.commit()
-		js = "setTimeout(function(){cur_frm.reload_doc()}, 500)"
-		frappe.emit_js(js, user=self.owner)
-		frappe.emit_js(js, user=frappe.session.user)
+		frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 
 
 @frappe.whitelist()
@@ -613,6 +613,8 @@ def get_check_run_settings(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	if frappe.db.exists('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account}):
 		return frappe.get_doc('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account})
+	else:
+		return create(doc.company, doc.bank_account, doc.pay_to_account)
 	
 
 def get_address(party, party_type, doctype, name):

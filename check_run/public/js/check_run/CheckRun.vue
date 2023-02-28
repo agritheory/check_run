@@ -178,7 +178,7 @@ export default {
 			this.onPayChange(this.state.selectedRow)
 		},
 		openMopWithSearch(keycode) {
-			if (!this.transactions.length) {
+			if (!this.transactions.length || !this.$refs.dropdowns) {
 				return
 			}
 			this.$refs.dropdowns[this.state.selectedRow].openWithSearch()
