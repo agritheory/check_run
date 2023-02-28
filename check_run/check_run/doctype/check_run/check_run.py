@@ -591,6 +591,8 @@ def get_check_run_settings(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	if frappe.db.exists('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account}):
 		return frappe.get_doc('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account})
+	else:
+		return create(doc.company, doc.bank_account, doc.pay_to_account)
 
 
 def get_address(party, party_type, doctype, name):
