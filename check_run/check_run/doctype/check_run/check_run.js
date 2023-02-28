@@ -27,6 +27,7 @@ frappe.ui.form.on('Check Run', {
 		set_queries(frm)
 		frappe.realtime.off("reload")
 		frappe.realtime.on("reload", (message) => { frm.reload_doc() })
+
 		if (frm.is_new()) {
 			get_balance(frm)
 		}
@@ -71,7 +72,7 @@ frappe.ui.form.on('Check Run', {
 	},
 	bank_account: frm => {
 		get_balance(frm)
-	}
+	},
 })
 
 function get_balance(frm) {
