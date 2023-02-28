@@ -119,7 +119,7 @@ class CheckRun(Document):
 		if int(check_number) < int(account_check_number):
 			frappe.throw(f'Initial Check Number cannot be lower than the last used check number <b>{account_check_number}</b> for <b>{self.bank_account}</b>')
 
-@frappe.whitelist()
+	@frappe.whitelist()
 	def before_submit(self):
 		transactions = self.transactions
 		transactions = json.loads(transactions)
