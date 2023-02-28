@@ -25,11 +25,11 @@ function show_bank_account_number(frm) {
 	}
 }
 
-function set_required_banking_fields(frm) {
-	if (!frm.doc.mode_of_payment) { return }
+function set_required_banking_fields(frm){
+	if(!frm.doc.mode_of_payment){ return }
 	frappe.db.get_value('Mode of Payment', frm.doc.mode_of_payment, 'type')
 	.then(r => {
-		if (r.message.type == 'Electronic') {
+		if(r.message.type == 'Electronic'){
 			frm.set_df_property('bank', 'reqd', 1)
 			frm.set_df_property('bank', 'hidden', 0)
 			frm.set_df_property('bank_account', 'reqd', 1)
