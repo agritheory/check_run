@@ -192,7 +192,7 @@ def create_payment_terms_templates(settings):
 			"payment_term": "Net 14",
 			"invoice_portion": 100,
 			"due_date_based_on": "Day(s) after invoice date",
-			"credit_days": 0})
+			"credit_days": 14})
 		doc.save()
 
 def create_suppliers(settings):
