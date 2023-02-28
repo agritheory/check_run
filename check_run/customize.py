@@ -31,3 +31,13 @@ def load_customizations():
 			})
 			property_setter.flags.ignore_permissions = True
 			property_setter.insert()
+
+
+def after_install():
+	if not frappe.db.exists('File', 'Home/Check Run'):
+		try: 
+			cr_folder = frappe.new_doc("File")
+			cr_folder.update({"file_name":"Check Run", "is_folder": True, "folder":"Home"})
+			cr_folder.save()
+		except Exception as e:
+			pass

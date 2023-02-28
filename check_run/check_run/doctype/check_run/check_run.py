@@ -6,6 +6,7 @@ import datetime
 import json
 from itertools import groupby, zip_longest
 from io import StringIO
+import types
 
 from PyPDF2 import PdfFileWriter
 
@@ -120,22 +121,38 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	def before_submit(self):
-		self.payment_entries = []
-		self.dt_pes = []
 		transactions = self.transactions
 		transactions = json.loads(transactions)
 		if len(transactions) < 1:
 			frappe.throw("You must select at least one Invoice to pay.")
-		transactions = sorted([frappe._dict(item) for item in transactions if item.get("pay")], key=lambda x: x.party)
-		_transactions = self.create_payment_entries(transactions)
 		self.print_count = 0
-		self.transactions = json.dumps(_transactions)
 		if self.ach_only().ach_only:
 			self.initial_check_number = ""
 			self.final_check_number = ""
+
+		if len(transactions) < 25:
+			self._before_submit()
 		else:
-			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
-		return self
+			self.status = 'Submitting'
+			frappe.enqueue_doc(self.doctype, self.name, "_before_submit", save=True, queue="short", timeout=3600)
+
+	def _before_submit(self, save=False):
+		try:
+			transactions = self.transactions
+			transactions = json.loads(transactions)
+			transactions = sorted([frappe._dict(item) for item in transactions if item.get("pay")], key=lambda x: x.party)
+			_transactions = self.create_payment_entries(transactions)
+			
+			self.db_set('transactions', json.dumps(_transactions))
+			self.db_set('status', 'Submitted')
+			if self.final_check_number:
+				frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
+			frappe.db.commit()
+			js = "console.log('_before_submit'); setTimeout(function(){cur_frm.reload_doc()}, 500)"
+			frappe.emit_js(js, user=self.owner)
+			frappe.emit_js(js, user=frappe.session.user)
+		except Exception as e:
+			frappe.log_error(title=f"{self.name} Check Run Error", message=e)
 
 	def build_nacha_file(self, settings=None):
 		electronic_mop = frappe.get_all('Mode of Payment', {'type': 'Electronic', 'enabled': 1}, 'name', pluck="name")
@@ -243,17 +260,22 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	def increment_print_count(self, reprint_check_number=None):
-		self.print_count = self.print_count + 1
-		self.set_status('Submitted')
-		self.save()
+		self.load_from_db()
 		frappe.enqueue_doc(self.doctype, self.name, 'render_check_pdf',	reprint_check_number=reprint_check_number, queue='short', now=True)
-		return
 
 
 	@frappe.whitelist()
 	def render_check_pdf(self, reprint_check_number=None):
+		self.load_from_db()
+		self.print_count = self.print_count + 1
+		self.set_status('Submitted')
 		if not frappe.db.exists('File', 'Home/Check Run'):
-			frappe.new_doc("File").update({"file_name":"Check Run", "is_folder": True, "folder":"Home"}).save()
+			try: 
+				cr_folder = frappe.new_doc("File")
+				cr_folder.update({"file_name":"Check Run", "is_folder": True, "folder":"Home"})
+				cr_folder.save()
+			except Exception as e:
+				pass
 		settings = get_check_run_settings(self)
 		initial_check_number = int(self.initial_check_number)
 		if reprint_check_number and reprint_check_number != 'undefined':
@@ -264,7 +286,7 @@ class CheckRun(Document):
 		_transactions = []
 		for pe, group in groupby(transactions, key=lambda x: x.get('payment_entry')):
 			group = list(group)
-			mode_of_payment, docstatus = frappe.db.get_value('Payment Entry', pe, ['mode_of_payment', 'docstatus'])
+			mode_of_payment, docstatus = frappe.db.get_value('Payment Entry', pe, ['mode_of_payment', 'docstatus']) or (None, None)
 			if docstatus == 1 and frappe.db.get_value('Mode of Payment', mode_of_payment, 'type') == 'Bank':
 				output = frappe.get_print(
 					'Payment Entry',
@@ -285,13 +307,16 @@ class CheckRun(Document):
 					_transactions.append(ref)
 
 		if _transactions and reprint_check_number:
-			frappe.db.set_value('Check Run', self.name, 'transactions', json.dumps(_transactions))
-			frappe.db.set_value('Check Run', self.name, 'initial_check_number', self.initial_check_number)
-			frappe.db.set_value('Check Run', self.name, 'final_check_number', self.initial_check_number + check_increment -1)
-			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
-		
-		frappe.db.set_value('Check Run', self.name, 'status', 'Ready to Print')
+			self.db_set('transactions', json.dumps(_transactions))
+		self.db_set('final_check_number', self.initial_check_number + (check_increment - 1))
+		self.db_set('status', 'Ready to Print')
+		self.db_set('print_count', self.print_count)
+		frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 		save_file(f"{self.name}.pdf", read_multi_pdf(output), 'Check Run', self.name, 'Home/Check Run', False, 0)
+		frappe.db.commit()
+		js = "setTimeout(function(){cur_frm.reload_doc()}, 500)"
+		frappe.emit_js(js, user=self.owner)
+		frappe.emit_js(js, user=frappe.session.user)
 
 
 @frappe.whitelist()
@@ -600,3 +625,11 @@ def get_address(party, party_type, doctype, name):
 			return get_default_address('Supplier', party)
 		elif party_type == 'Employee':
 			return frappe.get_value('Employee', name, 'permanent_address')
+
+
+@frappe.whitelist()
+def ach_only(docname):
+	if not frappe.db.exists('Check Run', docname):
+		return {'ach_only': False, 'checks_only': False}
+	cr = frappe.get_doc('Check Run', docname)
+	return cr.ach_only()
