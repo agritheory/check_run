@@ -25,8 +25,10 @@ frappe.ui.form.on('Check Run', {
 		permit_first_user(frm)
 		get_defaults(frm)
 		set_queries(frm)
-		frappe.realtime.off("reload")
-		frappe.realtime.on("reload", (message) => { frm.reload_doc() })
+		frappe.realtime.off('reload')
+		frappe.realtime.on('reload', message => {
+			frm.reload_doc()
+		})
 
 		if (frm.is_new()) {
 			get_balance(frm)
@@ -335,20 +337,22 @@ function settings_button(frm) {
 	})
 }
 
-function check_settings(frm){
+function check_settings(frm) {
 	if (frm.doc.docstatus < 1 && frm.doc.__onload && frm.doc.__onload.settings_missing) {
-		frappe
-			.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', { doc: frm.doc })
-			.then(r => {
-				if (r == undefined) {
-					frappe.confirm(
-						__(`No settings found for <b>${frm.doc.bank_account}</b> and <b>${frm.doc.pay_to_account}</b>. Would you like to review these settings?`),
-						() => { frappe.set_route('Form', 'Check Run Settings', r) },
-						() => { } //stay on this page
-					)
-				} else {
-					frm.doc.__onload.settings_missing = false
-				}
-			})
+		frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', { doc: frm.doc }).then(r => {
+			if (r == undefined) {
+				frappe.confirm(
+					__(
+						`No settings found for <b>${frm.doc.bank_account}</b> and <b>${frm.doc.pay_to_account}</b>. Would you like to review these settings?`
+					),
+					() => {
+						frappe.set_route('Form', 'Check Run Settings', r)
+					},
+					() => {} //stay on this page
+				)
+			} else {
+				frm.doc.__onload.settings_missing = false
+			}
+		})
 	}
 }
