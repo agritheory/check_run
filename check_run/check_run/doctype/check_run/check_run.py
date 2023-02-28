@@ -100,6 +100,8 @@ class CheckRun(Document):
 		selected = [txn for txn in json.loads(self.get('transactions')) if txn['pay']]
 		wrong_status = []
 		for t in selected:
+			if not t['mode_of_payment']:
+				frappe.throw(frappe._(f"Mode of Payment Required: {t['party_name']} {t['ref_number']}"))
 			if frappe.get_value(t['doctype'], filters=t['name'], fieldname='docstatus') != 1:
 				wrong_status.append({'party_name': t['party_name'], 'ref_number': t['ref_number'] or '', 'name': t['name']})
 		if len(wrong_status) < 1:
