@@ -1,16 +1,16 @@
 // Copyright (c) 2022, AgriTheory and contributors
 // For license information, please see license.txt
-frappe.ui.form.on("Check Run", {
-	validate: (frm) => {
+frappe.ui.form.on('Check Run', {
+	validate: frm => {
 		validate_mode_of_payment_mandatory(frm)
 		if (frm.check_run_state.party_filter.length > 0) {
-			frm.check_run_state.party_filter = ""
+			frm.check_run_state.party_filter = ''
 			frm.check_run_state.show_party_filter = false
 			return new Promise(function (resolve, reject) {
 				reject(
 					frappe.msgprint(
 						__(
-							"The document was not saved because a Party filter was present. The Party filter has now been cleared. Please review the document before saving."
+							'The document was not saved because a Party filter was present. The Party filter has now been cleared. Please review the document before saving.'
 						)
 					)
 				)
@@ -19,8 +19,8 @@ frappe.ui.form.on("Check Run", {
 		frm.doc.transactions = JSON.stringify(frm.check_run_state.transactions)
 		frm.doc.amount_check_run = frm.check_run_state.check_run_total()
 	},
-	refresh: (frm) => {
-		frm.layout.show_message("")
+	refresh: frm => {
+		frm.layout.show_message('')
 		settings_button(frm)
 		permit_first_user(frm)
 		get_defaults(frm)
@@ -32,37 +32,25 @@ frappe.ui.form.on("Check Run", {
 		get_entries(frm)
 		confirm_print(frm)
 		if (frm.doc.docstatus > 0) {
-			frm.set_df_property("initial_check_number", "read_only", 1)
-			frm.set_df_property("final_check_number", "read_only", 1)
+			frm.set_df_property('initial_check_number', 'read_only', 1)
+			frm.set_df_property('final_check_number', 'read_only', 1)
 		}
-		if (
-			frm.doc.docstatus < 1 &&
-			frm.doc.__onload &&
-			frm.doc.__onload.settings_missing
-		) {
+		if (frm.doc.docstatus < 1 && frm.doc.__onload && frm.doc.__onload.settings_missing) {
 			frappe
-				.xcall(
-					"check_run.check_run.doctype.check_run.check_run.get_check_run_settings",
-					{ doc: frm.doc }
-				)
-				.then((r) => {
+				.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', { doc: frm.doc })
+				.then(r => {
 					if (r == undefined) {
 						frappe.confirm(
-							__(
-								`No settings found for <b>${frm.doc.bank_account}</b> and <b>${frm.doc.pay_to_account}</b>`
-							),
+							__(`No settings found for <b>${frm.doc.bank_account}</b> and <b>${frm.doc.pay_to_account}</b>`),
 							() => {
 								frappe
-									.xcall(
-										"check_run.check_run.doctype.check_run_settings.check_run_settings.create",
-										{
-											company: frm.doc.company,
-											bank_account: frm.doc.bank_account,
-											pay_to_account: frm.doc.pay_to_account,
-										}
-									)
-									.then((r) => {
-										frappe.set_route("Form", "Check Run Settings", r)
+									.xcall('check_run.check_run.doctype.check_run_settings.check_run_settings.create', {
+										company: frm.doc.company,
+										bank_account: frm.doc.bank_account,
+										pay_to_account: frm.doc.pay_to_account,
+									})
+									.then(r => {
+										frappe.set_route('Form', 'Check Run Settings', r)
 									})
 							},
 							() => {}
@@ -73,67 +61,67 @@ frappe.ui.form.on("Check Run", {
 				})
 		}
 	},
-	onload_post_render: (frm) => {
-		frm.page.wrapper.find(".layout-side-section").hide()
+	onload_post_render: frm => {
+		frm.page.wrapper.find('.layout-side-section').hide()
 		permit_first_user(frm)
 	},
-	end_date: (frm) => {
+	end_date: frm => {
 		get_entries(frm)
 	},
-	posting_date: (frm) => {
+	posting_date: frm => {
 		get_entries(frm)
 	},
-	start_date: (frm) => {
+	start_date: frm => {
 		frappe
-			.xcall("check_run.check_run.doctype.check_run.check_run.get_balance", {
+			.xcall('check_run.check_run.doctype.check_run.check_run.get_balance', {
 				doc: frm.doc,
 			})
-			.then((r) => {
-				frm.set_value("beg_balance", r)
+			.then(r => {
+				frm.set_value('beg_balance', r)
 				get_entries(frm)
 			})
 	},
-	onload: (frm) => {
+	onload: frm => {
 		frm.$check_run = undefined
 		frm.transactions = []
 		frm.check_run_sort = {
-			partyInput: "",
+			partyInput: '',
 			docDate: false,
 			mop: false,
 			outstanding: false,
 			dueDate: false,
 		}
 	},
-	pay_to_account: (frm) => {
+	pay_to_account: frm => {
 		get_entries(frm)
 	},
-	bank_account: (frm) => {
+	bank_account: frm => {
 		get_balance(frm)
 	},
 })
 
 function get_balance(frm) {
 	frappe
-		.xcall("check_run.check_run.doctype.check_run.check_run.get_balance", {
+		.xcall('check_run.check_run.doctype.check_run.check_run.get_balance', {
 			doc: frm.doc,
 		})
-		.then((r) => {
-			frm.set_value("beg_balance", r)
+		.then(r => {
+			frm.set_value('beg_balance', r)
 		})
 }
 
 function set_queries(frm) {
-	frm.set_query("bank_account", function () {
+	frm.set_query('bank_account', function () {
 		return {
 			filters: {
 				company: frm.doc.company,
 			},
 		}
 	})
-	frm.set_query("pay_to_account", function () {
+	frm.set_query('pay_to_account', function () {
 		return {
 			filters: {
-				account_type: "Payable",
+				account_type: 'Payable',
 				is_group: 0,
 			},
 		}
@@ -142,16 +130,16 @@ function set_queries(frm) {
 
 function get_entries(frm) {
 	frappe
-		.xcall("check_run.check_run.doctype.check_run.check_run.get_entries", {
+		.xcall('check_run.check_run.doctype.check_run.check_run.get_entries', {
 			doc: frm.doc,
 		})
-		.then((r) => {
+		.then(r => {
 			frm.transactions = r.transactions
 			frm.modes_of_payment = r.modes_of_payment
 			check_run.mount_table(frm)
-			if (!frappe.user.has_role(["Accounts Manager"])) {
+			if (!frappe.user.has_role(['Accounts Manager'])) {
 				frm.disable_form()
-				frm.$check_run.css({ "pointer-events": "none" })
+				frm.$check_run.css({ 'pointer-events': 'none' })
 			}
 		})
 }
@@ -163,15 +151,15 @@ function total_check_run(frm) {
 			total += row.amount
 		}
 	}
-	frm.set_value("amount_check_run", Number(total))
+	frm.set_value('amount_check_run', Number(total))
 }
 
 function get_defaults(frm) {
 	if (!frm.is_new()) {
 		return
 	}
-	frm.set_value("start_date", moment().startOf("week").format())
-	frm.set_value("end_date", moment().endOf("week").format())
+	frm.set_value('start_date', moment().startOf('week').format())
+	frm.set_value('end_date', moment().endOf('week').format())
 }
 
 function get_last_check_number(frm) {
@@ -179,64 +167,59 @@ function get_last_check_number(frm) {
 	if (frm.doc.__islocal && frm.doc.start_date) {
 		frappe
 			.call({
-				method: "set_last_check_number",
+				method: 'set_last_check_number',
 				doc: frm.doc,
 			})
-			.then((r) => {
-				frm.refresh_field("last_check")
-				frm.refresh_field("initial_check_number")
+			.then(r => {
+				frm.refresh_field('last_check')
+				frm.refresh_field('initial_check_number')
 			})
 	}
 }
 
 function permit_first_user(frm) {
-	let viewers = frm.get_docinfo()["viewers"]
+	let viewers = frm.get_docinfo()['viewers']
 	if (!viewers) {
 		return
-	} else if (
-		viewers.current.length == 1 &&
-		viewers.current.includes(frappe.session.user)
-	) {
+	} else if (viewers.current.length == 1 && viewers.current.includes(frappe.session.user)) {
 		frm.user_lock = frappe.session.user
 		return
 	} else if (frappe.session.user == frm.user_lock) {
 		return
 	} else if (frm.user_lock && frappe.session.user != frm.user_lock) {
 		frm.disable_form()
-		frm.$check_run.css({ "pointer-events": "none" })
+		frm.$check_run.css({ 'pointer-events': 'none' })
 	}
 }
 
 function confirm_print(frm) {
-	if (frm.doc.status != "Confirm Print") {
+	if (frm.doc.status != 'Confirm Print') {
 		return
 	}
 	let d = new frappe.ui.Dialog({
-		title: __("Confirm Print"),
+		title: __('Confirm Print'),
 		fields: [
 			{
-				fieldname: "ht",
-				fieldtype: "HTML",
+				fieldname: 'ht',
+				fieldtype: 'HTML',
 				options: `<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">${__(
-					"Confirm Print"
+					'Confirm Print'
 				)}</button>
-			<button id="reprint" class="btn btn-sm btn-warning" style="width: 48% color: white">${__(
-				"Re-Print Checks"
-			)}</button>
+			<button id="reprint" class="btn btn-sm btn-warning" style="width: 48% color: white">${__('Re-Print Checks')}</button>
 			<br><br>`,
 			},
 			{
-				fieldname: "reprint_check_number",
-				fieldtype: "Data",
-				label: __("New Initial Check Number"),
+				fieldname: 'reprint_check_number',
+				fieldtype: 'Data',
+				label: __('New Initial Check Number'),
 			},
 		],
 		minimizable: false,
 		static: true,
 	})
-	d.wrapper.find("#confirm-print").on("click", () => {
+	d.wrapper.find('#confirm-print').on('click', () => {
 		frappe
-			.xcall("check_run.check_run.doctype.check_run.check_run.confirm_print", {
+			.xcall('check_run.check_run.doctype.check_run.check_run.confirm_print', {
 				docname: frm.doc.name,
 			})
 			.then(() => {
@@ -244,77 +227,74 @@ function confirm_print(frm) {
 				frm.reload_doc()
 			})
 	})
-	d.wrapper.find("#reprint").on("click", () => {
+	d.wrapper.find('#reprint').on('click', () => {
 		d.fields_dict.reprint_check_number.df.reqd = 1
 		let values = cur_dialog.get_values()
 		render_checks(frm, values.reprint_check_number || undefined)
-		frm.doc.status = "Submitted"
-		frm.page.set_indicator(__("Submitted"), "blue")
+		frm.doc.status = 'Submitted'
+		frm.page.set_indicator(__('Submitted'), 'blue')
 		d.hide()
 	})
 	d.show()
 }
 
 function reprint_checks(frm) {
-	frm.set_value("status", "Submitted")
+	frm.set_value('status', 'Submitted')
 	let d = new frappe.ui.Dialog({
-		title: __("Re-Print"),
+		title: __('Re-Print'),
 		fields: [
 			{
-				fieldname: "ht",
-				fieldtype: "HTML",
+				fieldname: 'ht',
+				fieldtype: 'HTML',
 				options: `<button id="reprint" class="btn btn-sm btn-warning" style="width: 48% color: white">${__(
-					"Re-Print Checks"
+					'Re-Print Checks'
 				)}</button><br><br>`,
 			},
 			{
-				fieldname: "reprint_check_number",
-				fieldtype: "Data",
-				label: __("New Initial Check Number"),
+				fieldname: 'reprint_check_number',
+				fieldtype: 'Data',
+				label: __('New Initial Check Number'),
 			},
 		],
 		minimizable: false,
 		static: true,
 	})
-	d.wrapper.find("#reprint").on("click", () => {
+	d.wrapper.find('#reprint').on('click', () => {
 		d.fields_dict.reprint_check_number.df.reqd = 1
 		let values = cur_dialog.get_values()
 		render_checks(frm, values.reprint_check_number || undefined)
 		d.hide()
 		frm.reload_doc()
-		frm.set_value("status", "Submitted")
+		frm.set_value('status', 'Submitted')
 	})
 	d.show()
 }
 
 function ach_only(frm) {
 	frappe
-		.xcall("check_run.check_run.doctype.check_run.check_run.ach_only", {
+		.xcall('check_run.check_run.doctype.check_run.check_run.ach_only', {
 			docname: frm.doc.name,
 		})
-		.then((r) => {
+		.then(r => {
 			if (!r.ach_only) {
 				if (frm.doc.docstatus == 1) {
-					if (frm.doc.print_count > 0 && frm.doc.status != "Ready to Print") {
-						frm.add_custom_button(__("Re-Print Checks"), () => {
+					if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
+						frm.add_custom_button(__('Re-Print Checks'), () => {
 							reprint_checks(frm)
 						})
-					} else if (
-						frm.doc.print_count == 0 &&
-						frm.doc.status == "Submitted"
-					) {
+					} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
 						render_checks(frm)
 					}
 				}
-				if (frm.doc.status == "Ready to Print") {
-					frm.add_custom_button(__("Download Checks"), () => {
+				if (frm.doc.status == 'Ready to Print') {
+					frm.add_custom_button(__('Download Checks'), () => {
 						download_checks(frm)
 					})
 				}
 			}
 			if (!r.print_checks_only) {
 				if (frm.doc.docstatus == 1) {
-					frm.add_custom_button(__("Download NACHA File"), () => {
+					frm.add_custom_button(__('Download NACHA File'), () => {
 						download_nacha(frm)
 					})
 				}
@@ -337,15 +317,15 @@ function validate_mode_of_payment_mandatory(frm) {
 	if (mode_of_payment_required.length == 0) {
 		return
 	}
-	let message = ""
+	let message = ''
 	for (const index in mode_of_payment_required) {
 		let row = mode_of_payment_required[index]
 		message += `<li>Row ${row.row}: ${row.party} - ${row.ref_name}</li>`
 	}
 	frappe.msgprint({
 		message: `<br><br><ul>${message}</ul>`,
-		indicator: "red",
-		title: __("Mode of Payment Required"),
+		indicator: 'red',
+		title: __('Mode of Payment Required'),
 		raise_exception: true,
 	})
 }
@@ -353,27 +333,27 @@ function validate_mode_of_payment_mandatory(frm) {
 function render_checks(frm, reprint_check_number = undefined) {
 	frappe
 		.call({
-			method: "increment_print_count",
+			method: 'increment_print_count',
 			doc: frm.doc,
 			args: { reprint_check_number: reprint_check_number },
 		})
 		.done(() => {
 			frm.reload_doc()
-			frm.add_custom_button(__("Re-Print Checks"), () => {
+			frm.add_custom_button(__('Re-Print Checks'), () => {
 				reprint_checks(frm)
 			})
 		})
-		.fail((r) => {
+		.fail(r => {
 			frm.reload_doc()
 		})
 }
 
 function download_checks(frm) {
 	frappe
-		.xcall("check_run.check_run.doctype.check_run.check_run.download_checks", {
+		.xcall('check_run.check_run.doctype.check_run.check_run.download_checks', {
 			docname: frm.doc.name,
 		})
-		.then((r) => {
+		.then(r => {
 			if (r) {
 				frm.reload_doc()
 				window.open(r)
@@ -382,23 +362,16 @@ function download_checks(frm) {
 }
 
 function download_nacha(frm) {
-	window.open(
-		`/api/method/check_run.check_run.doctype.check_run.check_run.download_nacha?docname=${frm.doc.name}`
-	)
+	window.open(`/api/method/check_run.check_run.doctype.check_run.check_run.download_nacha?docname=${frm.doc.name}`)
 	window.setTimeout(() => {
 		frm.reload_doc()
 	}, 1000)
 }
 
 function settings_button(frm) {
-	frm.add_custom_button(__("Modify Settings"), () => {
-		frappe
-			.xcall(
-				"check_run.check_run.doctype.check_run.check_run.get_check_run_settings",
-				{ doc: frm.doc }
-			)
-			.then((r) => {
-				frappe.set_route("Form", "Check Run Settings", r.name)
-			})
+	frm.add_custom_button(__('Modify Settings'), () => {
+		frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', { doc: frm.doc }).then(r => {
+			frappe.set_route('Form', 'Check Run Settings', r.name)
+		})
 	})
 }

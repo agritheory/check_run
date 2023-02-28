@@ -1,2 +1,2 @@
-import "./commands";
-import "../../../frappe/cypress/support/commands";
+import './commands'
+import '../../../frappe/cypress/support/commands'
