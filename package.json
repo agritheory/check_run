@@ -1,5 +1,6 @@
 {
 	"name": "check_run",
+	"license": "MIT",
 	"dependencies": {},
 	"devDependencies": {
 		"@testing-library/cypress": "^8",

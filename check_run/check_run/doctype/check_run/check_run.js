@@ -26,28 +26,7 @@ frappe.ui.form.on("Check Run", {
 		if(frm.is_new()){
 			get_balance(frm)
 		}
-		frappe.call({
-			method: "ach_only",
-			doc: frm.doc,
-		}).done(r => {
-			if (!r.message.ach_only) {
-				if (frm.doc.docstatus == 1) {
-					if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
-						frm.add_custom_button(__("Re-Print Checks"), () => { reprint_checks(frm) })
-					} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
-						render_checks(frm)
-					}
-				}
-				if (frm.doc.status == 'Ready to Print') {
-					frm.add_custom_button(__("Download Checks"), () => { download_checks(frm) })
-				}
-			}
-			if (!r.message.print_checks_only) {
-				if (frm.doc.docstatus == 1) {
-					frm.add_custom_button(__("Download NACHA File"), () => { download_nacha(frm) })
-				}
-			}
-		})
+		ach_only(frm)
 		get_entries(frm)
 		confirm_print(frm)
 		if(frm.doc.docstatus > 0){
@@ -222,13 +201,16 @@ function confirm_print(frm){
 	d.wrapper.find('#reprint').on('click', () => {
 		d.fields_dict.reprint_check_number.df.reqd = 1
 		let values = cur_dialog.get_values()
-		reprint_checks(frm, values.reprint_check_number || undefined)
+		render_checks(frm, values.reprint_check_number || undefined)
+		frm.doc.status = 'Submitted'
+		frm.page.set_indicator(__("Submitted"), "blue")
 		d.hide()
 	})
 	d.show()
 }
 
 function reprint_checks(frm) {
+	frm.set_value('status', 'Submitted')
 	let d = new frappe.ui.Dialog({
 		title: __("Re-Print"),
 		fields: [
@@ -250,11 +232,33 @@ function reprint_checks(frm) {
 		let values = cur_dialog.get_values()
 		render_checks(frm, values.reprint_check_number || undefined)
 		d.hide()
-		window.setTimeout(() => {
-			frm.reload_doc()
-		}, 1000)
+		frm.reload_doc()
+		frm.set_value('status', 'Submitted')
 	})
 	d.show()
+}
+
+function ach_only(frm){
+	frappe.xcall("check_run.check_run.doctype.check_run.check_run.ach_only", {docname: frm.doc.name})
+	.then(r => {
+		if (!r.ach_only) {
+			if (frm.doc.docstatus == 1) {
+				if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
+					frm.add_custom_button(__("Re-Print Checks"), () => { reprint_checks(frm) })
+				} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
+					render_checks(frm)
+				}
+			}
+			if (frm.doc.status == 'Ready to Print') {
+				frm.add_custom_button(__("Download Checks"), () => { download_checks(frm) })
+			}
+		}
+		if (!r.print_checks_only) {
+			if (frm.doc.docstatus == 1) {
+				frm.add_custom_button(__("Download NACHA File"), () => { download_nacha(frm) })
+			}
+		}
+	})
 }
 
 
