@@ -96,6 +96,106 @@ tax_authority = [
 	}),
 ]
 
+employees = [
+	('Wilmer Larson',
+	'Male',
+	'1977-03-06',
+	'2019-04-12',
+	'20 Gaven Path',
+	'Spokane',
+	'NV',
+	'66308'),
+ ('Shanel Finley',
+	'Female',
+	'1984-04-23',
+	'2019-07-04',
+	'1070 Ulloa Green',
+	'DeKalb',
+	'PA',
+	'30474'),
+ ('Camellia Phelps',
+	'Female',
+	'1980-07-06',
+	'2019-07-28',
+	'787 Sotelo Arcade',
+	'Stockton',
+	'CO',
+	'14860'),
+ ('Michale Mitchell',
+	'Male',
+	'1984-06-29',
+	'2020-01-12',
+	'773 Icehouse Road',
+	'West Sacramento',
+	'VT',
+	'24355'),
+ ('Sharilyn Romero',
+	'Female',
+	'1998-04-22',
+	'2020-03-20',
+	'432 Dudley Ranch',
+	'Clovis',
+	'WA',
+	'97159'),
+ ('Doug Buckley',
+	'Male',
+	'1979-06-18',
+	'2020-09-08',
+	'771 Battery Caulfield Motorway',
+	'Yonkers',
+	'VT',
+	'38125'),
+ ('Margarito Wallace',
+	'Male',
+	'1991-08-17',
+	'2020-11-01',
+	'639 Brook Park',
+	'Terre Haute',
+	'OR',
+	'41704'),
+ ('Mckenzie Ashley',
+	'Female',
+	'1997-09-13',
+	'2021-02-22',
+	'1119 Hunter Glen',
+	'Ormond Beach',
+	'MD',
+	'30864'),
+ ('Merrie Oliver',
+	'Other',
+	'1979-11-08',
+	'2021-03-11',
+	'267 Vega Freeway',
+	'West Palm Beach',
+	'FL',
+	'24411'),
+ ('Naoma Blake',
+	'Female',
+	'1987-07-10',
+	'2021-06-21',
+	'649 Conrad Road',
+	'Thousand Oaks',
+	'CT',
+	'97929'),
+ ('Donnell Fry',
+	'Male',
+	'1994-07-27',
+	'2021-06-24',
+	'504 Starr King Canyon',
+	'Norwalk',
+	'OR',
+	'46845'),
+ ('Shalanda Peterson',
+	'Female',
+	'1999-10-04',
+	'2021-08-01',
+	'109 Seventh Parkway',
+	'Urbana',
+	'DE',
+	'55975')
+]
+
+
 def create_test_data():
 	settings = frappe._dict({
 		'day': datetime.date(int(frappe.defaults.get_defaults().get('fiscal_year')), 1 ,1),
@@ -111,8 +211,9 @@ def create_test_data():
 	create_invoices(settings)
 	config_expense_claim(settings)
 	create_employees(settings)
-	create_expense_claim(settings)
-	create_payroll_journal_entry(settings)
+	for month in range(1,13):
+		create_payroll_journal_entry(settings)
+		settings.day = settings.day.replace(month=month)
 
 
 def create_bank_and_bank_account(settings):
@@ -389,22 +490,22 @@ def config_expense_claim(settings):
 
 
 def create_employees(settings):
-	for employee_number in range(1, 13):
+	for employee_number, employee in enumerate(employees, start=10):
 		emp = frappe.new_doc('Employee')
-		emp.first_name = "Test"
-		emp.last_name = f"Employee {employee_number}"
+		emp.first_name = employee[0].split(' ')[0]
+		emp.last_name = employee[0].split(' ')[1]
 		emp.employment_type = "Full-time"
 		emp.company = settings.company
 		emp.status = "Active"
-		emp.gender = "Other"
-		emp.date_of_birth = datetime.date(1990, 1, 1)
-		emp.date_of_joining = datetime.date(2020, 1, 1)
+		emp.gender = employee[1]
+		emp.date_of_birth = employee[2]
+		emp.date_of_joining = employee[3]
 		emp.mode_of_payment = 'Check' if employee_number % 3 == 0 else 'ACH/EFT'
 		emp.mode_of_payment = 'Cash' if employee_number == 10 else emp.mode_of_payment
 		emp.expense_approver = 'Administrator'
 		if emp.mode_of_payment == 'ACH/EFT':
 			emp.bank = 'Local Bank'
-			emp.bank_account = f'{employee_number}123456'
+			emp.bank_account = f'{employee_number}12345'
 		emp.save()
 
 

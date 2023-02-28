@@ -304,6 +304,10 @@ class CheckRun(Document):
 		
 		frappe.db.set_value('Check Run', self.name, 'status', 'Ready to Print')
 		save_file(f"{self.name}.pdf", read_multi_pdf(output), 'Check Run', self.name, 'Home/Check Run', False, 0)
+		frappe.db.commit() # not sure about this / testing
+		js = "setTimeout(function(){cur_frm.reload_doc()}, 500)"
+		frappe.emit_js(js, user=self.owner)
+		frappe.emit_js(js, user=frappe.session.user)
 
 
 @frappe.whitelist()
