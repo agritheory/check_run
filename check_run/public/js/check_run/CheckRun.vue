@@ -135,9 +135,15 @@ export default {
 	},
 	methods: {
 		transactionUrl: transaction => {
-			return encodeURI(
-				`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${transaction.name}`
-			)
+			if(transaction.doctype !== 'Journal Entry'){
+				return encodeURI(
+					`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${transaction.name}`
+				)
+			} else {
+				return encodeURI(
+					`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${transaction.ref_number}`
+				)
+			}
 		},
 		paymentEntryUrl: transaction => {
 			if (!transaction.payment_entry) {
