@@ -100,6 +100,8 @@ class CheckRun(Document):
 		selected = [txn for txn in json.loads(self.get('transactions')) if txn['pay']]
 		wrong_status = []
 		for t in selected:
+			if not t['mode_of_payment']:
+				frappe.throw(frappe._(f"Mode of Payment Required: {t['party_name']} {t['ref_number']}"))
 			if frappe.get_value(t['doctype'], filters=t['name'], fieldname='docstatus') != 1:
 				wrong_status.append({'party_name': t['party_name'], 'ref_number': t['ref_number'] or '', 'name': t['name']})
 		if len(wrong_status) < 1:
@@ -542,7 +544,6 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 		ach_entry = ACHEntry(
 			transaction_code=22, # checking account 
 			receiving_dfi_identification=party_bank_routing_number,
-			check_digit=5,
 			dfi_account_number=party_bank_account,
 			amount=int(pe.paid_amount * 100),
 			individual_id_number='',
@@ -591,6 +592,8 @@ def get_check_run_settings(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	if frappe.db.exists('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account}):
 		return frappe.get_doc('Check Run Settings', {'bank_account': doc.bank_account, 'pay_to_account': doc.pay_to_account})
+	else:
+		return create(doc.company, doc.bank_account, doc.pay_to_account)
 
 
 def get_address(party, party_type, doctype, name):
