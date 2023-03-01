@@ -103,7 +103,8 @@ class CheckRun(Document):
 		for t in selected:
 			if not t['mode_of_payment']:
 				frappe.throw(frappe._(f"Mode of Payment Required: {t['party_name']} {t['ref_number']}"))
-			if frappe.get_value(t['doctype'], filters=t['name'], fieldname='docstatus') != 1:
+			filters = {'name': t['name'] if t['doctype'] != 'Journal Entry' else t['ref_number']}
+			if frappe.get_value(t['doctype'], filters, 'docstatus') != 1:
 				wrong_status.append({'party_name': t['party_name'], 'ref_number': t['ref_number'] or '', 'name': t['name']})
 		if len(wrong_status) < 1:
 			return
@@ -208,6 +209,12 @@ class CheckRun(Document):
 				continue
 			for group in groups:
 				_references = []
+				if group[0].doctype == 'Purchase Invoice':
+					party = frappe.db.get_value('Purchase Invoice', group[0].name, 'supplier')
+				elif group[0].doctype == 'Expense Claim':
+					party = frappe.db.get_value('Expense Claim', group[0].name, 'employee')
+				elif group[0].doctype == 'Journal Entry':
+					party = frappe.db.get_value('Journal Entry Account', group[0].name, 'party')
 				pe = frappe.new_doc("Payment Entry")
 				pe.payment_type = "Pay"
 				pe.posting_date = nowdate()
@@ -236,9 +243,13 @@ class CheckRun(Document):
 					if settings.automatically_release_on_hold_invoices and reference.doctype == 'Purchase Invoice':
 						if frappe.get_value(reference.doctype, reference.name, 'on_hold'):
 							frappe.db.set_value(reference.doctype, reference.name, 'on_hold', 0)
+					if reference.doctype == 'Journal Entry':
+						reference_name = reference.ref_number
+					else:
+						reference_name = reference.name or reference.ref_number
 					pe.append('references', {
 							"reference_doctype": reference.doctype,
-							"reference_name": reference.name or reference.ref_number,
+							"reference_name": reference_name,
 							"due_date": reference.get("due_date"),
 							"outstanding_amount": flt(reference.amount),
 							"allocated_amount": flt(reference.amount),
@@ -445,7 +456,7 @@ def get_entries(doc):
 			.select(
 				ConstantColumn('Journal Entry').as_('doctype'),
 				je_accounts.party_type,
-				journal_entries.name,
+				je_accounts.name,
 				(journal_entries.name).as_('ref_number'),
 				je_accounts.party,
 				(je_accounts.party).as_('party_name'),
