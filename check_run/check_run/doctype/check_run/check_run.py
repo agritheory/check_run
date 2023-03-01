@@ -26,6 +26,8 @@ from erpnext.accounts.utils import get_balance_on
 from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_dimensions
 
 from atnacha import ACHEntry, ACHBatch, NACHAFile
+from check_run.check_run.doctype.check_run_settings.check_run_settings import create
+
 
 class CheckRun(Document):
 	def onload(self):
@@ -49,7 +51,6 @@ class CheckRun(Document):
 		else:
 			self.validate_transactions()
 			self.validate_last_check_number()
-		# Check all selected invoices have correct docstatus (saved/submitted)
 
 	def on_cancel(self):
 		settings = get_check_run_settings(self)
@@ -102,7 +103,8 @@ class CheckRun(Document):
 		for t in selected:
 			if not t['mode_of_payment']:
 				frappe.throw(frappe._(f"Mode of Payment Required: {t['party_name']} {t['ref_number']}"))
-			if frappe.get_value(t['doctype'], filters=t['name'], fieldname='docstatus') != 1:
+			filters = {'name': t['name'] if t['doctype'] != 'Journal Entry' else t['ref_number']}
+			if frappe.get_value(t['doctype'], filters, 'docstatus') != 1:
 				wrong_status.append({'party_name': t['party_name'], 'ref_number': t['ref_number'] or '', 'name': t['name']})
 		if len(wrong_status) < 1:
 			return
@@ -208,6 +210,12 @@ class CheckRun(Document):
 				continue
 			for group in groups:
 				_references = []
+				if group[0].doctype == 'Purchase Invoice':
+					party = frappe.db.get_value('Purchase Invoice', group[0].name, 'supplier')
+				elif group[0].doctype == 'Expense Claim':
+					party = frappe.db.get_value('Expense Claim', group[0].name, 'employee')
+				elif group[0].doctype == 'Journal Entry':
+					party = frappe.db.get_value('Journal Entry Account', group[0].name, 'party')
 				pe = frappe.new_doc("Payment Entry")
 				pe.payment_type = "Pay"
 				pe.posting_date = nowdate()
@@ -220,7 +228,7 @@ class CheckRun(Document):
 				pe.paid_from_account_currency = pe.paid_to_account_currency
 				pe.reference_date = self.posting_date
 				pe.party_type = group[0].party_type
-				pe.party = group[0].party
+				pe.party = party
 				pe.check_run = self.name
 				total_amount = 0
 				if frappe.db.get_value('Mode of Payment', _group[0].mode_of_payment, 'type') == 'Bank':
@@ -236,9 +244,13 @@ class CheckRun(Document):
 					if settings.automatically_release_on_hold_invoices and reference.doctype == 'Purchase Invoice':
 						if frappe.get_value(reference.doctype, reference.name, 'on_hold'):
 							frappe.db.set_value(reference.doctype, reference.name, 'on_hold', 0)
+					if reference.doctype == 'Journal Entry':
+						reference_name = reference.ref_number
+					else:
+						reference_name = reference.name or reference.ref_number
 					pe.append('references', {
 							"reference_doctype": reference.doctype,
-							"reference_name": reference.name or reference.ref_number,
+							"reference_name": reference_name,
 							"due_date": reference.get("due_date"),
 							"outstanding_amount": flt(reference.amount),
 							"allocated_amount": flt(reference.amount),
@@ -420,7 +432,7 @@ def get_entries(doc):
 			SELECT
 				'Journal Entry' AS doctype,
 				`tabJournal Entry Account`.party_type,
-				`tabJournal Entry`.name,
+				`tabJournal Entry Account`.name,
 				`tabJournal Entry`.name AS ref_number,
 				`tabJournal Entry Account`.party,
 				`tabJournal Entry Account`.party AS party_name,
