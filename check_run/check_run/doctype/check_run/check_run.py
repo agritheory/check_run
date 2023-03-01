@@ -564,7 +564,6 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 		ach_entry = ACHEntry(
 			transaction_code=22, # checking account 
 			receiving_dfi_identification=party_bank_routing_number,
-			check_digit=5,
 			dfi_account_number=party_bank_account,
 			amount=int(pe.paid_amount * 100),
 			individual_id_number='',
