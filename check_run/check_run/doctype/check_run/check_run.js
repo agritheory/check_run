@@ -21,6 +21,13 @@ frappe.ui.form.on('Check Run', {
 	},
 	refresh: frm => {
 		frm.layout.show_message('')
+		if (frm.doc.__onload && frm.doc.__onload.errors){
+			frm.set_intro(__('<a href="" id="check-run-error">This Check Run has errors</a>'), 'red')
+			$('#check-run-error').off().on('click', () =>{
+				frappe.route_options = {'method': ['like', `%${cur_frm.doc.name}%`]}
+				frappe.set_route('list', 'Error Log')
+			})
+		}
 		settings_button(frm)
 		permit_first_user(frm)
 		get_defaults(frm)
@@ -29,7 +36,6 @@ frappe.ui.form.on('Check Run', {
 		frappe.realtime.on('reload', message => {
 			frm.reload_doc()
 		})
-
 		if (frm.is_new()) {
 			get_balance(frm)
 		}

@@ -36,6 +36,9 @@ class CheckRun(Document):
 		settings = get_check_run_settings(self)
 		if not settings:
 			self.set_onload('settings_missing', True)
+		errors = frappe.get_all('Error Log', {'method': ['like', f"%{self.name}%"]})
+		if errors and self.docstatus == 0:
+			self.set_onload('errors', True)
 
 	def validate(self):
 		self.set_status()
@@ -155,7 +158,10 @@ class CheckRun(Document):
 			frappe.db.commit()
 			frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 		except Exception as e:
-			frappe.log_error(title=f"{self.name} Check Run Error", message=e)
+			self.db_set('status', 'Draft')
+			self.db_set('docstatus', 0)
+			frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
+			raise e
 
 	def build_nacha_file(self, settings=None):
 		electronic_mop = frappe.get_all('Mode of Payment', {'type': 'Electronic', 'enabled': 1}, 'name', pluck="name")
@@ -263,8 +269,12 @@ class CheckRun(Document):
 				pe.paid_amount = total_amount
 				pe.base_paid_amount = total_amount
 				pe.base_grand_total = total_amount
-				pe.save()
-				pe.submit()
+				try:
+					pe.save()
+					pe.submit()
+				except Exception as e:
+					frappe.log_error(title=f"{self.name} Check Run Error", message=e)
+					raise e
 				for reference in _references:
 					reference.payment_entry = pe.name
 					_transactions.append(reference)
@@ -404,7 +414,7 @@ def get_entries(doc):
 			.where(purchase_invoices.docstatus == 1)
 			.where(purchase_invoices.credit_to == pay_to_account)
 			.where(purchase_invoices.due_date <= end_date)
-			.where(Coalesce(purchase_invoices.release_date, datetime.date(1900, 1, 1)) <= end_date)
+			.where(Coalesce(purchase_invoices.release_date, datetime.date(1900, 1, 1)) < end_date)
 	)
 
 	# Build expense claims query

@@ -97,105 +97,108 @@ tax_authority = [
 	}),
 ]
 
-employees = [('Wilmer Larson',
-  'Male',
-  '1977-03-06',
-  '2019-04-12',
-  '20 Gaven Path',
-  'Spokane',
-  'NV',
-  '66308'),
+employees = [
+	('Wilmer Larson',
+	'Male',
+	'1977-03-06',
+	'2019-04-12',
+	'20 Gaven Path',
+	'Spokane',
+	'NV',
+	'66308'),
  ('Shanel Finley',
-  'Female',
-  '1984-04-23',
-  '2019-07-04',
-  '1070 Ulloa Green',
-  'DeKalb',
-  'PA',
-  '30474'),
+	'Female',
+	'1984-04-23',
+	'2019-07-04',
+	'1070 Ulloa Green',
+	'DeKalb',
+	'PA',
+	'30474'),
  ('Camellia Phelps',
-  'Female',
-  '1980-07-06',
-  '2019-07-28',
-  '787 Sotelo Arcade',
-  'Stockton',
-  'CO',
-  '14860'),
+	'Female',
+	'1980-07-06',
+	'2019-07-28',
+	'787 Sotelo Arcade',
+	'Stockton',
+	'CO',
+	'14860'),
  ('Michale Mitchell',
-  'Male',
-  '1984-06-29',
-  '2020-01-12',
-  '773 Icehouse Road',
-  'West Sacramento',
-  'VT',
-  '24355'),
+	'Male',
+	'1984-06-29',
+	'2020-01-12',
+	'773 Icehouse Road',
+	'West Sacramento',
+	'VT',
+	'24355'),
  ('Sharilyn Romero',
-  'Female',
-  '1998-04-22',
-  '2020-03-20',
-  '432 Dudley Ranch',
-  'Clovis',
-  'WA',
-  '97159'),
+	'Female',
+	'1998-04-22',
+	'2020-03-20',
+	'432 Dudley Ranch',
+	'Clovis',
+	'WA',
+	'97159'),
  ('Doug Buckley',
-  'Male',
-  '1979-06-18',
-  '2020-09-08',
-  '771 Battery Caulfield Motorway',
-  'Yonkers',
-  'VT',
-  '38125'),
+	'Male',
+	'1979-06-18',
+	'2020-09-08',
+	'771 Battery Caulfield Motorway',
+	'Yonkers',
+	'VT',
+	'38125'),
  ('Margarito Wallace',
-  'Male',
-  '1991-08-17',
-  '2020-11-01',
-  '639 Brook Park',
-  'Terre Haute',
-  'OR',
-  '41704'),
+	'Male',
+	'1991-08-17',
+	'2020-11-01',
+	'639 Brook Park',
+	'Terre Haute',
+	'OR',
+	'41704'),
  ('Mckenzie Ashley',
-  'Female',
-  '1997-09-13',
-  '2021-02-22',
-  '1119 Hunter Glen',
-  'Ormond Beach',
-  'MD',
-  '30864'),
+	'Female',
+	'1997-09-13',
+	'2021-02-22',
+	'1119 Hunter Glen',
+	'Ormond Beach',
+	'MD',
+	'30864'),
  ('Merrie Oliver',
-  'Other',
-  '1979-11-08',
-  '2021-03-11',
-  '267 Vega Freeway',
-  'West Palm Beach',
-  'FL',
-  '24411'),
+	'Other',
+	'1979-11-08',
+	'2021-03-11',
+	'267 Vega Freeway',
+	'West Palm Beach',
+	'FL',
+	'24411'),
  ('Naoma Blake',
-  'Female',
-  '1987-07-10',
-  '2021-06-21',
-  '649 Conrad Road',
-  'Thousand Oaks',
-  'CT',
-  '97929'),
+	'Female',
+	'1987-07-10',
+	'2021-06-21',
+	'649 Conrad Road',
+	'Thousand Oaks',
+	'CT',
+	'97929'),
  ('Donnell Fry',
-  'Male',
-  '1994-07-27',
-  '2021-06-24',
-  '504 Starr King Canyon',
-  'Norwalk',
-  'OR',
-  '46845'),
+	'Male',
+	'1994-07-27',
+	'2021-06-24',
+	'504 Starr King Canyon',
+	'Norwalk',
+	'OR',
+	'46845'),
  ('Shalanda Peterson',
-  'Female',
-  '1999-10-04',
-  '2021-08-01',
-  '109 Seventh Parkway',
-  'Urbana',
-  'DE',
-  '55975')]
+	'Female',
+	'1999-10-04',
+	'2021-08-01',
+	'109 Seventh Parkway',
+	'Urbana',
+	'DE',
+	'55975')
+]
 
 
 def create_test_data():
+	setup_accounts()
 	settings = frappe._dict({
 		'day': datetime.date(int(frappe.defaults.get_defaults().get('fiscal_year')), 1 ,1),
 		'company': frappe.defaults.get_defaults().get('company'),
@@ -203,14 +206,12 @@ def create_test_data():
 			{"account_type": "Bank", "company": frappe.defaults.get_defaults().get('company'), "is_group": 0}),
 		})
 	create_bank_and_bank_account(settings)
-	set_up_accounts(settings)
 	create_payment_terms_templates(settings)
 	create_suppliers(settings)
 	create_items(settings)
 	create_invoices(settings)
 	config_expense_claim(settings)
 	create_employees(settings)
-	create_expense_claim(settings)
 	for month in range(1,13):
 		create_payroll_journal_entry(settings)
 		settings.day = settings.day.replace(month=month)
@@ -225,9 +226,25 @@ def create_bank_and_bank_account(settings):
 		mop.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
 		mop.save()
 
-	frappe.db.set_value('Mode of Payment', 'Wire Transfer', 'type', 'General')
-	frappe.db.set_value('Mode of Payment', 'Credit Card', 'type', 'General')
-	frappe.db.set_value('Mode of Payment', 'Bank Draft', 'type', 'General')
+	wire_transfer = frappe.get_doc('Mode of Payment', 'Wire Transfer')
+	wire_transfer.type = 'General'
+	wire_transfer.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
+	wire_transfer.save()
+
+	credit_card = frappe.get_doc('Mode of Payment', 'Credit Card')
+	credit_card.type = 'General'
+	credit_card.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
+	credit_card.save()
+
+	bank_draft = frappe.get_doc('Mode of Payment', 'Bank Draft')
+	bank_draft.type = 'General'
+	bank_draft.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
+	bank_draft.save()
+
+	check_mop = frappe.get_doc('Mode of Payment', 'Check')
+	check_mop.type = 'General'
+	check_mop.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
+	check_mop.save()
 
 	if not frappe.db.exists('Bank', 'Local Bank'):
 		bank = frappe.new_doc('Bank')
@@ -260,11 +277,13 @@ def create_bank_and_bank_account(settings):
 	doc.save()
 	doc.submit()
 
-def set_up_accounts(settings):
+def setup_accounts():
 	frappe.rename_doc('Account', '1000 - Application of Funds (Assets) - CFC', '1000 - Assets - CFC', force=True)
 	frappe.rename_doc('Account', '2000 - Source of Funds (Liabilities) - CFC', '2000 - Liabilities - CFC', force=True)
 	frappe.rename_doc('Account', '1310 - Debtors - CFC', '1310 - Accounts Payable - CFC', force=True)
 	frappe.rename_doc('Account', '2110 - Creditors - CFC', '2110 - Accounts Receivable - CFC', force=True)
+	update_account_number('1110 - Cash - CFC', 'Petty Cash', account_number='1110')
+	update_account_number('Primary Checking - CFC', 'Primary Checking', account_number='1201')
 
 
 def create_payment_terms_templates(settings):
@@ -295,6 +314,7 @@ def create_payment_terms_templates(settings):
 			"due_date_based_on": "Day(s) after invoice date",
 			"credit_days": 14})
 		doc.save()
+
 
 def create_suppliers(settings):
 	addresses = frappe._dict({})
@@ -488,6 +508,7 @@ def config_expense_claim(settings):
 	pta.parent_account = frappe.get_value('Account', {'account_name': 'Indirect Expenses', 'company': settings.company})
 	pta.save()
 
+
 def create_employees(settings):
 	for employee_number, employee in enumerate(employees, start=10):
 		emp = frappe.new_doc('Employee')
@@ -506,6 +527,7 @@ def create_employees(settings):
 			emp.bank = 'Local Bank'
 			emp.bank_account = f'{employee_number}12345'
 		emp.save()
+
 
 def create_expense_claim(settings):
 	cost_center = frappe.get_value('Company', settings.company, 'cost_center')
@@ -563,6 +585,7 @@ def create_expense_claim(settings):
 	ec.payable_account = payable_acct
 	ec.save()
 	ec.submit()
+
 
 def create_payroll_journal_entry(settings):
 	emps = frappe.get_list('Employee', {'company': settings.company})
