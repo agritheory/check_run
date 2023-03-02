@@ -36,6 +36,10 @@ class CheckRun(Document):
 		settings = get_check_run_settings(self)
 		if not settings:
 			self.set_onload('settings_missing', True)
+		errors = frappe.get_all('Error Log', {'method': ['like', f"%{self.name}%"], 'seen': 0})
+		print(errors)
+		if errors and self.docstatus == 0:
+			self.set_onload('errors', True)
 
 	def validate(self):
 		self.set_status()
@@ -129,7 +133,7 @@ class CheckRun(Document):
 		transactions = self.transactions
 		transactions = json.loads(transactions)
 		if len(transactions) < 1:
-			frappe.throw("You must select at least one Invoice to pay.")
+			frappe.throw(frappe._("You must select at least one Invoice to pay."))
 		self.print_count = 0
 		if self.ach_only().ach_only:
 			self.initial_check_number = ""
@@ -153,11 +157,13 @@ class CheckRun(Document):
 			if self.final_check_number:
 				frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 			frappe.db.commit()
-			js = "console.log('_before_submit'); setTimeout(function(){cur_frm.reload_doc()}, 500)"
-			frappe.emit_js(js, user=self.owner)
-			frappe.emit_js(js, user=frappe.session.user)
+			frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 		except Exception as e:
-			frappe.log_error(title=f"{self.name} Check Run Error", message=e)
+			self.db_set('status', 'Draft')
+			self.db_set('docstatus', 0)
+			frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
+			raise e
+
 
 	def build_nacha_file(self, settings=None):
 		electronic_mop = frappe.get_all('Mode of Payment', {'type': 'Electronic', 'enabled': 1}, 'name', pluck="name")
@@ -264,8 +270,12 @@ class CheckRun(Document):
 				pe.paid_amount = total_amount
 				pe.base_paid_amount = total_amount
 				pe.base_grand_total = total_amount
-				pe.save()
-				pe.submit()
+				try:
+					pe.save()
+					pe.submit()
+				except Exception as e:
+					frappe.log_error(title=f"{self.name} Check Run Error", message=e)
+					raise e
 				for reference in _references:
 					reference.payment_entry = pe.name
 					_transactions.append(reference)
@@ -326,9 +336,7 @@ class CheckRun(Document):
 		frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 		save_file(f"{self.name}.pdf", read_multi_pdf(output), 'Check Run', self.name, 'Home/Check Run', False, 0)
 		frappe.db.commit()
-		js = "setTimeout(function(){cur_frm.reload_doc()}, 500)"
-		frappe.emit_js(js, user=self.owner)
-		frappe.emit_js(js, user=frappe.session.user)
+		frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 
 
 @frappe.whitelist()
