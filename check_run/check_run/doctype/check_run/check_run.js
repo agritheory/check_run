@@ -205,7 +205,7 @@ function confirm_print(frm) {
 				options: `<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">${__(
 					'Confirm Print'
 				)}</button>
-			<button id="reprint" class="btn btn-sm btn-warning" style="width: 48% color: white">${__('Re-Print Checks')}</button>
+			<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white">${__('Re-Print Checks')}</button>
 			<br><br>`,
 			},
 			{

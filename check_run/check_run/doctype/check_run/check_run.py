@@ -150,8 +150,6 @@ class CheckRun(Document):
 			
 			self.db_set('transactions', json.dumps(_transactions))
 			self.db_set('status', 'Submitted')
-			if self.final_check_number:
-				frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 			frappe.db.commit()
 			js = "console.log('_before_submit'); setTimeout(function(){cur_frm.reload_doc()}, 500)"
 			frappe.emit_js(js, user=self.owner)
@@ -320,6 +318,7 @@ class CheckRun(Document):
 
 		if _transactions and reprint_check_number:
 			self.db_set('transactions', json.dumps(_transactions))
+		self.db_set('initial_check_number', self.initial_check_number)
 		self.db_set('final_check_number', self.initial_check_number + (check_increment - 1))
 		self.db_set('status', 'Ready to Print')
 		self.db_set('print_count', self.print_count)
