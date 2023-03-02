@@ -32,6 +32,7 @@ def before_test():
 	create_test_data()
 	for modu in frappe.get_all('Module Onboarding'):
 		frappe.db.set_value('Module Onboarding', modu, 'is_complete', 1)
+	frappe.set_value('Website Settings', 'Website Settings', 'home_page', 'login')
 	frappe.db.commit()
 
 suppliers = [
@@ -197,6 +198,7 @@ employees = [
 
 
 def create_test_data():
+	setup_accounts()
 	settings = frappe._dict({
 		'day': datetime.date(int(frappe.defaults.get_defaults().get('fiscal_year')), 1 ,1),
 		'company': frappe.defaults.get_defaults().get('company'),
@@ -204,7 +206,6 @@ def create_test_data():
 			{"account_type": "Bank", "company": frappe.defaults.get_defaults().get('company'), "is_group": 0}),
 		})
 	create_bank_and_bank_account(settings)
-	set_up_accounts(settings)
 	create_payment_terms_templates(settings)
 	create_suppliers(settings)
 	create_items(settings)
@@ -225,9 +226,25 @@ def create_bank_and_bank_account(settings):
 		mop.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
 		mop.save()
 
-	frappe.db.set_value('Mode of Payment', 'Wire Transfer', 'type', 'General')
-	frappe.db.set_value('Mode of Payment', 'Credit Card', 'type', 'General')
-	frappe.db.set_value('Mode of Payment', 'Bank Draft', 'type', 'General')
+	wire_transfer = frappe.get_doc('Mode of Payment', 'Wire Transfer')
+	wire_transfer.type = 'General'
+	wire_transfer.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
+	wire_transfer.save()
+
+	credit_card = frappe.get_doc('Mode of Payment', 'Credit Card')
+	credit_card.type = 'General'
+	credit_card.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
+	credit_card.save()
+
+	bank_draft = frappe.get_doc('Mode of Payment', 'Bank Draft')
+	bank_draft.type = 'General'
+	bank_draft.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
+	bank_draft.save()
+
+	check_mop = frappe.get_doc('Mode of Payment', 'Check')
+	check_mop.type = 'General'
+	check_mop.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
+	check_mop.save()
 
 	if not frappe.db.exists('Bank', 'Local Bank'):
 		bank = frappe.new_doc('Bank')
@@ -260,11 +277,13 @@ def create_bank_and_bank_account(settings):
 	doc.save()
 	doc.submit()
 
-def set_up_accounts(settings):
+def setup_accounts():
 	frappe.rename_doc('Account', '1000 - Application of Funds (Assets) - CFC', '1000 - Assets - CFC', force=True)
 	frappe.rename_doc('Account', '2000 - Source of Funds (Liabilities) - CFC', '2000 - Liabilities - CFC', force=True)
 	frappe.rename_doc('Account', '1310 - Debtors - CFC', '1310 - Accounts Payable - CFC', force=True)
 	frappe.rename_doc('Account', '2110 - Creditors - CFC', '2110 - Accounts Receivable - CFC', force=True)
+	update_account_number('1110 - Cash - CFC', 'Petty Cash', account_number='1110')
+	update_account_number('Primary Checking - CFC', 'Primary Checking', account_number='1201')
 
 
 def create_payment_terms_templates(settings):
@@ -295,6 +314,7 @@ def create_payment_terms_templates(settings):
 			"due_date_based_on": "Day(s) after invoice date",
 			"credit_days": 14})
 		doc.save()
+
 
 def create_suppliers(settings):
 	addresses = frappe._dict({})
