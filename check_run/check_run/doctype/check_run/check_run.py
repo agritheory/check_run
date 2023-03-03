@@ -146,23 +146,27 @@ class CheckRun(Document):
 			frappe.enqueue_doc(self.doctype, self.name, "_before_submit", save=True, queue="short", timeout=3600)
 
 	def _before_submit(self, save=False):
+		savepoint = "submit_check_run"
+		frappe.db.savepoint(savepoint)
 		try:
 			transactions = self.transactions
 			transactions = json.loads(transactions)
 			transactions = sorted([frappe._dict(item) for item in transactions if item.get("pay")], key=lambda x: x.party)
 			_transactions = self.create_payment_entries(transactions)
-			
-			self.db_set('transactions', json.dumps(_transactions))
-			self.db_set('status', 'Submitted')
-			if self.final_check_number:
-				frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
-			frappe.db.commit()
-			frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 		except Exception as e:
-			self.db_set('status', 'Draft')
-			self.db_set('docstatus', 0)
+			frappe.db.rollback()
+			frappe.db.set_value(self.doctype, self.name, 'status', 'Draft')
+			frappe.db.set_value(self.doctype, self.name, 'docstatus', 1)
+			frappe.log_error(title=f"{self.name} Check Run Error", message=e)
 			frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 			raise e
+			return 
+		
+		self.db_set('transactions', json.dumps(_transactions))
+		self.db_set('status', 'Submitted')
+		if self.final_check_number:
+			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
+		frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 
 
 	def build_nacha_file(self, settings=None):
@@ -274,7 +278,9 @@ class CheckRun(Document):
 					pe.save()
 					pe.submit()
 				except Exception as e:
+					frappe.db.rollback()
 					frappe.log_error(title=f"{self.name} Check Run Error", message=e)
+					frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 					raise e
 				for reference in _references:
 					reference.payment_entry = pe.name
@@ -288,6 +294,8 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	def render_check_pdf(self, reprint_check_number=None):
+		if self.docstatus != 1:
+			return
 		self.load_from_db()
 		self.print_count = self.print_count + 1
 		self.set_status('Submitted')
