@@ -37,7 +37,6 @@ class CheckRun(Document):
 		if not settings:
 			self.set_onload('settings_missing', True)
 		errors = frappe.get_all('Error Log', {'method': ['like', f"%{self.name}%"], 'seen': 0})
-		print(errors)
 		if errors and self.docstatus == 0:
 			self.set_onload('errors', True)
 
@@ -129,7 +128,8 @@ class CheckRun(Document):
 			frappe.throw(f'Initial Check Number cannot be lower than the last used check number <b>{account_check_number}</b> for <b>{self.bank_account}</b>')
 
 	@frappe.whitelist()
-	def before_submit(self):
+	def process_check_run(self):
+		self.status = 'Submitting'
 		transactions = self.transactions
 		transactions = json.loads(transactions)
 		if len(transactions) < 1:
@@ -138,15 +138,11 @@ class CheckRun(Document):
 		if self.ach_only().ach_only:
 			self.initial_check_number = ""
 			self.final_check_number = ""
+		print('process_check_run')
+		frappe.enqueue_doc(self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600)
 
-		if len(transactions) < 25:
-			self._before_submit()
-		else:
-			self.status = 'Submitting'
-			frappe.enqueue_doc(self.doctype, self.name, "_before_submit", save=True, queue="short", timeout=3600)
-
-	def _before_submit(self, save=False):
-		savepoint = "submit_check_run"
+	def _process_check_run(self, save=False):
+		savepoint = "process_check_run"
 		frappe.db.savepoint(savepoint)
 		try:
 			transactions = self.transactions
@@ -154,16 +150,13 @@ class CheckRun(Document):
 			transactions = sorted([frappe._dict(item) for item in transactions if item.get("pay")], key=lambda x: x.party)
 			_transactions = self.create_payment_entries(transactions)
 		except Exception as e:
-			frappe.db.rollback()
-			frappe.db.set_value(self.doctype, self.name, 'status', 'Draft')
-			frappe.db.set_value(self.doctype, self.name, 'docstatus', 1)
-			frappe.log_error(title=f"{self.name} Check Run Error", message=e)
-			frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
+			frappe.db.rollback(savepoint="process_check_run")
 			raise e
-			return 
 		
-		self.db_set('transactions', json.dumps(_transactions))
-		self.db_set('status', 'Submitted')
+		self.transactions = json.dumps(_transactions)
+		self.set_status('Submitted')
+		self.save()
+		self.submit()
 		if self.final_check_number:
 			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 		frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
@@ -642,3 +635,8 @@ def ach_only(docname):
 		return {'ach_only': False, 'checks_only': False}
 	cr = frappe.get_doc('Check Run', docname)
 	return cr.ach_only()
+
+@frappe.whitelist()
+def process_check_run(docname):
+	doc = frappe.get_doc('Check Run', docname)
+	doc.process_check_run()

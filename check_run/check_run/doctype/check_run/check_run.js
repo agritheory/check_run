@@ -21,8 +21,9 @@ frappe.ui.form.on('Check Run', {
 	},
 	refresh: frm => {
 		frm.layout.show_message('')
-		if (frm.doc.__onload && frm.doc.__onload.errors) {
-			frm.set_intro(__('<a href="" id="check-run-error">This Check Run has errors</a>'), 'red')
+		frm.trigger('update_primary_action')
+		if (frm.doc.docstatus < 1 && frm.doc.__onload && frm.doc.__onload.errors) {
+			frm.set_intro(__('<a href="" style="color: var(--red)" id="check-run-error">This Check Run has errors, click to view.</a>'), 'red')
 			$('#check-run-error').off().on('click', () => {
 				frappe.route_options = { 'method': ['like', `%${cur_frm.doc.name}%`] }
 				frappe.set_route('List', 'Error Log')
@@ -34,7 +35,6 @@ frappe.ui.form.on('Check Run', {
 		set_queries(frm)
 		frappe.realtime.off('reload')
 		frappe.realtime.on('reload', message => {
-			console.log('reload')
 			frm.reload_doc()
 		})
 		if (frm.is_new()) {
@@ -76,6 +76,8 @@ frappe.ui.form.on('Check Run', {
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
 		permit_first_user(frm)
+		frm.trigger('update_primary_action')
+		$(frm.wrapper).on("dirty", () => { frm.trigger('update_primary_action') })
 	},
 	end_date: frm => {
 		get_entries(frm)
@@ -110,6 +112,23 @@ frappe.ui.form.on('Check Run', {
 	bank_account: frm => {
 		get_balance(frm)
 	},
+	process_check_run: frm => {
+		frm.layout.show_message('')
+		frm.doc.status = 'Submitting'
+		frm.page.set_indicator(__('Submitting'), 'orange')
+		frm.disable_form()
+		$(frm.$check_run).css({ 'pointer-events': 'none' })
+		frappe.xcall('check_run.check_run.doctype.check_run.check_run.process_check_run', {docname: frm.doc.name})
+	},
+	update_primary_action: frm => {
+		frm.disable_save()
+		if (frm.is_dirty()) {
+			frm.enable_save()
+		}
+		else if (frm.doc.status === 'Draft') {
+			frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
+		}
+	}
 })
 
 function get_balance(frm) {
@@ -151,7 +170,7 @@ function get_entries(frm) {
 			check_run.mount_table(frm)
 			if (!frappe.user.has_role(['Accounts Manager'])) {
 				frm.disable_form()
-				frm.$check_run.css({ 'pointer-events': 'none' })
+				$(frm.$check_run).css({ 'pointer-events': 'none' })
 			}
 		})
 }
@@ -200,7 +219,8 @@ function permit_first_user(frm) {
 		return
 	} else if (frm.user_lock && frappe.session.user != frm.user_lock) {
 		frm.disable_form()
-		frm.$check_run.css({ 'pointer-events': 'none' })
+		frm.disable_save()
+		$(frm.$check_run).css({ 'pointer-events': 'none' })
 	}
 }
 
