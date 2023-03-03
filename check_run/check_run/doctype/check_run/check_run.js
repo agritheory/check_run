@@ -22,7 +22,7 @@ frappe.ui.form.on('Check Run', {
 	refresh: frm => {
 		frm.layout.show_message('')
 		frm.trigger('update_primary_action')
-		if (frm.doc.__onload && frm.doc.__onload.errors){
+		if (frm.doc.__onload && frm.doc.__onload.errors) {
 			frm.set_intro(__('<a href="" id="check-run-error">This Check Run has errors</a>'), 'red')
 			$('#check-run-error')
 				.off()
@@ -55,7 +55,9 @@ frappe.ui.form.on('Check Run', {
 		frm.page.wrapper.find('.layout-side-section').hide()
 		permit_first_user(frm)
 		frm.trigger('update_primary_action')
-		$(frm.wrapper).on("dirty", () => { frm.trigger('update_primary_action') })
+		$(frm.wrapper).on('dirty', () => {
+			frm.trigger('update_primary_action')
+		})
 	},
 	end_date: frm => {
 		get_entries(frm)
@@ -98,11 +100,10 @@ frappe.ui.form.on('Check Run', {
 		frm.disable_save()
 		if (frm.is_dirty()) {
 			frm.enable_save()
-		}
-		else if (frm.doc.status === 'Draft') {
+		} else if (frm.doc.status === 'Draft') {
 			frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
 		}
-	}
+	},
 })
 
 function get_balance(frm) {
