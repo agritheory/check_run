@@ -36,6 +36,7 @@ app_include_js = [
 # include js in doctype views
 doctype_js = {
 	'Employee': 'public/js/custom/employee_custom.js',
+	"Payment Entry": 'public/js/custom/payment_entry_custom.js',
 	"Supplier": 'public/js/custom/supplier_custom.js',
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
@@ -102,13 +103,11 @@ override_doctype_class = {
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-#	}
-# }
+doc_events = {
+	"Payment Entry": {
+		"on_submit": "check_run.overrides.payment_entry.update_check_number",
+	}
+}
 
 # Scheduled Tasks
 # ---------------

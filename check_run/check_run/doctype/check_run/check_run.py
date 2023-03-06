@@ -327,6 +327,7 @@ class CheckRun(Document):
 
 		if _transactions and reprint_check_number:
 			self.db_set('transactions', json.dumps(_transactions))
+		self.db_set('initial_check_number', self.initial_check_number)
 		self.db_set('final_check_number', self.initial_check_number + (check_increment - 1))
 		self.db_set('status', 'Ready to Print')
 		self.db_set('print_count', self.print_count)
