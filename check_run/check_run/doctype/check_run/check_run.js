@@ -23,12 +23,13 @@ frappe.ui.form.on('Check Run', {
 		frm.layout.show_message('')
 		frm.trigger('update_primary_action')
 		if (frm.doc.__onload && frm.doc.__onload.errors) {
-			frm.set_intro(__('<a href="" id="check-run-error">This Check Run has errors</a>'), 'red')
+			frm.set_intro(__('<a href="" style="color: var(--red)" id="check-run-error">This Check Run has errors, click to view.</a>'), 'red')
 			$('#check-run-error')
 				.off()
-				.on('click', () => {
-					frappe.route_options = { method: ['like', `%${cur_frm.doc.name}%`] }
+				.on('click', e => {
+					frappe.route_options = { method: ['like', `%${frm.doc.name}%`] }
 					frappe.set_route('list', 'Error Log')
+					e.stopPropagation()
 				})
 		}
 		settings_button(frm)
