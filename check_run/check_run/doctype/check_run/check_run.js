@@ -23,12 +23,17 @@ frappe.ui.form.on('Check Run', {
 		frm.layout.show_message('')
 		frm.trigger('update_primary_action')
 		if (frm.doc.docstatus < 1 && frm.doc.__onload && frm.doc.__onload.errors) {
-			frm.set_intro(__('<a href="" style="color: var(--red)" id="check-run-error">This Check Run has errors, click to view.</a>'), 'red')
-			$('#check-run-error').off().on('click', e => {
-				frappe.route_options = { 'method': ['like', `%${frm.doc.name}%`] }
-				frappe.set_route('List', 'Error Log')
-				e.stopPropagation()
-			})
+			frm.set_intro(
+				__('<a href="" style="color: var(--red)" id="check-run-error">This Check Run has errors, click to view.</a>'),
+				'red'
+			)
+			$('#check-run-error')
+				.off()
+				.on('click', e => {
+					frappe.route_options = { method: ['like', `%${frm.doc.name}%`] }
+					frappe.set_route('List', 'Error Log')
+					e.stopPropagation()
+				})
 		}
 		settings_button(frm)
 		permit_first_user(frm)
@@ -54,7 +59,9 @@ frappe.ui.form.on('Check Run', {
 		frm.page.wrapper.find('.layout-side-section').hide()
 		permit_first_user(frm)
 		frm.trigger('update_primary_action')
-		$(frm.wrapper).on("dirty", () => { frm.trigger('update_primary_action') })
+		$(frm.wrapper).on('dirty', () => {
+			frm.trigger('update_primary_action')
+		})
 	},
 	end_date: frm => {
 		get_entries(frm)
@@ -95,17 +102,16 @@ frappe.ui.form.on('Check Run', {
 		frm.page.set_indicator(__('Submitting'), 'orange')
 		frm.disable_form()
 		$(frm.$check_run).css({ 'pointer-events': 'none' })
-		frappe.xcall('check_run.check_run.doctype.check_run.check_run.process_check_run', {docname: frm.doc.name})
+		frappe.xcall('check_run.check_run.doctype.check_run.check_run.process_check_run', { docname: frm.doc.name })
 	},
 	update_primary_action: frm => {
 		frm.disable_save()
 		if (frm.is_dirty()) {
 			frm.enable_save()
-		}
-		else if (frm.doc.status === 'Draft') {
+		} else if (frm.doc.status === 'Draft') {
 			frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
 		}
-	}
+	},
 })
 
 function get_balance(frm) {
@@ -396,7 +402,7 @@ function check_settings(frm) {
 					() => {
 						frappe.set_route('Form', 'Check Run Settings', r)
 					},
-					() => { } //stay on this page
+					() => {} //stay on this page
 				)
 			} else {
 				frm.doc.__onload.settings_missing = false
