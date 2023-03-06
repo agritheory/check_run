@@ -242,7 +242,7 @@ def create_bank_and_bank_account(settings):
 	bank_draft.save()
 
 	check_mop = frappe.get_doc('Mode of Payment', 'Check')
-	check_mop.type = 'General'
+	check_mop.type = 'Bank'
 	check_mop.append('accounts', {'company': settings.company, 'default_account': settings.company_account})
 	check_mop.save()
 
