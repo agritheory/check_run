@@ -24,9 +24,10 @@ frappe.ui.form.on('Check Run', {
 		frm.trigger('update_primary_action')
 		if (frm.doc.docstatus < 1 && frm.doc.__onload && frm.doc.__onload.errors) {
 			frm.set_intro(__('<a href="" style="color: var(--red)" id="check-run-error">This Check Run has errors, click to view.</a>'), 'red')
-			$('#check-run-error').off().on('click', () => {
-				frappe.route_options = { 'method': ['like', `%${cur_frm.doc.name}%`] }
+			$('#check-run-error').off().on('click', e => {
+				frappe.route_options = { 'method': ['like', `%${frm.doc.name}%`] }
 				frappe.set_route('List', 'Error Log')
+				e.stopPropagation()
 			})
 		}
 		settings_button(frm)
@@ -47,31 +48,7 @@ frappe.ui.form.on('Check Run', {
 			frm.set_df_property('initial_check_number', 'read_only', 1)
 			frm.set_df_property('final_check_number', 'read_only', 1)
 		}
-		if (frm.doc.docstatus < 1 && frm.doc.__onload && frm.doc.__onload.settings_missing) {
-			frappe
-				.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', { doc: frm.doc })
-				.then(r => {
-					if (r == undefined) {
-						frappe.confirm(
-							__(`No settings found for <b>${frm.doc.bank_account}</b> and <b>${frm.doc.pay_to_account}</b>`),
-							() => {
-								frappe
-									.xcall('check_run.check_run.doctype.check_run_settings.check_run_settings.create', {
-										company: frm.doc.company,
-										bank_account: frm.doc.bank_account,
-										pay_to_account: frm.doc.pay_to_account,
-									})
-									.then(r => {
-										frappe.set_route('Form', 'Check Run Settings', r)
-									})
-							},
-							() => {}
-						)
-					} else {
-						frm.doc.__onload.settings_missing = false
-					}
-				})
-		}
+		check_settings(frm)
 	},
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
@@ -406,4 +383,24 @@ function settings_button(frm) {
 			frappe.set_route('Form', 'Check Run Settings', r.name)
 		})
 	})
+}
+
+function check_settings(frm) {
+	if (frm.doc.docstatus < 1 && frm.doc.__onload && frm.doc.__onload.settings_missing) {
+		frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', { doc: frm.doc }).then(r => {
+			if (r == undefined) {
+				frappe.confirm(
+					__(
+						`No settings found for <b>${frm.doc.bank_account}</b> and <b>${frm.doc.pay_to_account}</b>. Would you like to review these settings?`
+					),
+					() => {
+						frappe.set_route('Form', 'Check Run Settings', r)
+					},
+					() => { } //stay on this page
+				)
+			} else {
+				frm.doc.__onload.settings_missing = false
+			}
+		})
+	}
 }

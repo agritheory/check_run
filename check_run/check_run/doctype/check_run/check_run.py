@@ -138,7 +138,6 @@ class CheckRun(Document):
 		if self.ach_only().ach_only:
 			self.initial_check_number = ""
 			self.final_check_number = ""
-		print('process_check_run')
 		frappe.enqueue_doc(self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600)
 
 	def _process_check_run(self, save=False):
@@ -152,7 +151,7 @@ class CheckRun(Document):
 		except Exception as e:
 			frappe.db.rollback(savepoint="process_check_run")
 			raise e
-		
+
 		self.transactions = json.dumps(_transactions)
 		self.set_status('Submitted')
 		self.save()
@@ -160,7 +159,6 @@ class CheckRun(Document):
 		if self.final_check_number:
 			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 		frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
-
 
 	def build_nacha_file(self, settings=None):
 		electronic_mop = frappe.get_all('Mode of Payment', {'type': 'Electronic', 'enabled': 1}, 'name', pluck="name")
@@ -282,14 +280,12 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	def increment_print_count(self, reprint_check_number=None):
-		self.load_from_db()
 		frappe.enqueue_doc(self.doctype, self.name, 'render_check_pdf',	reprint_check_number=reprint_check_number, queue='short', now=True)
 
 	@frappe.whitelist()
 	def render_check_pdf(self, reprint_check_number=None):
 		if self.docstatus != 1:
 			return
-		self.load_from_db()
 		self.print_count = self.print_count + 1
 		self.set_status('Submitted')
 		if not frappe.db.exists('File', 'Home/Check Run'):
