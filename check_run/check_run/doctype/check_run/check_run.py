@@ -36,6 +36,9 @@ class CheckRun(Document):
 		settings = get_check_run_settings(self)
 		if not settings:
 			self.set_onload('settings_missing', True)
+		errors = frappe.get_all('Error Log', {'method': ['like', f"%{self.name}%"]})
+		if errors and self.docstatus == 0:
+			self.set_onload('errors', True)
 
 	def validate(self):
 		self.set_status()
@@ -125,37 +128,37 @@ class CheckRun(Document):
 			frappe.throw(f'Initial Check Number cannot be lower than the last used check number <b>{account_check_number}</b> for <b>{self.bank_account}</b>')
 
 	@frappe.whitelist()
-	def before_submit(self):
+	def process_check_run(self):
+		self.status = 'Submitting'
 		transactions = self.transactions
 		transactions = json.loads(transactions)
 		if len(transactions) < 1:
-			frappe.throw("You must select at least one Invoice to pay.")
+			frappe.throw(frappe._("You must select at least one Invoice to pay."))
 		self.print_count = 0
 		if self.ach_only().ach_only:
 			self.initial_check_number = ""
 			self.final_check_number = ""
+		frappe.enqueue_doc(self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600)
 
-		if len(transactions) < 25:
-			self._before_submit()
-		else:
-			self.status = 'Submitting'
-			frappe.enqueue_doc(self.doctype, self.name, "_before_submit", save=True, queue="short", timeout=3600)
-
-	def _before_submit(self, save=False):
+	def _process_check_run(self, save=False):
+		savepoint = "process_check_run"
+		frappe.db.savepoint(savepoint)
 		try:
 			transactions = self.transactions
 			transactions = json.loads(transactions)
 			transactions = sorted([frappe._dict(item) for item in transactions if item.get("pay")], key=lambda x: x.party)
 			_transactions = self.create_payment_entries(transactions)
-			
-			self.db_set('transactions', json.dumps(_transactions))
-			self.db_set('status', 'Submitted')
-			if self.final_check_number:
-				frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
-			frappe.db.commit()
-			frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 		except Exception as e:
-			frappe.log_error(title=f"{self.name} Check Run Error", message=e)
+			frappe.db.rollback(savepoint="process_check_run")
+			raise e
+
+		self.transactions = json.dumps(_transactions)
+		self.set_status('Submitted')
+		self.save()
+		self.submit()
+		if self.final_check_number:
+			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
+		frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 
 	def build_nacha_file(self, settings=None):
 		electronic_mop = frappe.get_all('Mode of Payment', {'type': 'Electronic', 'enabled': 1}, 'name', pluck="name")
@@ -167,7 +170,6 @@ class CheckRun(Document):
 		ach_file = StringIO(nacha_file())
 		ach_file.seek(0)
 		return ach_file
-
 
 	@frappe.whitelist()
 	def ach_only(self):
@@ -263,8 +265,14 @@ class CheckRun(Document):
 				pe.paid_amount = total_amount
 				pe.base_paid_amount = total_amount
 				pe.base_grand_total = total_amount
-				pe.save()
-				pe.submit()
+				try:
+					pe.save()
+					pe.submit()
+				except Exception as e:
+					frappe.db.rollback()
+					frappe.log_error(title=f"{self.name} Check Run Error", message=e)
+					frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
+					raise e
 				for reference in _references:
 					reference.payment_entry = pe.name
 					_transactions.append(reference)
@@ -273,13 +281,12 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	def increment_print_count(self, reprint_check_number=None):
-		self.load_from_db()
+		print('render checks')
 		frappe.enqueue_doc(self.doctype, self.name, 'render_check_pdf',	reprint_check_number=reprint_check_number, queue='short', now=True)
 
 
 	@frappe.whitelist()
 	def render_check_pdf(self, reprint_check_number=None):
-		self.load_from_db()
 		self.print_count = self.print_count + 1
 		self.set_status('Submitted')
 		if not frappe.db.exists('File', 'Home/Check Run'):
@@ -404,7 +411,7 @@ def get_entries(doc):
 			.where(purchase_invoices.docstatus == 1)
 			.where(purchase_invoices.credit_to == pay_to_account)
 			.where(purchase_invoices.due_date <= end_date)
-			.where(Coalesce(purchase_invoices.release_date, datetime.date(1900, 1, 1)) <= end_date)
+			.where(Coalesce(purchase_invoices.release_date, datetime.date(1900, 1, 1)) < end_date)
 	)
 
 	# Build expense claims query
@@ -492,7 +499,6 @@ def get_entries(doc):
 	}, as_dict=True)
 	for transaction in transactions:
 		if settings and settings.pre_check_overdue_items:
-			print(transaction.due_date, doc.posting_date)
 			if transaction.due_date < doc.posting_date:
 				transaction.pay = 1
 		if transaction.doctype == 'Journal Entry':
@@ -645,3 +651,9 @@ def ach_only(docname):
 		return {'ach_only': False, 'checks_only': False}
 	cr = frappe.get_doc('Check Run', docname)
 	return cr.ach_only()
+
+
+@frappe.whitelist()
+def process_check_run(docname):
+	doc = frappe.get_doc('Check Run', docname)
+	doc.process_check_run()

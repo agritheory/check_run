@@ -21,6 +21,17 @@ frappe.ui.form.on('Check Run', {
 	},
 	refresh: frm => {
 		frm.layout.show_message('')
+		frm.trigger('update_primary_action')
+		if (frm.doc.__onload && frm.doc.__onload.errors) {
+			frm.set_intro(__('<a href="" style="color: var(--red)" id="check-run-error">This Check Run has errors, click to view.</a>'), 'red')
+			$('#check-run-error')
+				.off()
+				.on('click', e => {
+					frappe.route_options = { method: ['like', `%${frm.doc.name}%`] }
+					frappe.set_route('list', 'Error Log')
+					e.stopPropagation()
+				})
+		}
 		settings_button(frm)
 		permit_first_user(frm)
 		get_defaults(frm)
@@ -29,7 +40,6 @@ frappe.ui.form.on('Check Run', {
 		frappe.realtime.on('reload', message => {
 			frm.reload_doc()
 		})
-
 		if (frm.is_new()) {
 			get_balance(frm)
 		}
@@ -45,6 +55,10 @@ frappe.ui.form.on('Check Run', {
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
 		permit_first_user(frm)
+		frm.trigger('update_primary_action')
+		$(frm.wrapper).on('dirty', () => {
+			frm.trigger('update_primary_action')
+		})
 	},
 	end_date: frm => {
 		get_entries(frm)
@@ -74,6 +88,22 @@ frappe.ui.form.on('Check Run', {
 	},
 	bank_account: frm => {
 		get_balance(frm)
+	},
+	process_check_run: frm => {
+		frm.layout.show_message('')
+		frm.doc.status = 'Submitting'
+		frm.page.set_indicator(__('Submitting'), 'orange')
+		frm.disable_form()
+		$(frm.$check_run).css({ 'pointer-events': 'none' })
+		frappe.xcall('check_run.check_run.doctype.check_run.check_run.process_check_run', { docname: frm.doc.name })
+	},
+	update_primary_action: frm => {
+		frm.disable_save()
+		if (frm.is_dirty()) {
+			frm.enable_save()
+		} else if (frm.doc.status === 'Draft') {
+			frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
+		}
 	},
 })
 
