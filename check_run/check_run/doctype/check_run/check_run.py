@@ -567,7 +567,7 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 	batch = ACHBatch(
 		service_class_code=settings.ach_service_class_code,
 		company_name=doc.get('company'),
-		company_discretionary_data='',
+		company_discretionary_data=settings.company_discretionary_data or "",
 		company_id=company_ach_id,
 		standard_class_code=settings.ach_standard_class_code,
 		company_entry_description=settings.ach_description or "",
