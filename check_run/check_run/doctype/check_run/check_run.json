@@ -19,6 +19,7 @@
 		"company",
 		"bank_account",
 		"pay_to_account",
+		"company_discretionary_data",
 		"section_break_9",
 		"check_run_table",
 		"transactions",
@@ -94,6 +95,11 @@
 			"options": "Account",
 			"remember_last_selected_value": 1,
 			"reqd": 1
+		},
+		{	"allow_on_submit": 1,
+			"fieldname": "company_discretionary_data",
+			"fieldtype": "Data",
+			"label": "Company Discretionary Data",
 		},
 		{
 			"fieldname": "section_break_9",
