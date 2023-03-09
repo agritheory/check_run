@@ -28,7 +28,7 @@
 		"ach_standard_class_code",
 		"ach_description",
 		"column_break_21",
-		"omit_destination"
+		"immediate_origin"
 	],
 	"fields": [
 		{
@@ -150,12 +150,6 @@
 			"label": "ACH Settings"
 		},
 		{
-			"default": "0",
-			"fieldname": "omit_destination",
-			"fieldtype": "Check",
-			"label": "Omit Destination"
-		},
-		{
 			"fieldname": "column_break_21",
 			"fieldtype": "Column Break"
 		},
@@ -164,10 +158,15 @@
 			"fieldname": "automatically_release_on_hold_invoices",
 			"fieldtype": "Check",
 			"label": "Automatically Release On Hold Invoices"
+		},
+		{
+			"fieldname": "immediate_origin",
+			"fieldtype": "Data",
+			"label": "Immediate Origin"
 		}
 	],
 	"links": [],
-	"modified": "2023-02-22 14:14:52.852738",
+	"modified": "2023-03-09 07:34:52.062230",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",
