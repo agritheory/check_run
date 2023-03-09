@@ -53,7 +53,7 @@ class CheckRun(Document):
 				self.set_default_dates()
 		else:
 			self.validate_transactions()
-			self.validate_last_check_number()
+
 
 	def on_cancel(self):
 		settings = get_check_run_settings(self)
@@ -118,14 +118,6 @@ class CheckRun(Document):
 			f"The following document(s) have been cancelled, please remove them from Check Run to continue:<br>{invalid_records}"
 		))
 
-	@frappe.whitelist()
-	def validate_last_check_number(self, check_number=None):
-		if self.ach_only().ach_only:
-			return
-		check_number = check_number if check_number else (self.initial_check_number or 0)
-		account_check_number = frappe.get_value('Bank Account', self.bank_account, "check_number") or 0
-		if int(check_number) < int(account_check_number):
-			frappe.throw(f'Initial Check Number cannot be lower than the last used check number <b>{account_check_number}</b> for <b>{self.bank_account}</b>')
 
 	@frappe.whitelist()
 	def process_check_run(self):
@@ -138,9 +130,9 @@ class CheckRun(Document):
 		if self.ach_only().ach_only:
 			self.initial_check_number = ""
 			self.final_check_number = ""
-		frappe.enqueue_doc(self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600)
+		frappe.enqueue_doc(self.doctype, self.name, "_process_check_run", queue="short", timeout=3600)
 
-	def _process_check_run(self, save=False):
+	def _process_check_run(self):
 		savepoint = "process_check_run"
 		frappe.db.savepoint(savepoint)
 		try:
@@ -156,8 +148,6 @@ class CheckRun(Document):
 		self.set_status('Submitted')
 		self.save()
 		self.submit()
-		if self.final_check_number:
-			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 		frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 
 	def build_nacha_file(self, settings=None):
@@ -539,7 +529,7 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 	if not company_bank:
 		exceptions.append(f'Company Bank missing for {doc.company}')
 	if company_bank:
-		company_bank_aba_number = frappe.db.get_value('Bank Account', doc.bank_account, 'branch_code')
+		company_bank_aba_number = frappe.db.get_value('Bank', company_bank, 'aba_number')
 		company_bank_account_no = frappe.db.get_value('Bank Account', doc.bank_account, 'bank_account_no')
 		company_ach_id = frappe.db.get_value('Bank Account', doc.bank_account, 'company_ach_id')
 	if company_bank and not company_bank_aba_number:
@@ -590,8 +580,8 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 	)
 	nacha_file = NACHAFile(
 		priority_code=1,
-		immediate_destination=company_bank_aba_number if not settings.omit_destination else "",
-		immediate_origin=company_bank_aba_number,
+		immediate_destination=company_bank_aba_number,
+		immediate_origin=settings.immediate_origin or "",
 		file_creation_date=getdate(),
 		file_creation_time=get_datetime(),
 		file_id_modifier='0',
