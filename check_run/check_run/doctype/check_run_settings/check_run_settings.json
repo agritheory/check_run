@@ -29,7 +29,7 @@
   "ach_description",
   "column_break_21",
   "immediate_origin",
-  "company_discretionary_data",
+  "company_discretionary_data"
  ],
  "fields": [
   {
@@ -168,11 +168,12 @@
   {
    "fieldname": "company_discretionary_data",
    "fieldtype": "Data",
-   "label": "Company Discretionary Data"
+   "label": "Company Discretionary Data",
+   "length": 20
   }
  ],
  "links": [],
- "modified": "2023-03-09 13:34:52.062230",
+ "modified": "2023-03-10 12:33:20.854283",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",
