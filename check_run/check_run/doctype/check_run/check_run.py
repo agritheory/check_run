@@ -564,10 +564,11 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 	if exceptions:
 		frappe.throw('<br>'.join(e for e in exceptions))
 
+	company_discretionary_data = doc.get('company_discretionary_data') or settings.get('company_discretionary_data') or ""
 	batch = ACHBatch(
 		service_class_code=settings.ach_service_class_code,
 		company_name=doc.get('company'),
-		company_discretionary_data='',
+		company_discretionary_data=company_discretionary_data[:20],
 		company_id=company_ach_id,
 		standard_class_code=settings.ach_standard_class_code,
 		company_entry_description=settings.ach_description or "",
