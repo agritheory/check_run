@@ -132,6 +132,7 @@
    "fieldname": "ach_description",
    "fieldtype": "Data",
    "label": "ACH Description"
+   "length": 10
   },
   {
    "fieldname": "print_format",
