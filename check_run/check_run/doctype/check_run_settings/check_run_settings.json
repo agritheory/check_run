@@ -131,7 +131,8 @@
   {
    "fieldname": "ach_description",
    "fieldtype": "Data",
-   "label": "ACH Description"
+   "label": "ACH Description",
+   "length": 10
   },
   {
    "fieldname": "print_format",
@@ -173,7 +174,7 @@
   }
  ],
  "links": [],
- "modified": "2023-03-10 12:33:20.854283",
+ "modified": "2023-03-16 12:07:20.854283",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",
