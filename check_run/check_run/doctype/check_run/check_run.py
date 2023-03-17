@@ -156,10 +156,8 @@ class CheckRun(Document):
 			[e.get('payment_entry') for e in json.loads(self.transactions) if e.get('mode_of_payment') in electronic_mop]
 		))
 		payment_entries = [frappe.get_doc('Payment Entry', pe) for pe in ach_payment_entries]
-		nacha_file = build_nacha_file_from_payment_entries(self, payment_entries, settings)
-		ach_file = StringIO(nacha_file())
-		ach_file.seek(0)
-		return ach_file
+		return build_nacha_file_from_payment_entries(self, payment_entries, settings)
+
 
 	@frappe.whitelist()
 	def ach_only(self):
@@ -506,6 +504,12 @@ def download_nacha(docname):
 	doc = frappe.get_doc('Check Run', docname)
 	settings = get_check_run_settings(doc)
 	ach_file = doc.build_nacha_file(settings)
+	if settings.custom_post_processing_hook:
+		ach_file = frappe.call(settings.custom_post_processing_hook, doc, settings, ach_file)
+	else:
+		ach_file = ach_file()
+	ach_file = StringIO(ach_file)
+	ach_file.seek(0)
 	file_ext = settings.ach_file_extension if settings and settings.ach_file_extension else "ach"
 	frappe.local.response.filename = f'{docname.replace(" ", "-").replace("/", "-")}.{file_ext}'
 	frappe.local.response.type = "download"
@@ -565,13 +569,14 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 		frappe.throw('<br>'.join(e for e in exceptions))
 
 	company_discretionary_data = doc.get('company_discretionary_data') or settings.get('company_discretionary_data') or ""
+	ach_description = settings.get('ach_description') or ""
 	batch = ACHBatch(
 		service_class_code=settings.ach_service_class_code,
 		company_name=doc.get('company'),
 		company_discretionary_data=company_discretionary_data[:20],
 		company_id=company_ach_id,
 		standard_class_code=settings.ach_standard_class_code,
-		company_entry_description=settings.ach_description[:10] or "",
+		company_entry_description=ach_description[:10] or "",
 		company_descriptive_date=None,
 		effective_entry_date=getdate(),
 		settlement_date=None,
