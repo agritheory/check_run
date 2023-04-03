@@ -1,5 +1,6 @@
 {
 	"name": "check_run",
+	"license": "MIT",
 	"dependencies": {},
 	"devDependencies": {
 		"@testing-library/cypress": "^8",
@@ -8,5 +9,19 @@
 		"cypress": "^6",
 		"ts-custom-error": "~3.0.0"
 	},
-	"browser": "./cypress/support/index.js"
+	"browser": "./cypress/support/index.js",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/agritheory/check_run.git"
+	},
+	"publishConfig": {
+		"access": "restricted",
+		"registry": "https://npm.pkg.github.com"
+	},
+	"release": {
+		"branches": [
+			"version-13",
+			"version-14"
+		]
+	}
 }
