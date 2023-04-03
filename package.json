@@ -9,11 +9,15 @@
 		"cypress": "^6",
 		"ts-custom-error": "~3.0.0"
 	},
+	"browser": "./cypress/support/index.js",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/agritheory/check_run.git"
+		"url": "https://github.com/agritheory/greensight.git"
 	},
-	"browser": "./cypress/support/index.js",
+	"publishConfig": {
+		"access": "restricted",
+		"registry": "https://npm.pkg.github.com"
+	},
 	"release": {
 		"branches": [
 			"version-13",
