@@ -12,7 +12,7 @@
 	"browser": "./cypress/support/index.js",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/agritheory/greensight.git"
+		"url": "https://github.com/agritheory/check_run.git"
 	},
 	"publishConfig": {
 		"access": "restricted",
