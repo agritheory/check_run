@@ -15,8 +15,7 @@
 		"url": "https://github.com/agritheory/check_run.git"
 	},
 	"publishConfig": {
-		"access": "restricted",
-		"registry": "https://npm.pkg.github.com"
+		"access": "restricted"
 	},
 	"release": {
 		"branches": [
