@@ -216,3 +216,6 @@ lib
 
 # Prettier reformats code blocks inside Markdown, which affects rendered output
 *.md
+
+# In a Frappe context HTML files are either Jinja or Resig's microtemplate format and should not be checked
+*.html

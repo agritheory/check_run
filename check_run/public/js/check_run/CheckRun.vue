@@ -135,13 +135,17 @@ export default {
 	},
 	methods: {
 		transactionUrl: transaction => {
-			if(transaction.doctype !== 'Journal Entry'){
+			if (transaction.doctype !== 'Journal Entry') {
 				return encodeURI(
-					`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${transaction.name}`
+					`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${
+						transaction.name
+					}`
 				)
 			} else {
 				return encodeURI(
-					`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${transaction.ref_number}`
+					`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${
+						transaction.ref_number
+					}`
 				)
 			}
 		},
