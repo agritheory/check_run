@@ -1,212 +1,219 @@
 {
-	"actions": [],
-	"autoname": "format:ACC-CRS-{bank_account}-{pay_to_account}",
-	"creation": "2022-08-22 14:43:43.533105",
-	"doctype": "DocType",
-	"editable_grid": 1,
-	"engine": "InnoDB",
-	"field_order": [
-		"company",
-		"bank_account",
-		"column_break_3",
-		"pay_to_account",
-		"print_format",
-		"section_break_4",
-		"include_purchase_invoices",
-		"include_journal_entries",
-		"include_expense_claims",
-		"pre_check_overdue_items",
-		"allow_cancellation",
-		"cascade_cancellation",
-		"column_break_9",
-		"number_of_invoices_per_voucher",
-		"split_by_address",
-		"automatically_release_on_hold_invoices",
-		"ach_settings_section",
-		"ach_file_extension",
-		"ach_service_class_code",
-		"ach_standard_class_code",
-		"ach_description",
-		"column_break_21",
-		"immediate_origin",
-		"company_discretionary_data"
-	],
-	"fields": [
-		{
-			"fieldname": "company",
-			"fieldtype": "Link",
-			"label": "Company",
-			"options": "Company"
-		},
-		{
-			"fieldname": "bank_account",
-			"fieldtype": "Link",
-			"label": "Bank Account",
-			"options": "Bank Account"
-		},
-		{
-			"fieldname": "section_break_4",
-			"fieldtype": "Section Break"
-		},
-		{
-			"default": "1",
-			"fieldname": "include_purchase_invoices",
-			"fieldtype": "Check",
-			"label": "Include Purchase Invoices"
-		},
-		{
-			"default": "1",
-			"fieldname": "include_journal_entries",
-			"fieldtype": "Check",
-			"label": "Include Journal Entries "
-		},
-		{
-			"default": "1",
-			"fieldname": "include_expense_claims",
-			"fieldtype": "Check",
-			"label": "Include Expense Claims"
-		},
-		{
-			"default": "0",
-			"description": "Payment Entries will be unlinked when Check Run is cancelled",
-			"fieldname": "allow_cancellation",
-			"fieldtype": "Check",
-			"label": "Allow Cancellation"
-		},
-		{
-			"fieldname": "column_break_9",
-			"fieldtype": "Column Break"
-		},
-		{
-			"default": "ach",
-			"description": "Common file extensions are 'ach', 'txt' and 'dat'. Your bank may require one of these.",
-			"fieldname": "ach_file_extension",
-			"fieldtype": "Data",
-			"label": "ACH File Extension"
-		},
-		{
-			"default": "0",
-			"description": "Pre-Check all payables that have a due date greater than the Check Run's posting date",
-			"fieldname": "pre_check_overdue_items",
-			"fieldtype": "Check",
-			"label": "Pre-Check Overdue Items"
-		},
-		{
-			"default": "0",
-			"description": "When a Check Run is cancelled, all Payment Entries linked to it will also be cancelled. This is not recommended. ",
-			"fieldname": "cascade_cancellation",
-			"fieldtype": "Check",
-			"label": "Cascade Cancellation"
-		},
-		{
-			"description": "Defaults to 5 if no value is provided",
-			"fieldname": "number_of_invoices_per_voucher",
-			"fieldtype": "Int",
-			"label": "Number of Invoices per Voucher",
-			"non_negative": 1
-		},
-		{
-			"fieldname": "column_break_3",
-			"fieldtype": "Column Break"
-		},
-		{
-			"fieldname": "pay_to_account",
-			"fieldtype": "Link",
-			"label": "Payable Account",
-			"options": "Account"
-		},
-		{
-			"fieldname": "ach_service_class_code",
-			"fieldtype": "Select",
-			"label": "ACH Service Class Code",
-			"options": "200\n220\n225"
-		},
-		{
-			"description": "PPD is only supported Entry format at this time",
-			"fieldname": "ach_standard_class_code",
-			"fieldtype": "Select",
-			"label": "ACH Standard Class Code",
-			"options": "PPD"
-		},
-		{
-			"fieldname": "ach_description",
-			"fieldtype": "Data",
-			"label": "ACH Description",
-			"length": 10
-		},
-		{
-			"fieldname": "print_format",
-			"fieldtype": "Link",
-			"label": "Print Format",
-			"options": "Print Format"
-		},
-		{
-			"default": "0",
-			"fieldname": "split_by_address",
-			"fieldtype": "Check",
-			"label": "Split Invoices by Address"
-		},
-		{
-			"fieldname": "ach_settings_section",
-			"fieldtype": "Section Break",
-			"label": "ACH Settings"
-		},
-		{
-			"fieldname": "column_break_21",
-			"fieldtype": "Column Break"
-		},
-		{
-			"default": "0",
-			"fieldname": "automatically_release_on_hold_invoices",
-			"fieldtype": "Check",
-			"label": "Automatically Release On Hold Invoices"
-		},
-		{
-			"fieldname": "immediate_origin",
-			"fieldtype": "Data",
-			"label": "Immediate Origin"
-		},
-		{
-			"fieldname": "company_discretionary_data",
-			"fieldtype": "Data",
-			"label": "Company Discretionary Data",
-			"length": 20
-		}
-	],
-	"links": [],
-	"modified": "2023-03-16 12:07:20.854283",
-	"modified_by": "Administrator",
-	"module": "Check Run",
-	"name": "Check Run Settings",
-	"owner": "Administrator",
-	"permissions": [
-		{
-			"create": 1,
-			"delete": 1,
-			"email": 1,
-			"export": 1,
-			"print": 1,
-			"read": 1,
-			"report": 1,
-			"role": "System Manager",
-			"share": 1,
-			"write": 1
-		},
-		{
-			"create": 1,
-			"delete": 1,
-			"email": 1,
-			"export": 1,
-			"print": 1,
-			"read": 1,
-			"report": 1,
-			"role": "Accounts Manager",
-			"share": 1,
-			"write": 1
-		}
-	],
-	"quick_entry": 1,
-	"sort_field": "modified",
-	"sort_order": "DESC",
-	"track_changes": 1
+ "actions": [],
+ "autoname": "format:ACC-CRS-{bank_account}-{pay_to_account}",
+ "creation": "2022-08-22 14:43:43.533105",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "company",
+  "bank_account",
+  "column_break_3",
+  "pay_to_account",
+  "print_format",
+  "section_break_4",
+  "include_purchase_invoices",
+  "include_journal_entries",
+  "include_expense_claims",
+  "pre_check_overdue_items",
+  "allow_cancellation",
+  "cascade_cancellation",
+  "column_break_9",
+  "number_of_invoices_per_voucher",
+  "split_by_address",
+  "automatically_release_on_hold_invoices",
+  "ach_settings_section",
+  "ach_file_extension",
+  "ach_service_class_code",
+  "ach_standard_class_code",
+  "ach_description",
+  "column_break_21",
+  "immediate_origin",
+  "company_discretionary_data",
+  "custom_post_processing_hook"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "bank_account",
+   "fieldtype": "Link",
+   "label": "Bank Account",
+   "options": "Bank Account"
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_purchase_invoices",
+   "fieldtype": "Check",
+   "label": "Include Purchase Invoices"
+  },
+  {
+   "default": "1",
+   "fieldname": "include_journal_entries",
+   "fieldtype": "Check",
+   "label": "Include Journal Entries "
+  },
+  {
+   "default": "1",
+   "fieldname": "include_expense_claims",
+   "fieldtype": "Check",
+   "label": "Include Expense Claims"
+  },
+  {
+   "default": "0",
+   "description": "Payment Entries will be unlinked when Check Run is cancelled",
+   "fieldname": "allow_cancellation",
+   "fieldtype": "Check",
+   "label": "Allow Cancellation"
+  },
+  {
+   "fieldname": "column_break_9",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "ach",
+   "description": "Common file extensions are 'ach', 'txt' and 'dat'. Your bank may require one of these.",
+   "fieldname": "ach_file_extension",
+   "fieldtype": "Data",
+   "label": "ACH File Extension"
+  },
+  {
+   "default": "0",
+   "description": "Pre-Check all payables that have a due date greater than the Check Run's posting date",
+   "fieldname": "pre_check_overdue_items",
+   "fieldtype": "Check",
+   "label": "Pre-Check Overdue Items"
+  },
+  {
+   "default": "0",
+   "description": "When a Check Run is cancelled, all Payment Entries linked to it will also be cancelled. This is not recommended. ",
+   "fieldname": "cascade_cancellation",
+   "fieldtype": "Check",
+   "label": "Cascade Cancellation"
+  },
+  {
+   "description": "Defaults to 5 if no value is provided",
+   "fieldname": "number_of_invoices_per_voucher",
+   "fieldtype": "Int",
+   "label": "Number of Invoices per Voucher",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pay_to_account",
+   "fieldtype": "Link",
+   "label": "Payable Account",
+   "options": "Account"
+  },
+  {
+   "fieldname": "ach_service_class_code",
+   "fieldtype": "Select",
+   "label": "ACH Service Class Code",
+   "options": "200\n220\n225"
+  },
+  {
+   "description": "PPD is only supported Entry format at this time",
+   "fieldname": "ach_standard_class_code",
+   "fieldtype": "Select",
+   "label": "ACH Standard Class Code",
+   "options": "PPD"
+  },
+  {
+   "fieldname": "ach_description",
+   "fieldtype": "Data",
+   "label": "ACH Description",
+   "length": 10
+  },
+  {
+   "fieldname": "print_format",
+   "fieldtype": "Link",
+   "label": "Print Format",
+   "options": "Print Format"
+  },
+  {
+   "default": "0",
+   "fieldname": "split_by_address",
+   "fieldtype": "Check",
+   "label": "Split Invoices by Address"
+  },
+  {
+   "fieldname": "ach_settings_section",
+   "fieldtype": "Section Break",
+   "label": "ACH Settings"
+  },
+  {
+   "fieldname": "column_break_21",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "automatically_release_on_hold_invoices",
+   "fieldtype": "Check",
+   "label": "Automatically Release On Hold Invoices"
+  },
+  {
+   "fieldname": "immediate_origin",
+   "fieldtype": "Data",
+   "label": "Immediate Origin"
+  },
+  {
+   "fieldname": "company_discretionary_data",
+   "fieldtype": "Data",
+   "label": "Company Discretionary Data",
+   "length": 20
+  },
+  {
+   "fieldname": "custom_post_processing_hook",
+   "fieldtype": "Data",
+   "label": "Custom Post Processing Hook",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2023-03-17 13:43:25.837467",
+ "modified_by": "Administrator",
+ "module": "Check Run",
+ "name": "Check Run Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Accounts Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
 }

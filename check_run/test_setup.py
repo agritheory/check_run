@@ -650,3 +650,13 @@ def create_payroll_journal_entry(settings):
 	je.save()
 	je.submit()
 	
+
+
+"""
+Set in check run settings
+check_run.test_setup.example_post_processing_hook
+"""
+def example_post_processing_hook(check_run: 'CheckRun', settings: 'CheckRun Settings', nacha: 'NACHAFile') -> str:
+	b = "$$AAPAACH0094[TEST[NL$$\n"
+	a = str(nacha)
+	return b + a 
