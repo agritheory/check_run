@@ -14,6 +14,7 @@ Other fields available to help configure your ACH generation include:
 - Company Discretionary Data, also in the Batch header
 - Immediate Origin, which can override the ABA number that the bank is expecting
 - Custom Post Processing Hook, which allows you to provide a custom function to further manipulate the ACH file. For example, Royal Bank of Canada requires a non-standard first line.
+- Posting Date, which becomes the "Effective Entry Date" in the ACH Batch Header
 
 The 'Custom Post Processing Hook' is a read-only field and not intended to be set by non-technical users. The RBC example noted above can be set by entering the following into the browser console: `cur_frm.set_value('custom_post_processing_hook','check_run.test_setup.example_post_processing_hook')`. Provide the dotted path to your function with a signature matching that of the example.
 
