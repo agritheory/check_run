@@ -173,8 +173,8 @@ doc_events = {
 # For example: Role, Gender, etc.
 # translated_search_doctypes = []
 
-jenv = {
+jinja = {
 	"methods": [
-		"get_default_address:frappe.contacts.doctype.address.address.get_default_address"
+		"frappe.contacts.doctype.address.address.get_default_address"
 	]
 }
