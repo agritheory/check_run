@@ -332,8 +332,7 @@ def check_for_draft_check_run(company, bank_account, payable_account):
 			'company': company,
 			'bank_account': bank_account,
 			'pay_to_account': payable_account,
-			'status': ['in', ['Draft', 'Submitted']],
-			'initial_check_number': ['!=', 0]
+			'docstatus': 0,
 		}
 	)
 	if existing:
