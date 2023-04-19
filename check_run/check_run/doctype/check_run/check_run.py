@@ -552,12 +552,18 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 			party_bank_routing_number = frappe.db.get_value('Bank', party_bank, 'aba_number')
 			if not party_bank_routing_number:
 				exceptions.append(f'{pe.party_type} Bank Routing Number missing for {pe.party_name}')
+		if settings.get('individual_id_number_from') == "Naming Series":
+			individual_id_number=pe.party
+		elif settings.get('individual_id_number_from') == "Party Name":
+			individual_id_number=pe.party_name
+		else:
+			individual_id_number=''
 		ach_entry = ACHEntry(
 			transaction_code=22, # checking account 
 			receiving_dfi_identification=party_bank_routing_number,
 			dfi_account_number=party_bank_account,
 			amount=int(pe.paid_amount * 100),
-			individual_id_number='',
+			individual_id_number=individual_id_number[:15],
 			individual_name=pe.party_name,
 			discretionary_data='',
 			addenda_record_indicator=0,
