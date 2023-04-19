@@ -30,6 +30,7 @@
   "column_break_21",
   "immediate_origin",
   "company_discretionary_data",
+  "individual_id_number_from",
   "custom_post_processing_hook"
  ],
  "fields": [
@@ -172,6 +173,12 @@
    "fieldtype": "Data",
    "label": "Company Discretionary Data",
    "length": 20
+  },
+  {
+   "fieldname": "individual_id_number_from",
+   "fieldtype": "Select",
+   "label": "Individual ID Number From",
+   "options": "None\nNaming Series\nParty Name"
   },
   {
    "fieldname": "custom_post_processing_hook",
