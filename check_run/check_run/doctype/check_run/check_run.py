@@ -553,9 +553,9 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 			if not party_bank_routing_number:
 				exceptions.append(f'{pe.party_type} Bank Routing Number missing for {pe.party_name}')
 		if settings.get('individual_id_number_from') == "Naming Series":
-			individual_id_number=pe.party
+			individual_id_number=''.join(c for c in pe.party if c.isalnum()).upper()
 		elif settings.get('individual_id_number_from') == "Party Name":
-			individual_id_number=pe.party_name
+			individual_id_number=''.join(c for c in pe.party_name if c.isalnum()).upper()
 		else:
 			individual_id_number=''
 		ach_entry = ACHEntry(
