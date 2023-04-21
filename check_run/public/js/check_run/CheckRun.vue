@@ -41,7 +41,7 @@
 							>&#11021;</span
 						>
 					</th>
-					<th v-if="state.docstatus < 1" style="min-width: 200px; text-align: left">
+					<th v-if="state.status == 'Draft'" style="min-width: 200px; text-align: left">
 						<input
 							type="checkbox"
 							autocomplete="off"
@@ -74,7 +74,7 @@
 								ref="dropdowns"
 								v-model="state.transactions[i].mode_of_payment"
 								:items="modeOfPaymentNames"
-								v-if="state.docstatus < 1"
+								v-if="state.status == 'Draft'"
 								:transactionIndex="i"
 								:isOpen="state.transactions[i].mopIsOpen"
 								@isOpenChanged="val => (state.transactions[i].mopIsOpen = val)" />
@@ -83,7 +83,7 @@
 						</td>
 						<td>{{ format_currency(item.amount, 'USD', 2) }}</td>
 						<td>{{ moment(item.due_date).format('MM/DD/YY') }}</td>
-						<td v-if="state.docstatus < 1" style="text-align: left">
+						<td v-if="state.status == 'Draft'" style="text-align: left">
 							<input
 								type="checkbox"
 								class="input-with-feedback checkrun-check-box"
@@ -110,7 +110,7 @@ export default {
 	components: {
 		ADropdown,
 	},
-	props: ['transactions', 'modes_of_payment', 'docstatus', 'state'],
+	props: ['transactions', 'modes_of_payment', 'status', 'state'],
 	data() {
 		return {
 			selectAll: false,
@@ -131,7 +131,7 @@ export default {
 			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
 			cur_frm.refresh_field('amount_check_run')
 			cur_frm.dirty()
-		},
+		}
 	},
 	methods: {
 		transactionUrl: transaction => {
@@ -181,7 +181,7 @@ export default {
 			}
 		},
 		checkPay() {
-			if (this.state.docstatus >= 1 || !this.transactions.length) {
+			if (this.state.status == 'Draft' || !this.transactions.length) {
 				return
 			}
 			this.transactions[this.state.selectedRow].pay = !this.transactions[this.state.selectedRow].pay
