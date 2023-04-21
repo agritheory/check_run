@@ -62,6 +62,11 @@ frappe.ui.form.on('Check Run', {
 		$(frm.wrapper).on('dirty', () => {
 			frm.trigger('update_primary_action')
 		})
+		if (frm.doc.__onload && frm.doc.__onload.check_run_submitting) {
+			frm.doc.status = 'Submitting'
+			frm.page.set_indicator(__('Submitting'), 'orange')
+			frm.disable_form()
+		}
 	},
 	end_date: frm => {
 		get_entries(frm)

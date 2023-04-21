@@ -41,6 +41,10 @@ class CheckRun(Document):
 		errors = frappe.get_all(
 			"Error Log", {"method": ["like", f"%{self.name}%"], "seen": 0}
 		)
+		if frappe.defaults.get_global_default("check_run_submitting"):
+			self.set_onload("check_run_submitting", True)
+		else:
+			self.set_onload("check_run_submitting", False)
 		if errors and self.docstatus == 0:
 			self.set_onload("errors", True)
 
@@ -151,6 +155,7 @@ class CheckRun(Document):
 		)
 
 	def _process_check_run(self):
+		frappe.defaults.set_global_default("check_run_submitting", self.name)
 		savepoint = "process_check_run"
 		frappe.db.savepoint(savepoint)
 		try:
@@ -161,8 +166,10 @@ class CheckRun(Document):
 				key=lambda x: x.party,
 			)
 			_transactions = self.create_payment_entries(transactions)
+			frappe.defaults.clear_default("check_run_submitting")
 		except Exception as e:
 			frappe.db.rollback(savepoint="process_check_run")
+			frappe.defaults.clear_default("check_run_submitting")
 			raise e
 
 		self.transactions = json.dumps(_transactions)
