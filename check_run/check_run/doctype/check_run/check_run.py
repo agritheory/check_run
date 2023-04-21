@@ -2,30 +2,23 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-import datetime
 import json
 from itertools import groupby, zip_longest
 from io import StringIO
-import types
 
 from PyPDF2 import PdfFileWriter
 
 import frappe
 from frappe.model.document import Document
 from frappe.utils.data import flt
-from frappe.utils.data import date_diff, add_days, nowdate, getdate, now, get_datetime
+from frappe.utils.data import nowdate, getdate, now, get_datetime
 from frappe.utils.print_format import read_multi_pdf
 from frappe.permissions import has_permission
-from frappe.utils.file_manager import save_file, remove_all, download_file
+from frappe.utils.file_manager import save_file, remove_all
 from frappe.utils.password import get_decrypted_password
 from frappe.contacts.doctype.address.address import get_default_address
-from frappe.query_builder.custom import ConstantColumn
-from frappe.query_builder.functions import Coalesce
 
 from erpnext.accounts.utils import get_balance_on
-from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
-	get_dimensions,
-)
 
 from atnacha import ACHEntry, ACHBatch, NACHAFile
 from check_run.check_run.doctype.check_run_settings.check_run_settings import create
@@ -41,8 +34,9 @@ class CheckRun(Document):
 		errors = frappe.get_all(
 			"Error Log", {"method": ["like", f"%{self.name}%"], "seen": 0}
 		)
-		if frappe.defaults.get_global_default("check_run_submitting"):
-			self.set_onload("check_run_submitting", True)
+		check_run_submitting = frappe.defaults.get_global_default("check_run_submitting")
+		if check_run_submitting:
+			self.set_onload("check_run_submitting", check_run_submitting)
 		else:
 			self.set_onload("check_run_submitting", False)
 		if errors and self.docstatus == 0:
@@ -141,6 +135,16 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	def process_check_run(self):
+		check_run_submitting = frappe.defaults.get_global_default("check_run_submitting")
+		if check_run_submitting:
+			frappe.throw(
+				frappe._(
+					f"""
+			Check run {check_run_submitting} is in process. No other check runs can be submitted until it completes. <a href="/app/background_jobs">Click here</a> for details.
+			"""
+				)
+			)
+			return
 		self.status = "Submitting"
 		transactions = self.transactions
 		transactions = json.loads(transactions)
@@ -166,12 +170,12 @@ class CheckRun(Document):
 				key=lambda x: x.party,
 			)
 			_transactions = self.create_payment_entries(transactions)
-			frappe.defaults.clear_default("check_run_submitting")
 		except Exception as e:
 			frappe.db.rollback(savepoint="process_check_run")
 			frappe.defaults.clear_default("check_run_submitting")
 			raise e
 
+		frappe.defaults.clear_default("check_run_submitting")
 		self.transactions = json.dumps(_transactions)
 		self.set_status("Submitted")
 		self.save()
