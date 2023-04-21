@@ -136,7 +136,7 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	def process_check_run(self):
-		self.status = "Submitting"
+		self.db_set("status", "Submitting")
 		transactions = self.transactions
 		transactions = json.loads(transactions)
 		if len(transactions) < 1:

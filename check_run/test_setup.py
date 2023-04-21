@@ -683,8 +683,10 @@ def config_expense_claim(settings):
 	pta.account_name = "Payroll Taxes"
 	pta.account_number = (
 		max(
-			int(a.account_number or 1)
-			for a in frappe.get_all("Account", {"is_group": 0}, ["account_number"])
+			[
+				int(a.account_number or 1)
+				for a in frappe.get_all("Account", {"is_group": 0}, ["account_number"])
+			]
 		)
 		+ 1
 	)

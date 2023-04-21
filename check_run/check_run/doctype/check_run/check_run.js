@@ -110,6 +110,8 @@ frappe.ui.form.on('Check Run', {
 			frm.enable_save()
 		} else if (frm.doc.status === 'Draft') {
 			frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
+		} else if (frm.doc.status == 'Submitting') {
+			frm.disable_form()
 		}
 	},
 })
