@@ -15,9 +15,7 @@ required_apps = ["erpnext"]
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/check_run/css/check_run.css"
-app_include_js = [
-	"/assets/js/check_run.min.js"
-]
+app_include_js = ["/assets/js/check_run.min.js"]
 
 # include js, css files in header of web template
 # web_include_css = "/assets/check_run/css/check_run.css"
@@ -35,9 +33,9 @@ app_include_js = [
 
 # include js in doctype views
 doctype_js = {
-	'Employee': 'public/js/custom/employee_custom.js',
-	"Payment Entry": 'public/js/custom/payment_entry_custom.js',
-	"Supplier": 'public/js/custom/supplier_custom.js',
+	"Employee": "public/js/custom/employee_custom.js",
+	"Payment Entry": "public/js/custom/payment_entry_custom.js",
+	"Supplier": "public/js/custom/supplier_custom.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -51,7 +49,7 @@ doctype_js = {
 
 # website user home page (by Role)
 # role_home_page = {
-#	"Role": "home_page"
+# 	"Role": "home_page"
 # }
 
 # Generators
@@ -65,7 +63,7 @@ doctype_js = {
 
 # before_install = "check_run.install.before_install"
 after_install = "check_run.customize.after_install"
-after_migrate = 'check_run.customize.load_customizations'
+after_migrate = "check_run.customize.load_customizations"
 
 # Uninstallation
 # ------------
@@ -95,9 +93,7 @@ after_migrate = 'check_run.customize.load_customizations'
 # ---------------
 # Override standard doctype classes
 
-override_doctype_class = {
-	"Bank": "check_run.overrides.bank.CustomBank"
-}
+override_doctype_class = {"Bank": "check_run.overrides.bank.CustomBank"}
 
 # Document Events
 # ---------------

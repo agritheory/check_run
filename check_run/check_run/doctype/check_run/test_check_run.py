@@ -7,5 +7,3 @@ import unittest
 
 class TestCheckRun(unittest.TestCase):
 	pass
-
-

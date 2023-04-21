@@ -80,14 +80,14 @@ jobs:
             echo "D,${file}" >> base/mrd.txt
           done
 
-      - name: Setup requirements and script
-        run: |
-          pip install rich
-          pip install json_source_map
-          git clone --depth 1 https://gist.github.com/3eea518743067f1b971114f1a2016f69 fsjd
+      # - name: Setup requirements and script
+      #   run: |
+      #     pip install rich
+      #     pip install json_source_map
+      #     git clone --depth 1 https://gist.github.com/3eea518743067f1b971114f1a2016f69 fsjd
 
-      - name: Diff table
-        run: python3 fsjd/frappe_schema_json_diff.py base/mrd.txt head/acmr.txt 1
+      # - name: Diff table
+      #   run: python3 fsjd/frappe_schema_json_diff.py base/mrd.txt head/acmr.txt 1
 
   py_json_merge:
     runs-on: ubuntu-latest
