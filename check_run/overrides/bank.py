@@ -16,9 +16,13 @@ class CustomBank(Bank):
 			and dl.link_doctype = 'Bank' and dl.link_name = %s
 			""",
 			(self.name),
-			as_dict=True
+			as_dict=True,
 		)
-		if 'Canada' in [c['country'] for c in countries]:
+		if "Canada" in [c["country"] for c in countries]:
 			if len(self.aba_number) > 8:
-				frappe.throw(_("This Bank is linked to at least one Canadian address. Canadian banking institutions require the ABA Number must not exceed 8 characters."))
+				frappe.throw(
+					_(
+						"This Bank is linked to at least one Canadian address. Canadian banking institutions require the ABA Number must not exceed 8 characters."
+					)
+				)
 		return
