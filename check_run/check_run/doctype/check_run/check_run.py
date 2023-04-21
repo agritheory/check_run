@@ -1,6 +1,7 @@
 # Copyright (c) 2022, AgriTheory and contributors
 # For license information, please see license.txt
 
+from __future__ import unicode_literals
 import datetime
 import json
 from itertools import groupby, zip_longest
@@ -136,7 +137,7 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	def process_check_run(self):
-		self.db_set("status", "Submitting")
+		self.status = "Submitting"
 		transactions = self.transactions
 		transactions = json.loads(transactions)
 		if len(transactions) < 1:
@@ -156,7 +157,7 @@ class CheckRun(Document):
 			transactions = self.transactions
 			transactions = json.loads(transactions)
 			transactions = sorted(
-				(frappe._dict(item) for item in transactions if item.get("pay")),
+				[frappe._dict(item) for item in transactions if item.get("pay")],
 				key=lambda x: x.party,
 			)
 			_transactions = self.create_payment_entries(transactions)
@@ -175,11 +176,13 @@ class CheckRun(Document):
 			"Mode of Payment", {"type": "Electronic", "enabled": 1}, "name", pluck="name"
 		)
 		ach_payment_entries = list(
-			{
-				e.get("payment_entry")
-				for e in json.loads(self.transactions)
-				if e.get("mode_of_payment") in electronic_mop
-			}
+			set(
+				[
+					e.get("payment_entry")
+					for e in json.loads(self.transactions)
+					if e.get("mode_of_payment") in electronic_mop
+				]
+			)
 		)
 		payment_entries = [frappe.get_doc("Payment Entry", pe) for pe in ach_payment_entries]
 		return build_nacha_file_from_payment_entries(self, payment_entries, settings)

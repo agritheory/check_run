@@ -101,17 +101,18 @@ frappe.ui.form.on('Check Run', {
 		frm.doc.status = 'Submitting'
 		frm.page.set_indicator(__('Submitting'), 'orange')
 		frm.disable_form()
-		$(frm.$check_run).css({ 'pointer-events': 'none' })
+		cur_frm.$check_run.$children[0].state.status = frm.doc.status
 		frappe.xcall('check_run.check_run.doctype.check_run.check_run.process_check_run', { docname: frm.doc.name })
 	},
 	update_primary_action: frm => {
 		frm.disable_save()
 		if (frm.is_dirty()) {
 			frm.enable_save()
-		} else if (frm.doc.status === 'Draft') {
+		} else if (frm.doc.status == 'Draft') {
 			frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
 		} else if (frm.doc.status == 'Submitting') {
 			frm.disable_form()
+			cur_frm.$check_run.$children[0].state.status = frm.doc.status
 		}
 	},
 })

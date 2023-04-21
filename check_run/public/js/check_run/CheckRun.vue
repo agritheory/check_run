@@ -131,7 +131,7 @@ export default {
 			cur_frm.doc.amount_check_run = cur_frm.check_run_state.check_run_total()
 			cur_frm.refresh_field('amount_check_run')
 			cur_frm.dirty()
-		},
+		}
 	},
 	methods: {
 		transactionUrl: transaction => {
