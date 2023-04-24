@@ -125,14 +125,14 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	def process_check_run(self):
-		check_run_submitting = frappe.defaults.get_global_default("check_run_submitting")
-		if check_run_submitting:
-			frappe.throw(
-				frappe._(
-					f"""Check run {check_run_submitting} is in process. No other check runs can be submitted until it completes. <a href="/app/background_jobs">Click here</a> for details."""
-				)
-			)
-			return
+		# check_run_submitting = frappe.defaults.get_global_default("check_run_submitting")
+		# if check_run_submitting:
+		# 	frappe.throw(
+		# 		frappe._(
+		# 			f"""Check run {check_run_submitting} is in process. No other check runs can be submitted until it completes. <a href="/app/background_jobs">Click here</a> for details."""
+		# 		)
+		# 	)
+		# 	return
 		self.status = "Submitting"
 		transactions = self.transactions
 		transactions = json.loads(transactions)
@@ -143,7 +143,7 @@ class CheckRun(Document):
 			self.initial_check_number = ""
 			self.final_check_number = ""
 		frappe.enqueue_doc(
-			self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600
+			self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600, now=True
 		)
 
 	def _process_check_run(self, save=False):
@@ -158,7 +158,7 @@ class CheckRun(Document):
 			)
 			_transactions = self.create_payment_entries(transactions)
 		except Exception as e:
-			frappe.db.rollback(savepoint="process_check_run")
+			frappe.db.rollback(save_point="process_check_run")
 			frappe.defaults.clear_default("check_run_submitting")
 			raise e
 
@@ -249,7 +249,7 @@ class CheckRun(Document):
 				pe.paid_from_account_currency = pe.paid_to_account_currency
 				pe.reference_date = self.posting_date
 				pe.party_type = group[0].party_type
-				pe.party = group.party
+				pe.party = party
 				pe.check_run = self.name
 				total_amount = 0
 				if frappe.db.get_value("Mode of Payment", _group[0].mode_of_payment, "type") == "Bank":

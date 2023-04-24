@@ -66,6 +66,7 @@ frappe.ui.form.on('Check Run', {
 			frm.doc.status = 'Submitting'
 			frm.page.set_indicator(__('Submitting'), 'orange')
 			frm.disable_form()
+			cur_frm.$check_run.$children[0].state.status = 'Submitting'
 		} else if (frm.doc.__onload && frm.doc.__onload.check_run_submitting) {
 			frm.set_intro(
 				__(
@@ -110,8 +111,8 @@ frappe.ui.form.on('Check Run', {
 		frm.doc.status = 'Submitting'
 		frm.page.set_indicator(__('Submitting'), 'orange')
 		frm.disable_form()
-		cur_frm.$check_run.$children[0].state.status = frm.doc.status
 		frappe.xcall('check_run.check_run.doctype.check_run.check_run.process_check_run', { docname: frm.doc.name })
+		cur_frm.$check_run.$children[0].state.status = frm.doc.status
 	},
 	update_primary_action: frm => {
 		frm.disable_save()
