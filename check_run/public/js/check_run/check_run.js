@@ -12,7 +12,7 @@ check_run.mount_table = frm => {
 	frm.check_run_state = Vue.observable({
 		transactions: frm.transactions,
 		party_filter: '',
-		docstatus: frm.doc.docstatus,
+		status: frm.doc.status,
 		modes_of_payment: frm.modes_of_payment,
 		show_party_filter: false,
 		check_run_total: function () {
@@ -35,7 +35,7 @@ check_run.mount_table = frm => {
 				props: {
 					transactions: frm.check_run_state.transactions, //list of transtactions
 					modes_of_payment: frm.check_run_state.modes_of_payment, // populate modes_of_payment select. doesn't get updated
-					docstatus: frm.check_run_state.docstatus, // used to conditionally render column inputs based on submission status. doesn't get updated
+					status: frm.check_run_state.status, // used to conditionally render column inputs based on submission status
 					state: frm.check_run_state,
 				},
 			}),

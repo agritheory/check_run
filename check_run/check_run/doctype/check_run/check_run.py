@@ -36,6 +36,11 @@ class CheckRun(Document):
 		errors = frappe.get_all("Error Log", {"method": ["like", f"%{self.name}%"]})
 		if errors and self.docstatus == 0:
 			self.set_onload("errors", True)
+		check_run_submitting = frappe.defaults.get_global_default("check_run_submitting")
+		if check_run_submitting:
+			self.set_onload("check_run_submitting", check_run_submitting)
+		else:
+			self.set_onload("check_run_submitting", False)
 
 	def validate(self):
 		self.set_status()
@@ -120,6 +125,14 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	def process_check_run(self):
+		check_run_submitting = frappe.defaults.get_global_default("check_run_submitting")
+		if check_run_submitting:
+			frappe.throw(
+				frappe._(
+					f"""Check run {check_run_submitting} is in process. No other check runs can be submitted until it completes. <a href="/app/background_jobs">Click here</a> for details."""
+				)
+			)
+			return
 		self.status = "Submitting"
 		transactions = self.transactions
 		transactions = json.loads(transactions)
@@ -134,6 +147,7 @@ class CheckRun(Document):
 		)
 
 	def _process_check_run(self, save=False):
+		frappe.defaults.set_global_default("check_run_submitting", self.name)
 		savepoint = "process_check_run"
 		frappe.db.savepoint(savepoint)
 		try:
@@ -145,8 +159,10 @@ class CheckRun(Document):
 			_transactions = self.create_payment_entries(transactions)
 		except Exception as e:
 			frappe.db.rollback(savepoint="process_check_run")
+			frappe.defaults.clear_default("check_run_submitting")
 			raise e
 
+		frappe.defaults.clear_default("check_run_submitting")
 		self.transactions = json.dumps(_transactions)
 		self.set_status("Submitted")
 		self.save()

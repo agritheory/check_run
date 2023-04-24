@@ -62,6 +62,19 @@ frappe.ui.form.on('Check Run', {
 		$(frm.wrapper).on('dirty', () => {
 			frm.trigger('update_primary_action')
 		})
+		if (frm.doc.__onload && frm.doc.__onload.check_run_submitting == frm.doc.name) {
+			frm.doc.status = 'Submitting'
+			frm.page.set_indicator(__('Submitting'), 'orange')
+			frm.disable_form()
+		} else if (frm.doc.__onload && frm.doc.__onload.check_run_submitting) {
+			frm.set_intro(
+				__(
+					`<span style="color: var(--orange)" id="check-run-error">Check Run ${frm.doc.__onload.check_run_submitting} is processing. This Check Run cannot be processed until it completes.</span>`
+				),
+				'red'
+			)
+			cur_frm.$check_run.$children[0].state.status = 'Submitting'
+		}
 	},
 	end_date: frm => {
 		get_entries(frm)
@@ -97,14 +110,17 @@ frappe.ui.form.on('Check Run', {
 		frm.doc.status = 'Submitting'
 		frm.page.set_indicator(__('Submitting'), 'orange')
 		frm.disable_form()
-		$(frm.$check_run).css({ 'pointer-events': 'none' })
+		cur_frm.$check_run.$children[0].state.status = frm.doc.status
 		frappe.xcall('check_run.check_run.doctype.check_run.check_run.process_check_run', { docname: frm.doc.name })
 	},
 	update_primary_action: frm => {
 		frm.disable_save()
 		if (frm.is_dirty()) {
 			frm.enable_save()
-		} else if (frm.doc.status === 'Draft') {
+		} else if ((frm.doc.__onload && frm.doc.__onload.check_run_submitting) || frm.doc.status == 'Submitting') {
+			frm.disable_save()
+			frm.disable_form()
+		} else if (frm.doc.status == 'Draft' && !(frm.doc.__onload && frm.doc.__onload.check_run_submitting)) {
 			frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
 		}
 	},
@@ -141,7 +157,7 @@ function get_entries(frm) {
 		check_run.mount_table(frm)
 		if (!frappe.user.has_role(['Accounts Manager'])) {
 			frm.disable_form()
-			frm.$check_run.css({ 'pointer-events': 'none' })
+			cur_frm.$check_run.$children[0].state.status = frm.doc.status
 		}
 	})
 }
