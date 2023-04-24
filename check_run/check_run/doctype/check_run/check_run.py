@@ -146,8 +146,6 @@ class CheckRun(Document):
 		self.set_status('Submitted')
 		self.save()
 		self.submit()
-		if self.final_check_number:
-			frappe.db.set_value('Bank Account', self.bank_account, 'check_number', self.final_check_number)
 		frappe.publish_realtime('reload', '{}', doctype=self.doctype, docname=self.name)
 
 	def build_nacha_file(self, settings=None):
@@ -318,6 +316,7 @@ class CheckRun(Document):
 
 		if _transactions and reprint_check_number:
 			self.db_set('transactions', json.dumps(_transactions))
+		self.db_set('initial_check_number', self.initial_check_number)
 		self.db_set('final_check_number', self.initial_check_number + (check_increment - 1))
 		self.db_set('status', 'Ready to Print')
 		self.db_set('print_count', self.print_count)
