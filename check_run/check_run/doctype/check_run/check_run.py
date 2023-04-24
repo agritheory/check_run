@@ -233,7 +233,7 @@ class CheckRun(Document):
 				pe.paid_from_account_currency = pe.paid_to_account_currency
 				pe.reference_date = self.posting_date
 				pe.party_type = group[0].party_type
-				pe.party = group[0].party
+				pe.party = group.party
 				pe.check_run = self.name
 				total_amount = 0
 				if frappe.db.get_value("Mode of Payment", _group[0].mode_of_payment, "type") == "Bank":
@@ -367,8 +367,7 @@ def check_for_draft_check_run(company, bank_account, payable_account):
 			"company": company,
 			"bank_account": bank_account,
 			"pay_to_account": payable_account,
-			"status": ["in", ["Draft", "Submitted"]],
-			"initial_check_number": ["!=", 0],
+			"docstatus": 0,
 		},
 	)
 	if existing:
