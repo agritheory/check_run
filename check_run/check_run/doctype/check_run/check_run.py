@@ -148,8 +148,7 @@ class CheckRun(Document):
 
 	def _process_check_run(self, save=False):
 		frappe.defaults.set_global_default("check_run_submitting", self.name)
-		savepoint = "process_check_run"
-		frappe.db.savepoint(savepoint)
+		frappe.db.sql("SAVEPOINT process_check_run")
 		try:
 			transactions = self.transactions
 			transactions = json.loads(transactions)
@@ -158,7 +157,10 @@ class CheckRun(Document):
 			)
 			_transactions = self.create_payment_entries(transactions)
 		except Exception as e:
-			frappe.db.rollback(save_point="process_check_run")
+			try:
+				frappe.db.rollback(save_point="process_check_run")
+			except Exception as _e:
+				pass
 			frappe.defaults.clear_default("check_run_submitting")
 			raise e
 
@@ -167,6 +169,7 @@ class CheckRun(Document):
 		self.set_status("Submitted")
 		self.save()
 		self.submit()
+		frappe.db.sql("RELEASE SAVEPOINT process_check_run")
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
 	def build_nacha_file(self, settings=None):
