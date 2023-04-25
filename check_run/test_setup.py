@@ -394,6 +394,7 @@ def setup_accounts():
 	update_account_number("Primary Checking - CFC", "Primary Checking", account_number="1201")
 
 
+
 def create_payment_terms_templates(settings):
 	if not frappe.db.exists("Payment Terms Template", "Net 30"):
 		doc = frappe.new_doc("Payment Terms Template")
