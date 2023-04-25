@@ -280,8 +280,8 @@ def create_bank_and_bank_account(settings):
 def setup_accounts():
 	frappe.rename_doc('Account', '1000 - Application of Funds (Assets) - CFC', '1000 - Assets - CFC', force=True)
 	frappe.rename_doc('Account', '2000 - Source of Funds (Liabilities) - CFC', '2000 - Liabilities - CFC', force=True)
-	frappe.rename_doc('Account', '1310 - Debtors - CFC', '1310 - Accounts Payable - CFC', force=True)
-	frappe.rename_doc('Account', '2110 - Creditors - CFC', '2110 - Accounts Receivable - CFC', force=True)
+	frappe.rename_doc('Account', '1310 - Debtors - CFC', '1310 - Accounts Receivable - CFC', force=True)
+	frappe.rename_doc('Account', '2110 - Creditors - CFC', '2110 - Accounts Payable - CFC', force=True)
 	update_account_number('1110 - Cash - CFC', 'Petty Cash', account_number='1110')
 	update_account_number('Primary Checking - CFC', 'Primary Checking', account_number='1201')
 
