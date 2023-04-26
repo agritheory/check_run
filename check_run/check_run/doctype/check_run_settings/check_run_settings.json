@@ -28,7 +28,9 @@
 		"ach_standard_class_code",
 		"ach_description",
 		"column_break_21",
-		"immediate_origin"
+		"immediate_origin",
+		"company_discretionary_data",
+		"custom_post_processing_hook"
 	],
 	"fields": [
 		{
@@ -130,7 +132,8 @@
 		{
 			"fieldname": "ach_description",
 			"fieldtype": "Data",
-			"label": "ACH Description"
+			"label": "ACH Description",
+			"length": 10
 		},
 		{
 			"fieldname": "print_format",
@@ -163,10 +166,22 @@
 			"fieldname": "immediate_origin",
 			"fieldtype": "Data",
 			"label": "Immediate Origin"
+		},
+		{
+			"fieldname": "company_discretionary_data",
+			"fieldtype": "Data",
+			"label": "Company Discretionary Data",
+			"length": 20
+		},
+		{
+			"fieldname": "custom_post_processing_hook",
+			"fieldtype": "Data",
+			"label": "Custom Post Processing Hook",
+			"read_only": 1
 		}
 	],
 	"links": [],
-	"modified": "2023-03-09 07:34:52.062230",
+	"modified": "2023-03-17 13:43:25.837467",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",
