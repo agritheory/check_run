@@ -724,7 +724,7 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 		effective_entry_date=doc.posting_date,
 		settlement_date=None,
 		originator_status_code=1,
-		originating_dfi_id=company_bank_account_no,
+		originating_dfi_id=company_bank_aba_number,
 		entries=ach_entries,
 	)
 	nacha_file = NACHAFile(
