@@ -277,7 +277,7 @@ function reprint_checks(frm) {
 			{
 				fieldname: 'ht',
 				fieldtype: 'HTML',
-				options: `<button id="reprint" class="btn btn-sm btn-warning" style="width: 48% color: white">${__(
+				options: `<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white">${__(
 					'Re-Print Checks'
 				)}</button><br><br>`,
 			},
