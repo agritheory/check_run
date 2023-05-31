@@ -314,6 +314,8 @@ class CheckRun(Document):
 				pe.paid_amount = total_amount
 				pe.base_paid_amount = total_amount
 				pe.base_grand_total = total_amount
+				if validate_pre_existing_payment_entry(pe):
+					continue
 				try:
 					pe.save()
 					pe.submit()
@@ -326,6 +328,28 @@ class CheckRun(Document):
 					reference.payment_entry = pe.name
 					_transactions.append(reference)
 		return _transactions
+
+
+def validate_pre_existing_payment_entry(pe):
+	existing_pe = frappe.get_value(
+		"Payment Entry",
+		{"reference_no": pe.reference_no, "docstatus": 1, "payment_type": "Pay"},
+		["name", "party", "paid_amount"],
+		as_dict=True,
+	)
+	# reference numbers already match
+	# very likely a duplicate, check the references
+	if pe.party == existing_pe.party and pe.paid_amount == existing_pe.paid_amount:
+		existing_pe = frappe.get_doc("Payment Entry", pe.name)
+		for ref in pe.references:
+			matching_ref = list(
+				filter(lambda x: x.reference_name == ref.reference_name, existing_pe.references)
+			)
+			# they are paying the same invoice,
+			if len(matching_ref) == 1:
+				matching_ref = matching_ref[0]
+				if matching_ref.outstanding_amount == ref.outstanding_amount:
+					return True
 
 	@frappe.whitelist()
 	def increment_print_count(self, reprint_check_number=None):
@@ -684,13 +708,13 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 			if not party_bank_routing_number:
 				exceptions.append(
 					f"{pe.party_type} Bank Routing Number missing for {pe.party_name}"
-				)	
-		if settings.get('individual_id_number_from') == "Naming Series":
-			individual_id_number=''.join(c for c in pe.party if c.isalnum()).upper()
-		elif settings.get('individual_id_number_from') == "Party Name":
-			individual_id_number=''.join(c for c in pe.party_name if c.isalnum()).upper()
+				)
+		if settings.get("individual_id_number_from") == "Naming Series":
+			individual_id_number = "".join(c for c in pe.party if c.isalnum()).upper()
+		elif settings.get("individual_id_number_from") == "Party Name":
+			individual_id_number = "".join(c for c in pe.party_name if c.isalnum()).upper()
 		else:
-			individual_id_number=''
+			individual_id_number = ""
 
 		ach_entry = ACHEntry(
 			transaction_code=22,  # checking account
