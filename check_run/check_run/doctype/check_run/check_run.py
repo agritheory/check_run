@@ -43,7 +43,6 @@ class CheckRun(Document):
 			self.set_onload("errors", True)
 
 	def validate(self):
-		self.set_status()
 		gl_account = frappe.get_value("Bank Account", self.bank_account, "account")
 		if not gl_account:
 			frappe.throw(
@@ -56,7 +55,8 @@ class CheckRun(Document):
 				self.set_default_payable_account()
 				self.set_default_dates()
 		else:
-			self.validate_transactions()
+			if self.status == "Draft":
+				self.filter_transactions()
 
 	def on_cancel(self):
 		settings = get_check_run_settings(self)
@@ -75,7 +75,8 @@ class CheckRun(Document):
 
 	def set_status(self, status=None):
 		if status:
-			self.status = status
+			self.db_set("status", status)
+			return
 		elif self.status == "Confirm Print":
 			pass
 		elif self.docstatus == 0:
@@ -103,35 +104,52 @@ class CheckRun(Document):
 		if not self.end_date:
 			self.end_date = getdate()
 
-	def validate_transactions(self):
+	def filter_transactions(self):
 		if not self.get("transactions"):
 			return
-		selected = [txn for txn in json.loads(self.get("transactions")) if txn["pay"]]
-		wrong_status = []
+		transactions = json.loads(self.get("transactions"))
+		for t in transactions:
+			if self.not_outstanding_or_cancelled(t):
+				transactions.remove(t)
+		self.transactions = json.dumps(transactions)
+		selected = [txn for txn in transactions if txn["pay"]]
 		for t in selected:
 			if not t["mode_of_payment"]:
 				frappe.throw(
 					frappe._(f"Mode of Payment Required: {t['party_name']} {t['ref_number']}")
 				)
-			filters = {"name": t["name"] if t["doctype"] != "Journal Entry" else t["ref_number"]}
-			if frappe.get_value(t["doctype"], filters, "docstatus") != 1:
-				wrong_status.append(
-					{
-						"party_name": t["party_name"],
-						"ref_number": t["ref_number"] or "",
-						"name": t["name"],
-					}
-				)
-		if len(wrong_status) < 1:
-			return
-		invalid_records = ""
-		for invalid_record in wrong_status:
-			invalid_records += " ".join(invalid_record.values()) + "<br>"
-		frappe.throw(
-			frappe._(
-				f"The following document(s) have been cancelled, please remove them from Check Run to continue:<br>{invalid_records}"
+
+	def not_outstanding_or_cancelled(self, transaction):
+		filters = {
+			"name": transaction["name"]
+			if transaction["doctype"] != "Journal Entry"
+			else transaction["ref_number"]
+		}
+		if frappe.get_value(transaction["doctype"], filters, "docstatus") != 1:
+			return True
+		if transaction["doctype"] == "Journal Entry":
+			outstanding_based_on_gle = frappe.db.sql(
+				"""
+				SELECT SUM(`tabGL Entry`.debit) - SUM(`tabGL Entry`.credit) AS outstanding_amount
+				FROM `tabGL Entry` 
+				WHERE party_type = %(party_type)s
+				AND account = %(account)s
+				AND party = %(party)s
+				AND voucher_no = %(ref)s
+				""",
+				{
+					"account": self.pay_to_account,
+					"party": transaction["party"],
+					"party_type": transaction["party_type"],
+					"ref": filters["name"],
+				},
+				as_dict=True,
 			)
-		)
+			if outstanding_based_on_gle and not outstanding_based_on_gle[0].outstanding_amount:
+				return True
+		else:
+			if frappe.get_value(transaction["doctype"], filters, "outstanding_amount") == 0.0:
+				return True
 
 	@frappe.whitelist()
 	def process_check_run(self):
@@ -161,7 +179,7 @@ class CheckRun(Document):
 	def _process_check_run(self):
 		frappe.defaults.set_global_default("check_run_submitting", self.name)
 		savepoint = "process_check_run"
-		frappe.db.savepoint(savepoint)
+		frappe.db.savepoint(save_point=savepoint)  # frappe.db.savepoint in V14+
 		try:
 			transactions = self.transactions
 			transactions = json.loads(transactions)
@@ -171,7 +189,7 @@ class CheckRun(Document):
 			)
 			_transactions = self.create_payment_entries(transactions)
 		except Exception as e:
-			frappe.db.rollback(savepoint="process_check_run")
+			frappe.db.rollback()
 			frappe.defaults.clear_default("check_run_submitting")
 			raise e
 
@@ -285,6 +303,8 @@ class CheckRun(Document):
 				for reference in group:
 					if not reference:
 						continue
+					if self.not_outstanding_or_cancelled(reference):
+						continue
 					if (
 						settings.automatically_release_on_hold_invoices
 						and reference.doctype == "Purchase Invoice"
@@ -314,6 +334,8 @@ class CheckRun(Document):
 				pe.paid_amount = total_amount
 				pe.base_paid_amount = total_amount
 				pe.base_grand_total = total_amount
+				if not pe.get("references"):  # already paid or cancelled
+					continue
 				try:
 					pe.save()
 					pe.submit()
@@ -555,7 +577,7 @@ def get_entries(doc):
 		if len(query) > 1:
 			query += "\nUNION\n"
 		query += je_select
-	query += "\nORDER BY due_date, name"
+	query += "\nORDER BY due_date, ref_number"
 
 	transactions = frappe.db.sql(
 		query,
@@ -684,13 +706,13 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 			if not party_bank_routing_number:
 				exceptions.append(
 					f"{pe.party_type} Bank Routing Number missing for {pe.party_name}"
-				)	
-		if settings.get('individual_id_number_from') == "Naming Series":
-			individual_id_number=''.join(c for c in pe.party if c.isalnum()).upper()
-		elif settings.get('individual_id_number_from') == "Party Name":
-			individual_id_number=''.join(c for c in pe.party_name if c.isalnum()).upper()
+				)
+		if settings.get("individual_id_number_from") == "Naming Series":
+			individual_id_number = "".join(c for c in pe.party if c.isalnum()).upper()
+		elif settings.get("individual_id_number_from") == "Party Name":
+			individual_id_number = "".join(c for c in pe.party_name if c.isalnum()).upper()
 		else:
-			individual_id_number=''
+			individual_id_number = ""
 
 		ach_entry = ACHEntry(
 			transaction_code=22,  # checking account
