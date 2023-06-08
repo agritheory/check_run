@@ -463,8 +463,8 @@ def confirm_print(docname):
 	remove_all("Check Run", docname, from_delete=False, delete_permanently=False)
 
 	# Reset status and enable hooks
-	frappe.db.set_value("Check Run", docname, "status", "Printed")
 	cr = frappe.get_doc("Check Run", docname)
+	cr.db_set("status", "Printed")
 	cr.run_method("on_update_after_submit")
 	return
 
