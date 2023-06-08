@@ -73,6 +73,9 @@ class CheckRun(Document):
 			for pe in pes:
 				frappe.db.set_value("Payment Entry", pe, "check_run", "")
 
+	def on_update_after_submit(self):
+		pass
+
 	def set_status(self, status=None):
 		if status:
 			self.db_set("status", status)
@@ -163,6 +166,7 @@ class CheckRun(Document):
 				)
 			)
 			return
+		self.run_method("validate")
 		self.status = "Submitting"
 		transactions = self.transactions
 		transactions = json.loads(transactions)
@@ -458,8 +462,11 @@ def confirm_print(docname):
 	# Remove PDF file(s)
 	remove_all("Check Run", docname, from_delete=False, delete_permanently=False)
 
-	# Reset status
-	return frappe.db.set_value("Check Run", docname, "status", "Printed")
+	# Reset status and enable hooks
+	frappe.db.set_value("Check Run", docname, "status", "Printed")
+	cr = frappe.get_doc("Check Run", docname)
+	cr.run_method("on_update_after_submit")
+	return
 
 
 @frappe.whitelist()
