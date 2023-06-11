@@ -150,6 +150,15 @@ class CheckRun(Document):
 			)
 			if outstanding_based_on_gle and not outstanding_based_on_gle[0].outstanding_amount:
 				return True
+		elif transaction["doctype"] == "Expense Claim":
+			ec = frappe.get_value(
+				transaction["doctype"],
+				filters,
+				["grand_total", "total_amount_reimbursed"],
+				as_dict=True,
+			)
+			if ec.grand_total <= ec.total_amount_reimbursed:
+				return True
 		else:
 			if frappe.get_value(transaction["doctype"], filters, "outstanding_amount") == 0.0:
 				return True
