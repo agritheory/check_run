@@ -94,7 +94,7 @@
 		},
 		{
 			"default": "0",
-			"description": "When a Check Run is cancelled, all Payment Entries linked to it will also be cancelled. This is not recommended. ",
+			"description": "When a Check Run is cancelled, all Payment Entries linked to it will also be cancelled. This is not recommended.",
 			"fieldname": "cascade_cancellation",
 			"fieldtype": "Check",
 			"label": "Cascade Cancellation"
