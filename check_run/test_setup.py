@@ -296,6 +296,7 @@ def create_test_data():
 	create_invoices(settings)
 	config_expense_claim(settings)
 	create_employees(settings)
+	create_expense_claim(settings)
 	for month in range(1, 13):
 		create_payroll_journal_entry(settings)
 		settings.day = settings.day.replace(month=month)
