@@ -107,16 +107,12 @@ doc_events = {
 	"Journal Entry": {
 		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
 	},
-<<<<<<< HEAD
 	"Payment Entry": {
 		"on_submit": "check_run.overrides.payment_entry.update_check_number",
 	},
 	"Purchase Invoice": {
 		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
 	},
-=======
-	"Bank": {"validate": ["check_run.overrides.bank.validate"]},
->>>>>>> 5d5ebf0 (feat: migrate validation to doc_events from doctype override)
 }
 
 # Scheduled Tasks
