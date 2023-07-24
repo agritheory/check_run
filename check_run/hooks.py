@@ -1,4 +1,4 @@
-from . import __version__ as app_version
+from . import __version__ as app_version  # noqa: F401
 
 app_name = "check_run"
 app_title = "Check Run"
@@ -102,7 +102,16 @@ override_doctype_class = {"Bank": "check_run.overrides.bank.CustomBank"}
 doc_events = {
 	"Payment Entry": {
 		"on_submit": "check_run.overrides.payment_entry.update_check_number",
-	}
+	},
+	"Purchase Invoice": {
+		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
+	},
+	"Expense Claim": {
+		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
+	},
+	"Journal Entry": {
+		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
+	},
 }
 
 # Scheduled Tasks
