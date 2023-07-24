@@ -1,4 +1,4 @@
-from . import __version__ as app_version
+from . import __version__ as app_version  # noqa: F401
 
 app_name = "check_run"
 app_title = "Check Run"
@@ -93,7 +93,7 @@ after_migrate = "check_run.customize.load_customizations"
 # ---------------
 # Override standard doctype classes
 
-override_doctype_class = {"Bank": "check_run.overrides.bank.CustomBank"}
+# override_doctype_class = {"Bank": "check_run.overrides.bank.CustomBank"}
 
 # Document Events
 # ---------------
@@ -102,7 +102,8 @@ override_doctype_class = {"Bank": "check_run.overrides.bank.CustomBank"}
 doc_events = {
 	"Payment Entry": {
 		"on_submit": "check_run.overrides.payment_entry.update_check_number",
-	}
+	},
+	"Bank": {"validate": ["check_run.overrides.bank.validate"]},
 }
 
 # Scheduled Tasks
