@@ -93,23 +93,24 @@ after_migrate = "check_run.customize.load_customizations"
 # ---------------
 # Override standard doctype classes
 
-override_doctype_class = {"Bank": "check_run.overrides.bank.CustomBank"}
+# override_doctype_class = {"Bank": "check_run.overrides.bank.CustomBank"}
 
 # Document Events
 # ---------------
 # Hook on document methods and events
 
 doc_events = {
-	"Payment Entry": {
-		"on_submit": "check_run.overrides.payment_entry.update_check_number",
-	},
-	"Purchase Invoice": {
-		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
-	},
+	"Bank": {"validate": ["check_run.overrides.bank.validate"]},
 	"Expense Claim": {
 		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
 	},
 	"Journal Entry": {
+		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
+	},
+	"Payment Entry": {
+		"on_submit": "check_run.overrides.payment_entry.update_check_number",
+	},
+	"Purchase Invoice": {
 		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
 	},
 }
