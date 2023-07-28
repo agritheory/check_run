@@ -5,6 +5,7 @@ import frappe
 from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
 from erpnext.setup.utils import enable_all_roles_and_domains, set_defaults_for_tests
 from erpnext.accounts.doctype.account.account import update_account_number
+from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import make_debit_note
 
 
 def before_test():
@@ -394,7 +395,6 @@ def setup_accounts():
 	update_account_number("Primary Checking - CFC", "Primary Checking", account_number="1201")
 
 
-
 def create_payment_terms_templates(settings):
 	if not frappe.db.exists("Payment Terms Template", "Net 30"):
 		doc = frappe.new_doc("Payment Terms Template")
@@ -623,6 +623,19 @@ def create_invoices(settings):
 	)  # allow date to be backdated for testing
 	pi.save()
 	pi.submit()
+
+	spi = frappe.get_value(
+		"Purchase Invoice",
+		{"supplier": "Cooperative Ag Finance"},
+		order_by="posting_date DESC",
+	)
+	rpi = make_debit_note(spi)
+	rpi.return_against = (
+		None  # this approach isn't best practice but it allows us to see a negative PI in the check run
+	)
+	rpi.items[0].rate = 500
+	rpi.save()
+	rpi.submit()
 
 
 def validate_release_date(self):

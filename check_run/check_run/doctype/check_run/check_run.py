@@ -497,7 +497,7 @@ def get_entries(doc):
 				"\n",
 			).as_("mode_of_payment"),
 		)
-		.where(purchase_invoices.outstanding_amount > 0)
+		.where(purchase_invoices.outstanding_amount != 0)
 		.where(purchase_invoices.company == company)
 		.where(purchase_invoices.docstatus == 1)
 		.where(purchase_invoices.credit_to == pay_to_account)
