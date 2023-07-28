@@ -520,7 +520,7 @@ def get_entries(doc):
 					`tabPurchase Invoice`.posting_date,
 					COALESCE(`tabPurchase Invoice`.supplier_default_mode_of_payment, `tabSupplier`.supplier_default_mode_of_payment, '\n') AS mode_of_payment
 				FROM `tabPurchase Invoice`, `tabSupplier`
-				WHERE `tabPurchase Invoice`.outstanding_amount > 0
+				WHERE `tabPurchase Invoice`.outstanding_amount != 0
 				AND `tabPurchase Invoice`.supplier = `tabSupplier`.name
 				AND `tabPurchase Invoice`.company = %(company)s
 				AND `tabPurchase Invoice`.docstatus = 1
