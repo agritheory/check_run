@@ -81,11 +81,11 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install Dependencies
-        run: bash ${{GITHUB_WORKSPACE}}/.github/helper/install_dependencies.sh
+        run: bash ${{github.workspace}}/.github/helper/install_dependencies.sh
 
       - name: Install
         run: |
-          bash ${{GITHUB_WORKSPACE}}/.github/helper/install.sh
+          bash ${{github.workspace}}/.github/helper/install.sh
 
       - name: Cypress run
         uses: cypress-io/github-action@v4
