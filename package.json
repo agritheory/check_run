@@ -18,12 +18,6 @@
 	"publishConfig": {
 		"access": "restricted"
 	},
-	"release": {
-		"branches": [
-			"version-13",
-			"version-14"
-		]
-	},
     "semantic_release": {
         "assets": [],
         "branches": {
@@ -36,6 +30,9 @@
 				"prerelease": false
 			}
         },
+        "version_variables": [
+			"check_run/__init__.py:__version__"
+		],
         "changelog": {
             "template_dir": "templates",
             "changelog_file": "CHANGELOG.md",
