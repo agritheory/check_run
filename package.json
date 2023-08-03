@@ -82,7 +82,7 @@
         "logging_use_named_masks": false,
         "major_on_zero": true,
         "remote": {
-            "name": "upstream",
+            "name": "origin",
             "token": {
                 "env": "GH_TOKEN"
             },
