@@ -54,6 +54,7 @@ frappe.ui.form.on('Check Run', {
 			frm.set_df_property('final_check_number', 'read_only', 1)
 		}
 		check_settings(frm)
+		settup_preview(frm)
 	},
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
@@ -423,6 +424,20 @@ function check_settings(frm) {
 			} else {
 				frm.doc.__onload.settings_missing = false
 			}
+		})
+	}
+}
+
+function settup_preview(frm) {
+	if ($('#pdf-preview-wrapper').length == 0) {
+		$('.page-body .page-wrapper').append(`<div id="pdf-preview-wrapper">
+		<button class="btn btn-secondary btn-default btn-sm" id='close-pdf-button'>Close PDF Preview</button>
+		</div>`)
+
+		$('#close-pdf-button').on('click', event => {
+			$('#pdf-preview').remove()
+			$('.page-body').removeClass('show-pdf-preview')
+			frm.page.wrapper.find('.layout-side-section').show()
 		})
 	}
 }

@@ -36,13 +36,13 @@ frappe.ui.form.Attachments.prototype.add_attachment = attachment => {
 	})
 	if (file_name.endsWith('.pdf')) {
 		if ($('#pdf-preview-wrapper').length == 0) {
-			$('.submitted-form .page-body .page-wrapper').append(`<div id="pdf-preview-wrapper">
+			$('.page-body .page-wrapper').append(`<div id="pdf-preview-wrapper">
 			<button class="btn btn-secondary btn-default btn-sm" id='close-pdf-button'>Close PDF Preview</button>
 			</div>`)
 
 			$('#close-pdf-button').on('click', event => {
 				$('#pdf-preview').remove()
-				$('.submitted-form .page-body').removeClass('show-pdf-preview')
+				$('.page-body').removeClass('show-pdf-preview')
 				cur_frm.page.wrapper.find('.layout-side-section').show()
 			})
 		}
@@ -57,5 +57,5 @@ frappe.ui.pdfPreview = (frm, file_url) => {
 		$('#pdf-preview-wrapper').removeClass('pdf-preview-wrapper-fw')
 	}
 	$('#pdf-preview-wrapper').append(`<iframe id="pdf-preview" src="${file_url}">`)
-	$('.submitted-form .page-body').addClass('show-pdf-preview')
+	$('.page-body').addClass('show-pdf-preview')
 }

@@ -67,7 +67,7 @@
 							<a :href="transactionUrl(item)" target="_blank">
 								{{ item.ref_number || item.name }}
 							</a>
-							<a @click="showPreview(item)">
+							<a v-if="item.attachments.length > 0" @click="showPreview(item)">
 							<svg viewBox="0 0 150 150" style="max-height: 1.15rem; translate: rotate(-90deg)" >
 								<g>
 									<path
@@ -203,8 +203,15 @@ export default {
 			}
 			this.$refs.dropdowns[this.state.selectedRow].openWithSearch()
 		},
-		showPreview(item){
-			console.log(item)
+		showPreview(item) {
+			cur_frm.page.wrapper.find('.layout-side-section').hide()
+			if (localStorage.container_fullwidth != 'false') {
+				$('#pdf-preview-wrapper').addClass('pdf-preview-wrapper-fw')
+			} else {
+				$('#pdf-preview-wrapper').removeClass('pdf-preview-wrapper-fw')
+			}
+			$('#pdf-preview-wrapper').append(`<iframe id="pdf-preview" src="${item.attachments[0]}">`)
+			$('.page-body').addClass('show-pdf-preview')
 		}
 	},
 	beforeMount() {

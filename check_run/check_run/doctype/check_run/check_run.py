@@ -17,6 +17,7 @@ from frappe.permissions import has_permission
 from frappe.utils.file_manager import save_file, remove_all
 from frappe.utils.password import get_decrypted_password
 from frappe.contacts.doctype.address.address import get_default_address
+from frappe.desk.form.load import get_attachments
 
 from erpnext.accounts.utils import get_balance_on
 
@@ -605,6 +606,10 @@ def get_entries(doc):
 		as_dict=True,
 	)
 	for transaction in transactions:
+		transaction.attachments = [
+			attachment.file_url for attachment in get_attachments(transaction.doctype, transaction.name)
+			if attachment.file_url.endswith('.pdf')
+		]
 		if settings and settings.pre_check_overdue_items:
 			if transaction.due_date < doc.posting_date:
 				transaction.pay = 1
