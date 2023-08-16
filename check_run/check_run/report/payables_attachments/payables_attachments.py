@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe.desk.form.load import get_attachments
 
 
 def execute(filters=None):
@@ -9,7 +10,7 @@ def execute(filters=None):
 
 
 def get_data(filters):
-	return frappe.db.sql("""
+	data = frappe.db.sql("""
 		SELECT 
 		pi.name AS purchase_invoice_name,
 		pi.title,
@@ -26,19 +27,19 @@ def get_data(filters):
 		pi.is_return,
 		pi.release_date,
 		pi.represents_company,
-		pi.is_internal_supplier,
-		file.file_name AS attachments,
-		file.file_url
+		pi.is_internal_supplier
 		FROM `tabPurchase Invoice` AS pi
-		LEFT JOIN `tabFile` AS file
-		ON  file.attached_to_name = pi.name
-		AND file.attached_to_doctype = 'Purchase Invoice'
-		AND file.file_url  LIKE '%.pdf'
 		ORDER BY pi.modified DESC
 		""",
 		as_dict=True,
 	)
 
+	for row in data:
+		row['attachments'] = "  ".join([
+			f"""<a data-pdf-preview="{attachment.file_url}" onclick="pdf_preview('{attachment.file_url}')">{attachment.file_name}</a>"""
+			for attachment in get_attachments('Purchase Invoice', row['purchase_invoice_name']) if attachment.file_url.endswith('.pdf')
+		])
+	return data
 
 def get_columns(filters):
 	return [
@@ -148,7 +149,7 @@ def get_columns(filters):
 			"label": frappe._("Attachments"),
 			"fieldname": "attachments",
 			"fieldtype": "Data",
-			"width": "200px",
+			"width": "400px",
 		},
 	]
 
