@@ -71,7 +71,7 @@ frappe.ui.closeFilePreview = () => {
 	if ($('#pdf-preview').length != 0) {
 		$('#pdf-preview').remove()
 		$('.page-body').removeClass('show-pdf-preview')
-		if (cur_frm !== null) {
+		if (cur_frm !== null && cur_frm.doctype != 'Check Run') {
 			cur_frm.page.wrapper.find('.layout-side-section').show()
 		}
 	}
