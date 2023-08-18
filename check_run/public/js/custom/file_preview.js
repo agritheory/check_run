@@ -5,7 +5,6 @@ $(document).on('page-change', function(e) {
 })
 
 $(document).on('click', function(e) {
-	console.log(e)
 	if (!$(e.target).get(0).hasAttribute('data-pdf-preview')) {
 		frappe.ui.closeFilePreview()
 	}
@@ -13,6 +12,10 @@ $(document).on('click', function(e) {
 
 $(document).on('keydown', (e) => {
 	if (e.which === frappe.ui.keyCode.ESCAPE) {
+		frappe.ui.closeFilePreview()
+	}
+
+	if (e.which === frappe.ui.keyCode.SPACE && cur_frm && cur_frm.doctype == 'Check Run') {
 		frappe.ui.closeFilePreview()
 	}
 });
