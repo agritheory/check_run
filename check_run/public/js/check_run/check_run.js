@@ -1,6 +1,7 @@
 import CheckRun from './CheckRun.vue'
 import ADropdown from './ADropdown.vue'
 
+
 frappe.provide('check_run')
 
 check_run.mount_table = frm => {
