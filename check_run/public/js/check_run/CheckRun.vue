@@ -63,20 +63,22 @@
 						tabindex="1"
 						@click="state.selectedRow = i">
 						<td style="text-align: left">{{ item.party_name || item.party }}</td>
-						<td style="white-space: nowrap">
+						<td style="text-align: left;white-space: nowrap;">
 							<a :href="transactionUrl(item)" target="_blank">
 								{{ item.ref_number || item.name }}
 							</a>
-							<a v-if="item.attachments.length > 0" @click="showPreview(item)" data-pdf-preview="item">
-							<svg viewBox="0 0 150 150" style="max-height: 1.15rem; translate: rotate(-90deg)" data-pdf-preview="item">
-								<g>
-									<path
-										d="M 93.148438,80.832031 C 109.5,57.742188 104.03125,25.769531 80.941406,9.421875 57.851562,-6.925781 25.878906,-1.460938 9.53125,21.632812 -6.816406,44.722656 -1.351562,76.691406 21.742188,93.039062 38.222656,104.70703 60.011719,105.60547 77.394531,95.339844 l 37.769529,37.542966 c 4.07813,4.29297 10.86328,4.46485 15.15625,0.38672 4.29297,-4.07422 4.46485,-10.85937 0.39063,-15.15234 -0.12891,-0.13672 -0.25391,-0.26172 -0.39063,-0.39063 z m -41.839844,3.5 C 33.0625,84.335938 18.269531,69.554688 18.257812,51.308594 18.253906,33.0625 33.035156,18.269531 51.285156,18.261719 c 18.222656,-0.0078 33.007813,14.75 33.042969,32.972656 0.03125,18.25 -14.742187,33.066406 -32.996094,33.097656 -0.0078,0 -0.01172,0 -0.02344,0 z m 0,0"
-										style="fill: #000000; fill-opacity: 1; fill-rule: nonzero; stroke: none"
-										id="path2" />
-								</g>
-							</svg>
-							</a>
+							<div style="float: right;" class="dropdown show" v-if="item.attachments.length > 1">
+							  <a class="btn btn-default btn-xs dropdown-toggle" href="#" role="button" :id="item.name" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							    <i class="fa fa-search"></i>
+							  </a>
+							  <div class="dropdown-menu" :aria-labelledby="item.name">
+							    <a v-for="attachment in item.attachments" class="dropdown-item" href="javascript:;" @click="showPreview(attachment.file_url)" data-pdf-preview="item">{{ attachment.file_name }}</a>
+							  </div>
+							</div>
+
+							<button style="float: right;"  v-if="item.attachments.length == 1" type="button" class="btn btn-secondary btn-xs" @click="showPreview(item.attachments)" data-pdf-preview="item">
+								<i @click="showPreview(item.attachments)" data-pdf-preview="item" class="fa fa-search"></i>
+							</button>
 						</td>
 						<td>{{ item.posting_date }}</td>
 						<td class="mop-onclick" :data-mop-index="i">
@@ -203,10 +205,16 @@ export default {
 			}
 			this.$refs.dropdowns[this.state.selectedRow].openWithSearch()
 		},
-		showPreview(item) {
+		showPreview(attachment) {
+			console.log(this.transactions)
 			frappe.ui.addFilePreviewWrapper()
 			$('#pdf-preview-wrapper').removeClass('pdf-preview-wrapper-fw')
-			$('#pdf-preview-wrapper').append(`<iframe id="pdf-preview" src="${item.attachments[0]}">`)
+			if (typeof attachment == 'string') {
+				var file_url = attachment
+			} else {
+				var file_url = attachment[0].file_url
+			}
+			$('#pdf-preview-wrapper').append(`<iframe id="pdf-preview" src="${file_url}">`)
 			$('.page-body').addClass('show-pdf-preview')
 		}
 	},
