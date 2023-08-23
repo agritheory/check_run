@@ -1,5 +1,6 @@
 <template>
 	<div>
+		<ModeOfPaymentSummary :transactions="transactions" />
 		<table class="table table-compact table-hover check-run-table" style="text-align: center; margin: 0">
 			<thead>
 				<tr>
@@ -104,11 +105,13 @@
 </template>
 <script>
 import ADropdown from './ADropdown.vue'
+import ModeOfPaymentSummary from './ModeOfPaymentSummary.vue'
 
 export default {
 	name: 'CheckRun',
 	components: {
 		ADropdown,
+		ModeOfPaymentSummary,
 	},
 	props: ['transactions', 'modes_of_payment', 'status', 'state'],
 	data() {
