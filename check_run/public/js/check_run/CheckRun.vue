@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<ModeOfPaymentSummary :transactions="transactions" />
+		<ModeOfPaymentSummary :transactions="transactions" :pay_to_account_currency="pay_to_account_currency" />
 		<table class="table table-compact table-hover check-run-table" style="text-align: center; margin: 0">
 			<thead>
 				<tr>
@@ -82,7 +82,7 @@
 
 							<span v-else>{{ transactions[i].mode_of_payment }}</span>
 						</td>
-						<td>{{ format_currency(item.amount, 'USD', 2) }}</td>
+						<td>{{ format_currency(item.amount, pay_to_account_currency, 2) }}</td>
 						<td>{{ moment(item.due_date).format('MM/DD/YY') }}</td>
 						<td v-if="state.status == 'Draft'" style="text-align: left">
 							<input
@@ -124,6 +124,7 @@ export default {
 				due_date: 1,
 			},
 			modeOfPaymentNames: this.modes_of_payment.map(mop => mop.name),
+			pay_to_account_currency: '',
 		}
 	},
 	watch: {
@@ -196,6 +197,9 @@ export default {
 	beforeMount() {
 		this.moment = moment
 		this.format_currency = format_currency
+		frappe.db.get_value('account', cur_frm.doc.pay_to_account, 'account_currency').then(r => {
+			this.pay_to_account_currency = r.message.pay_to_account_currency
+		})
 		cur_frm.check_run_component = this
 	},
 }

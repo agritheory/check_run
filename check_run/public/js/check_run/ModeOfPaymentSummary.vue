@@ -2,7 +2,7 @@
 	<div>
 		<div id="modeOfPaymentSummary" class="row">
 			<div v-for="result in results" class="col">
-				{{ result.qty }} {{ result.mode_of_payment}}: ${{ result.amount }}
+				{{ result.qty }} {{ result.mode_of_payment}}: {{ format_currency(result.amount, pay_to_account_currency, 2) }}
 			</div>
 		</div>
 	</div>
@@ -17,6 +17,7 @@ export default {
 			required: true,
 			default: () => [],
 		},
+		pay_to_account_currency: ''
 	},
 	data() {
 		return {
@@ -70,6 +71,9 @@ export default {
 		  }, {});
 		  return Object.values(agg);
 		}
+	},
+	beforeMount() {
+		this.format_currency = format_currency
 	},
 }
 </script>
