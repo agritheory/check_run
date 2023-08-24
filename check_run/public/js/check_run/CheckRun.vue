@@ -206,19 +206,9 @@ export default {
 			this.$refs.dropdowns[this.state.selectedRow].openWithSearch()
 		},
 		showPreview(attachment) {
+			var file_url = typeof attachment == 'string' ? attachment : attachment[0].file_url
 			frappe.ui.addFilePreviewWrapper()
-			if (localStorage.container_fullwidth != 'false') {
-				$('#pdf-preview-wrapper').addClass('pdf-preview-wrapper-fw')
-			} else {
-				$('#pdf-preview-wrapper').removeClass('pdf-preview-wrapper-fw')
-			}
-			if (typeof attachment == 'string') {
-				var file_url = attachment
-			} else {
-				var file_url = attachment[0].file_url
-			}
-			$('#pdf-preview-wrapper').append(`<iframe id="pdf-preview" src="${file_url}">`)
-			$('.page-body').addClass('show-pdf-preview')
+			frappe.ui.pdfPreview(cur_frm, file_url)
 		}
 	},
 	beforeMount() {
