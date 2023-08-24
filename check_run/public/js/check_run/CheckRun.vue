@@ -67,7 +67,7 @@
 							<a :href="transactionUrl(item)" target="_blank">
 								{{ item.ref_number || item.name }}
 							</a>
-							<div style="float: right;" class="dropdown show" v-if="item.attachments.length > 1">
+							<div v-if="item.attachments.length > 1" style="float: right;" class="dropdown show">
 							  <a class="btn btn-default btn-xs dropdown-toggle" href="#" role="button" :id="item.name" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
 							    <i class="fa fa-search"></i>
 							  </a>
@@ -76,7 +76,7 @@
 							  </div>
 							</div>
 
-							<button style="float: right;"  v-if="item.attachments.length == 1" type="button" class="btn btn-secondary btn-xs" @click="showPreview(item.attachments)" data-pdf-preview="item">
+							<button v-if="item.attachments.length == 1" style="float: right;" type="button" class="btn btn-secondary btn-xs" @click="showPreview(item.attachments)" data-pdf-preview="item">
 								<i @click="showPreview(item.attachments)" data-pdf-preview="item" class="fa fa-search"></i>
 							</button>
 						</td>
@@ -206,9 +206,12 @@ export default {
 			this.$refs.dropdowns[this.state.selectedRow].openWithSearch()
 		},
 		showPreview(attachment) {
-			console.log(this.transactions)
 			frappe.ui.addFilePreviewWrapper()
-			$('#pdf-preview-wrapper').removeClass('pdf-preview-wrapper-fw')
+			if (localStorage.container_fullwidth != 'false') {
+				$('#pdf-preview-wrapper').addClass('pdf-preview-wrapper-fw')
+			} else {
+				$('#pdf-preview-wrapper').removeClass('pdf-preview-wrapper-fw')
+			}
 			if (typeof attachment == 'string') {
 				var file_url = attachment
 			} else {
