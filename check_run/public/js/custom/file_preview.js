@@ -1,24 +1,33 @@
 frappe.provide('frappe.ui.form')
 
-$(document).on('page-change', function(e) {
+$(document).on('page-change', function (e) {
 	frappe.ui.closeFilePreview()
 })
 
+<<<<<<< HEAD
 $(document).on('click', function(e) {
+=======
+$(document).on('click', function (e) {
+	console.log(e)
+>>>>>>> 07e61640683268b878df9b00ba34afdf69a1b46e
 	if (!$(e.target).get(0).hasAttribute('data-pdf-preview')) {
 		frappe.ui.closeFilePreview()
 	}
-});
+})
 
-$(document).on('keydown', (e) => {
+$(document).on('keydown', e => {
 	if (e.which === frappe.ui.keyCode.ESCAPE) {
 		frappe.ui.closeFilePreview()
 	}
+<<<<<<< HEAD
 
 	if (e.which === frappe.ui.keyCode.SPACE && cur_frm && cur_frm.doctype == 'Check Run') {
 		frappe.ui.closeFilePreview()
 	}
 });
+=======
+})
+>>>>>>> 07e61640683268b878df9b00ba34afdf69a1b46e
 
 $('#close-pdf-button').on('click', event => {
 	frappe.ui.closeFilePreview()
@@ -41,15 +50,15 @@ frappe.ui.form.Attachments.prototype.add_attachment = attachment => {
 	let icon = `<a href="/app/file/${fileid}">
 				${frappe.utils.icon(attachment.is_private ? 'lock' : 'unlock', 'sm ml-0')}
 			</a>`
-	
+
 	if (file_name.endsWith('.pdf')) {
 		icon += `<i class="fa fa-file-pdf-o" data-pdf-preview="${file_url}"></i>`
 	}
-	
+
 	$(`<li class="attachment-row">`)
 		.append(frappe.get_data_pill(file_label, fileid, remove_action, icon))
 		.insertAfter(cur_frm.attachments.attachments_label.addClass('has-attachments'))
-	
+
 	$('.fa-file-pdf-o').on('click', event => {
 		frappe.ui.pdfPreview(cur_frm, event.currentTarget.dataset.pdfPreview)
 	})

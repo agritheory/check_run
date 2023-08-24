@@ -2,9 +2,9 @@
 // For license information, please see license.txt
 /* eslint-disable */
 
-frappe.query_reports["Payables Attachments"] = {
-	"filters": [],
-};
+frappe.query_reports['Payables Attachments'] = {
+	filters: [],
+}
 
 frappe.ui.addFilePreviewWrapper()
 
