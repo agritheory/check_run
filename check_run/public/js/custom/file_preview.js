@@ -4,12 +4,7 @@ $(document).on('page-change', function (e) {
 	frappe.ui.closeFilePreview()
 })
 
-<<<<<<< HEAD
-$(document).on('click', function(e) {
-=======
 $(document).on('click', function (e) {
-	console.log(e)
->>>>>>> 07e61640683268b878df9b00ba34afdf69a1b46e
 	if (!$(e.target).get(0).hasAttribute('data-pdf-preview')) {
 		frappe.ui.closeFilePreview()
 	}
@@ -19,15 +14,10 @@ $(document).on('keydown', e => {
 	if (e.which === frappe.ui.keyCode.ESCAPE) {
 		frappe.ui.closeFilePreview()
 	}
-<<<<<<< HEAD
-
 	if (e.which === frappe.ui.keyCode.SPACE && cur_frm && cur_frm.doctype == 'Check Run') {
 		frappe.ui.closeFilePreview()
 	}
 });
-=======
-})
->>>>>>> 07e61640683268b878df9b00ba34afdf69a1b46e
 
 $('#close-pdf-button').on('click', event => {
 	frappe.ui.closeFilePreview()
