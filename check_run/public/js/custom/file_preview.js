@@ -77,7 +77,9 @@ frappe.ui.closeFilePreview = () => {
 }
 
 frappe.ui.pdfPreview = (frm, file_url) => {
-	frm.page.wrapper.find('.layout-side-section').hide()
+	if (frm !== null) {
+		frm.page.wrapper.find('.layout-side-section').hide()
+	}
 	if (localStorage.container_fullwidth != 'false') {
 		$('#pdf-preview-wrapper').addClass('pdf-preview-wrapper-fw')
 	} else {
