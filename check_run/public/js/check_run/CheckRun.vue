@@ -41,7 +41,7 @@
 							>&#11021;</span
 						>
 					</th>
-					<th v-if="state.status == 'Draft'" style="min-width: 200px; text-align: left">
+					<th v-if="state.status == 'Draft'" class="col col-sm-1" style="text-align: left">
 						<input
 							type="checkbox"
 							autocomplete="off"
@@ -50,7 +50,7 @@
 							id="select-all"
 							v-model="selectAll" /><span>Select All</span>
 					</th>
-					<th v-else class="col col-sm-2">Check Number | Reference</th>
+					<th v-else class="col col-sm-1">Check Number | Reference</th>
 				</tr>
 			</thead>
 			<tbody>
