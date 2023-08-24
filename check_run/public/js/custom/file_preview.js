@@ -17,7 +17,7 @@ $(document).on('keydown', e => {
 	if (e.which === frappe.ui.keyCode.SPACE && cur_frm && cur_frm.doctype == 'Check Run') {
 		frappe.ui.closeFilePreview()
 	}
-});
+})
 
 $('#close-pdf-button').on('click', event => {
 	frappe.ui.closeFilePreview()
