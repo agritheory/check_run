@@ -274,10 +274,11 @@ employees = [
 
 
 def create_test_data():
+	today = frappe.utils.getdate()
 	setup_accounts()
 	settings = frappe._dict(
 		{
-			"day": datetime.date(int(frappe.defaults.get_defaults().get("fiscal_year")), 1, 1),
+			"day": today.replace(month=1, day=1),
 			"company": frappe.defaults.get_defaults().get("company"),
 			"company_account": frappe.get_value(
 				"Account",
