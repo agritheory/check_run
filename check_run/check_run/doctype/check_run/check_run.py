@@ -18,7 +18,7 @@ from frappe.utils.file_manager import save_file, remove_all
 from frappe.utils.password import get_decrypted_password
 from frappe.contacts.doctype.address.address import get_default_address
 from frappe.query_builder.custom import ConstantColumn
-from frappe.query_builder.functions import Coalesce
+from frappe.query_builder.functions import Coalesce, Sum
 
 from erpnext.accounts.utils import get_balance_on
 
@@ -125,22 +125,15 @@ class CheckRun(Document):
 		if frappe.get_value(transaction["doctype"], filters, "docstatus") != 1:
 			return True
 		if transaction["doctype"] == "Journal Entry":
-			outstanding_based_on_gle = frappe.db.sql(
-				"""
-				SELECT SUM(`tabGL Entry`.debit) - SUM(`tabGL Entry`.credit) AS outstanding_amount
-				FROM `tabGL Entry` 
-				WHERE party_type = %(party_type)s
-				AND account = %(account)s
-				AND party = %(party)s
-				AND voucher_no = %(ref)s
-				""",
-				{
-					"account": self.pay_to_account,
-					"party": transaction["party"],
-					"party_type": transaction["party_type"],
-					"ref": filters["name"],
-				},
-				as_dict=True,
+			gl_entry = frappe.qb.DocType("GL Entry")
+			outstanding_based_on_gle = (
+				frappe.qb.from_(gl_entry)
+				.select((Sum(gl_entry.debit) - Sum(gl_entry.credit)).as_("outstanding_amount"))
+				.where(gl_entry.party_type == transaction["party_type"])
+				.where(gl_entry.account == self.pay_to_account)
+				.where(gl_entry.party == transaction["party"])
+				.where(gl_entry.voucher_no == filters["name"])
+				.run(as_dict=True)
 			)
 			if outstanding_based_on_gle and not outstanding_based_on_gle[0].outstanding_amount:
 				return True
