@@ -94,14 +94,14 @@ after_migrate = "check_run.customize.load_customizations"
 # DocType Class
 # ---------------
 # Override standard doctype classes
-
-override_doctype_class = {"Bank": "check_run.overrides.bank.CustomBank"}
+# override_doctype_class = {"Bank": "check_run.overrides.bank.CustomBank"}
 
 # Document Events
 # ---------------
 # Hook on document methods and events
 
 doc_events = {
+	"Bank": {"validate": ["check_run.overrides.bank.validate"]},
 	"Payment Entry": {
 		"on_submit": "check_run.overrides.payment_entry.update_check_number",
 	},
