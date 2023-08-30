@@ -3,9 +3,11 @@
 
 import frappe
 
+
 def execute(filters=None):
 	print(filters)
 	return get_columns(filters), get_data(filters)
+
 
 def get_columns(filters):
 	return [
@@ -13,7 +15,7 @@ def get_columns(filters):
 			"label": frappe._("Check Date"),
 			"fieldname": "check_date",
 			"fieldtype": "Date",
-			"width": "150px"
+			"width": "150px",
 		},
 		{
 			"label": frappe._("Check Number"),
@@ -29,8 +31,10 @@ def get_columns(filters):
 		},
 	]
 
+
 def get_data(filters):
-	return frappe.db.sql("""
+	return frappe.db.sql(
+		"""
 		SELECT
 			`tabPayment Entry`.reference_no AS check_number,
 			`tabPayment Entry`.reference_date AS check_date,
@@ -44,9 +48,11 @@ def get_data(filters):
 		AND `tabPayment Entry`.mode_of_payment = 'Check'
 		AND `tabPayment Entry`.docstatus = 1
 		ORDER BY check_date
-		""", {
-			'start_date': filters.start_date,
-			'end_date': filters.end_date,
-			'bank_account': filters.bank_account
-	}, as_dict=True)
-
+		""",
+		{
+			"start_date": filters.start_date,
+			"end_date": filters.end_date,
+			"bank_account": filters.bank_account,
+		},
+		as_dict=True,
+	)

@@ -1,4 +1,4 @@
-from . import __version__ as app_version
+from . import __version__ as app_version  # noqa: F401
 
 app_name = "check_run"
 app_title = "Check Run"
@@ -35,9 +35,9 @@ app_include_js = [
 
 # include js in doctype views
 doctype_js = {
-	'Employee': 'public/js/custom/employee_custom.js',
-	"Payment Entry": 'public/js/custom/payment_entry_custom.js',
-	"Supplier": 'public/js/custom/supplier_custom.js',
+	"Employee": "public/js/custom/employee_custom.js",
+	"Payment Entry": "public/js/custom/payment_entry_custom.js",
+	"Supplier": "public/js/custom/supplier_custom.js",
 }
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
@@ -51,7 +51,7 @@ doctype_js = {
 
 # website user home page (by Role)
 # role_home_page = {
-#	"Role": "home_page"
+# 	"Role": "home_page"
 # }
 
 # Generators
@@ -65,7 +65,7 @@ doctype_js = {
 
 # before_install = "check_run.install.before_install"
 after_install = "check_run.customize.after_install"
-after_migrate = 'check_run.customize.load_customizations'
+after_migrate = "check_run.customize.load_customizations"
 
 # Uninstallation
 # ------------
@@ -94,19 +94,17 @@ after_migrate = 'check_run.customize.load_customizations'
 # DocType Class
 # ---------------
 # Override standard doctype classes
-
-override_doctype_class = {
-	"Bank": "check_run.overrides.bank.CustomBank"
-}
+# override_doctype_class = {"Bank": "check_run.overrides.bank.CustomBank"}
 
 # Document Events
 # ---------------
 # Hook on document methods and events
 
 doc_events = {
+	"Bank": {"validate": ["check_run.overrides.bank.validate"]},
 	"Payment Entry": {
 		"on_submit": "check_run.overrides.payment_entry.update_check_number",
-	}
+	},
 }
 
 # Scheduled Tasks
@@ -173,8 +171,4 @@ doc_events = {
 # For example: Role, Gender, etc.
 # translated_search_doctypes = []
 
-jinja = {
-	"methods": [
-		"frappe.contacts.doctype.address.address.get_default_address"
-	]
-}
+jinja = {"methods": ["frappe.contacts.doctype.address.address.get_default_address"]}
