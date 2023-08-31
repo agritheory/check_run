@@ -486,6 +486,7 @@ def get_entries(doc):
 			ConstantColumn("Purchase Invoice").as_("doctype"),
 			ConstantColumn("Supplier").as_("party_type"),
 			purchase_invoices.name,
+			(purchase_invoices.bill_no).as_("ref_number"),
 			(purchase_invoices.supplier).as_("party"),
 			(purchase_invoices.supplier_name).as_("party_name"),
 			(payment_schedule.outstanding).as_("amount"),

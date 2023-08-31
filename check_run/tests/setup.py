@@ -207,7 +207,7 @@ def create_payment_terms_templates(settings):
 			},
 		)
 		doc.save()
-	if not frappe.db.exists("Payment Terms Template", "12 Month Rental Agreement"):
+	if not frappe.db.exists("Payment Terms Template", "18 Month Rental Agreement"):
 		doc = frappe.new_doc("Payment Terms Template")
 		doc.template_name = "18 Month Rental Agreement"
 		for month in range(0, 18):
