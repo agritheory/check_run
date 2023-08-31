@@ -5,7 +5,6 @@ import frappe
 
 
 def execute(filters=None):
-	print(filters)
 	return get_columns(filters), get_data(filters)
 
 
