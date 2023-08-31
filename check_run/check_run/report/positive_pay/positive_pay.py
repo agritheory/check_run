@@ -45,7 +45,7 @@ def get_data(filters):
 		)
 		.where(pe.reference_date >= filters.start_date)
 		.where(pe.reference_date <= filters.end_date)
-		.where(pe.bank_account >= filters.bank_account)
+		.where(pe.bank_account == filters.bank_account)
 		.where(mop.type == "Bank")
 		.where(pe.docstatus == 1)
 		.orderby(pe.reference_date)
