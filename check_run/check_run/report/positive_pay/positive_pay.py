@@ -5,7 +5,6 @@ import frappe
 
 
 def execute(filters=None):
-	print(filters)
 	return get_columns(filters), get_data(filters)
 
 
@@ -33,26 +32,22 @@ def get_columns(filters):
 
 
 def get_data(filters):
-	return frappe.db.sql(
-		"""
-		SELECT
-			`tabPayment Entry`.reference_no AS check_number,
-			`tabPayment Entry`.reference_date AS check_date,
-			`tabPayment Entry`.party_name AS party_name
-		FROM `tabPayment Entry`
-		WHERE
-		`tabPayment Entry`.reference_date >= %(start_date)s 
-		AND `tabPayment Entry`.reference_date <= %(end_date)s
-		AND `tabPayment Entry`.bank_account = %(bank_account)s
-		AND `tabPayment Entry`.payment_type = 'Pay'
-		AND `tabPayment Entry`.mode_of_payment = 'Check'
-		AND `tabPayment Entry`.docstatus = 1
-		ORDER BY check_date
-		""",
-		{
-			"start_date": filters.start_date,
-			"end_date": filters.end_date,
-			"bank_account": filters.bank_account,
-		},
-		as_dict=True,
+	pe = frappe.qb.DocType("Payment Entry")
+	mop = frappe.qb.DocType("Mode of Payment")
+	return (
+		frappe.qb.from_(pe)
+		.inner_join(mop)
+		.on(pe.mode_of_payment == mop.name)
+		.select(
+			(pe.reference_no).as_("check_number"),
+			(pe.reference_date).as_("check_date"),
+			pe.party_name,
+		)
+		.where(pe.reference_date >= filters.start_date)
+		.where(pe.reference_date <= filters.end_date)
+		.where(pe.bank_account == filters.bank_account)
+		.where(mop.type == "Bank")
+		.where(pe.docstatus == 1)
+		.orderby(pe.reference_date)
+		.run(as_dict=True)
 	)
