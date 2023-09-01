@@ -18,7 +18,7 @@ from frappe.utils.file_manager import save_file, remove_all
 from frappe.utils.password import get_decrypted_password
 from frappe.contacts.doctype.address.address import get_default_address
 from frappe.query_builder.custom import ConstantColumn
-from frappe.query_builder.functions import Coalesce
+from frappe.query_builder.functions import Coalesce, Sum
 
 from erpnext.accounts.utils import get_balance_on
 
@@ -125,22 +125,15 @@ class CheckRun(Document):
 		if frappe.get_value(transaction["doctype"], filters, "docstatus") != 1:
 			return True
 		if transaction["doctype"] == "Journal Entry":
-			outstanding_based_on_gle = frappe.db.sql(
-				"""
-				SELECT SUM(`tabGL Entry`.debit) - SUM(`tabGL Entry`.credit) AS outstanding_amount
-				FROM `tabGL Entry` 
-				WHERE party_type = %(party_type)s
-				AND account = %(account)s
-				AND party = %(party)s
-				AND voucher_no = %(ref)s
-				""",
-				{
-					"account": self.pay_to_account,
-					"party": transaction["party"],
-					"party_type": transaction["party_type"],
-					"ref": filters["name"],
-				},
-				as_dict=True,
+			gl_entry = frappe.qb.DocType("GL Entry")
+			outstanding_based_on_gle = (
+				frappe.qb.from_(gl_entry)
+				.select((Sum(gl_entry.debit) - Sum(gl_entry.credit)).as_("outstanding_amount"))
+				.where(gl_entry.party_type == transaction["party_type"])
+				.where(gl_entry.account == self.pay_to_account)
+				.where(gl_entry.party == transaction["party"])
+				.where(gl_entry.voucher_no == filters["name"])
+				.run(as_dict=True)
 			)
 			if outstanding_based_on_gle and not outstanding_based_on_gle[0].outstanding_amount:
 				return True
@@ -475,33 +468,42 @@ def get_entries(doc):
 	end_date = doc.end_date
 
 	# Build purchase invoices query
+	payment_schedule = frappe.qb.DocType("Payment Schedule")
 	purchase_invoices = frappe.qb.DocType("Purchase Invoice")
 	suppliers = frappe.qb.DocType("Supplier")
+	supplier_mop_sub_query = (
+		frappe.qb.from_(suppliers)
+		.select(suppliers.supplier_default_mode_of_payment)
+		.as_("supplier_default_mode_of_payment")
+		.where(purchase_invoices.supplier == suppliers.name)
+	)
+
 	pi_qb = (
-		frappe.qb.from_(purchase_invoices)
-		.inner_join(suppliers)
-		.on(purchase_invoices.supplier == suppliers.name)
+		frappe.qb.from_(payment_schedule)
+		.inner_join(purchase_invoices)
+		.on(purchase_invoices.name == payment_schedule.parent)
 		.select(
 			ConstantColumn("Purchase Invoice").as_("doctype"),
 			ConstantColumn("Supplier").as_("party_type"),
 			purchase_invoices.name,
 			(purchase_invoices.bill_no).as_("ref_number"),
-			(purchase_invoices.supplier_name).as_("party"),
-			(suppliers.supplier_name).as_("party_name"),
-			(purchase_invoices.outstanding_amount).as_("amount"),
-			purchase_invoices.due_date,
+			(purchase_invoices.supplier).as_("party"),
+			(purchase_invoices.supplier_name).as_("party_name"),
+			(payment_schedule.outstanding).as_("amount"),
+			payment_schedule.due_date,
 			purchase_invoices.posting_date,
 			Coalesce(
 				purchase_invoices.supplier_default_mode_of_payment,
-				suppliers.supplier_default_mode_of_payment,
+				supplier_mop_sub_query,  # suppliers.supplier_default_mode_of_payment,
 				"\n",
 			).as_("mode_of_payment"),
 		)
-		.where(purchase_invoices.outstanding_amount != 0)
+		.where(payment_schedule.due_date <= end_date)
+		.where(payment_schedule.outstanding != 0)
+		.where(payment_schedule.parenttype == "Purchase Invoice")
 		.where(purchase_invoices.company == company)
 		.where(purchase_invoices.docstatus == 1)
 		.where(purchase_invoices.credit_to == pay_to_account)
-		.where(purchase_invoices.due_date <= end_date)
 		.where(Coalesce(purchase_invoices.release_date, datetime.date(1900, 1, 1)) < end_date)
 	)
 
@@ -587,7 +589,7 @@ def get_entries(doc):
 			else:
 				query = query.union(qb)
 	if query:
-		query = query.orderby("due_date", "ref_number").get_sql()
+		query = query.orderby("due_date", "name").get_sql()
 
 	transactions = frappe.db.sql(
 		query, {"company": company, "pay_to_account": pay_to_account, "end_date": end_date}, as_dict=True
