@@ -6,10 +6,11 @@
 				<tr>
 					<th style="text-align: left" class="col col-sm-2" id="check-run-party-filter">
 						<span class="party-onclick party-display">Party</span>
-						<span class="filter-icon"
-							><svg class="icon icon-sm" style="" @click="toggleShowPartyFilter()">
-								<use class="" href="#icon-filter"></use></svg
-						></span>
+						<span class="filter-icon">
+							<svg class="icon icon-sm" style="" @click="toggleShowPartyFilter()">
+								<use class="" href="#icon-filter"></use>
+							</svg>
+						</span>
 						<div class="party-filter" v-if="state.show_party_filter">
 							<input type="text" class="form-control" v-model="state.party_filter" />
 						</div>
