@@ -18,6 +18,7 @@ export default {
 			default: () => [],
 		},
 		pay_to_account_currency: '',
+		status,
 	},
 	data() {
 		return {
@@ -30,7 +31,9 @@ export default {
 	watch: {
 		transactions: {
 			handler: function(newValue) {
-                this.calculate_totals()
+				if (this.status == 'Draft') {
+					this.calculate_totals()
+				}
             },
             deep: true
 		},

@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<ModeOfPaymentSummary :transactions="transactions" :pay_to_account_currency="pay_to_account_currency" />
+		<ModeOfPaymentSummary :transactions="transactions" :pay_to_account_currency="pay_to_account_currency" :status="state.status"/>
 		<table class="table table-compact table-hover check-run-table" style="text-align: center; margin: 0">
 			<thead>
 				<tr>
