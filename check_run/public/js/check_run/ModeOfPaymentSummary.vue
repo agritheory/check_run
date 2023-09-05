@@ -27,9 +27,18 @@ export default {
 	created() {
 		this.calculate_totals()
 	},
+	watch: {
+		transactions: {
+			handler: function(newValue) {
+                this.calculate_totals()
+            },
+            deep: true
+		},
+	},
 	methods: {
 		calculate_totals() {
-			let modes_of_payments = this.aggregate(this.transactions, 'mode_of_payment', 'amount')
+			let pay_transactions = this.transactions.filter(function(item) { return item.pay; });
+			let modes_of_payments = this.aggregate(pay_transactions, 'mode_of_payment', 'amount')
 			var results = []
 
 			frappe.db
