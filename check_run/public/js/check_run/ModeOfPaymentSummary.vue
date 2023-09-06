@@ -40,8 +40,7 @@ export default {
 	},
 	methods: {
 		calculate_totals() {
-			let pay_transactions = this.transactions.filter(function(item) { return item.pay; });
-			let modes_of_payments = this.aggregate(pay_transactions, 'mode_of_payment', 'amount')
+			let modes_of_payments = this.aggregate(this.transactions, 'mode_of_payment', 'amount', 'pay')
 			var results = []
 
 			frappe.db
@@ -54,15 +53,16 @@ export default {
 					let number_of_invoices_per_voucher = r.message.number_of_invoices_per_voucher
 					$(modes_of_payments).each(function (index) {
 						var mode_of_payment = modes_of_payments[index]
+						var amounts = mode_of_payment.amount.filter(elements => { return elements !== null })
 						if (mode_of_payment.mode_of_payment == 'Check') {
-							var qty = `(${mode_of_payment.amount.length}/${number_of_invoices_per_voucher})`
+							var qty = `(${amounts.length}/${number_of_invoices_per_voucher})`
 						} else {
-							var qty = `(${mode_of_payment.amount.length})`
+							var qty = `(${amounts.length})`
 						}
 						results.push({
 							mode_of_payment: mode_of_payment.mode_of_payment,
 							qty: qty,
-							amount: mode_of_payment.amount.reduce(function (acc, val) {
+							amount: amounts.reduce(function (acc, val) {
 								return acc + val
 							}, 0),
 						})
@@ -70,10 +70,14 @@ export default {
 					this.results = results
 				})
 		},
-		aggregate(arr, on, who) {
+		aggregate(arr, on, who, filter) {
 			const agg = arr.reduce((a, b) => {
 				const onValue = b[on]
-				const whoValue = b[who]
+				if (b[filter]) {
+					var whoValue = b[who]
+				} else {
+					var whoValue = null
+				}
 
 				if (a[onValue]) {
 					a[onValue] = {
