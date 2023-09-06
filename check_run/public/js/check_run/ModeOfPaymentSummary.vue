@@ -67,7 +67,12 @@ export default {
 							}, 0),
 						})
 					})
-					this.results = results
+					this.results = results.sort(function(a, b) {
+						var keyA = a.mode_of_payment, keyB = b.mode_of_payment;
+						if (keyA < keyB) return -1
+						if (keyA > keyB) return 1
+						return 0
+					})
 				})
 		},
 		aggregate(arr, on, who, filter) {
