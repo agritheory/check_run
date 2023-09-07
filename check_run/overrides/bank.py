@@ -2,7 +2,6 @@
 # For license information, please see license.txt
 
 import frappe
-from typing import Optional  # noqa: F401
 from erpnext.accounts.doctype.bank_account.bank_account import BankAccount
 
 

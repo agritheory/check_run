@@ -5,7 +5,6 @@ import datetime
 import json
 from itertools import groupby, zip_longest
 from io import StringIO
-from typing import Optional, Union, NoReturn  # noqa: F401
 from typing_extensions import Self
 
 from PyPDF2 import PdfFileWriter
