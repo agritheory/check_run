@@ -1,3 +1,7 @@
 {
-	"js/check_run.min.js": ["public/js/check_run/check_run.js", "public/js/check_run/check_run_quick_entry.js"]
+	"js/check_run.min.js": [
+		"public/js/check_run/check_run.js",
+		"public/js/check_run/check_run_quick_entry.js",
+		"public/js/custom/file_preview.js"
+	]
 }

@@ -41,7 +41,7 @@
 							>&#11021;</span
 						>
 					</th>
-					<th v-if="state.status == 'Draft'" style="min-width: 200px; text-align: left">
+					<th v-if="state.status == 'Draft'" class="col col-sm-1" style="text-align: left">
 						<input
 							type="checkbox"
 							autocomplete="off"
@@ -50,7 +50,7 @@
 							id="select-all"
 							v-model="selectAll" /><span>Select All</span>
 					</th>
-					<th v-else class="col col-sm-2">Check Number | Reference</th>
+					<th v-else class="col col-sm-1">Check Number | Reference</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -63,10 +63,22 @@
 						tabindex="1"
 						@click="state.selectedRow = i">
 						<td style="text-align: left">{{ item.party_name || item.party }}</td>
-						<td>
+						<td style="text-align: left;white-space: nowrap;">
 							<a :href="transactionUrl(item)" target="_blank">
 								{{ item.ref_number || item.name }}
 							</a>
+							<div v-if="item.attachments.length > 1" style="float: right;" class="dropdown show">
+							  <a class="btn btn-default btn-xs dropdown-toggle" href="#" role="button" :id="item.name" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+							    <i class="fa fa-search"></i>
+							  </a>
+							  <div class="dropdown-menu" :aria-labelledby="item.name">
+							    <a v-for="attachment in item.attachments" class="dropdown-item" href="javascript:;" @click="showPreview(attachment.file_url)" data-pdf-preview="item">{{ attachment.file_name }}</a>
+							  </div>
+							</div>
+
+							<button v-if="item.attachments.length == 1" style="float: right;" type="button" class="btn btn-secondary btn-xs" @click="showPreview(item.attachments)" data-pdf-preview="item">
+								<i @click="showPreview(item.attachments)" data-pdf-preview="item" class="fa fa-search"></i>
+							</button>
 						</td>
 						<td>{{ item.posting_date }}</td>
 						<td class="mop-onclick" :data-mop-index="i">
@@ -193,6 +205,11 @@ export default {
 			}
 			this.$refs.dropdowns[this.state.selectedRow].openWithSearch()
 		},
+		showPreview(attachment) {
+			var file_url = typeof attachment == 'string' ? attachment : attachment[0].file_url
+			frappe.ui.addFilePreviewWrapper()
+			frappe.ui.pdfPreview(cur_frm, file_url)
+		}
 	},
 	beforeMount() {
 		this.moment = moment
