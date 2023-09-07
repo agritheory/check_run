@@ -2,6 +2,15 @@
 
 
 
+## v13.3.3 (2023-09-07)
+
+### Fix
+
+* fix: skip check on draft check runs with no transactions (#147)
+
+Resolution for `TypeError: the JSON object must be str, bytes or bytearray, not NoneType` when draft check run has no transactions. ([`b3821cb`](https://github.com/agritheory/check_run/commit/b3821cb7332414ce5049a2f9bf355cd4f9e4ae1e))
+
+
 ## v13.3.2 (2023-09-07)
 
 ### Ci
