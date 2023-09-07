@@ -24,6 +24,21 @@ jobs:
         with:
           commit_message: "style: prettify code"
 
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+
+      - name: Install mypy
+        run: pip install mypy
+
+      - name: Run mypy
+        uses: sasanquaneuf/mypy-github-action@releases/v1
+        with:
+          checkName: 'mypy'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   json_diff:
     needs: [ py_json_merge ]
     runs-on: ubuntu-latest
