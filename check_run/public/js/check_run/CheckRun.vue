@@ -202,7 +202,7 @@ export default {
 	beforeMount() {
 		this.moment = moment
 		this.format_currency = format_currency
-		frappe.db.get_value('account', cur_frm.doc.pay_to_account, 'account_currency').then(r => {
+		frappe.db.get_value('Account', cur_frm.doc.pay_to_account, 'account_currency').then(r => {
 			this.pay_to_account_currency = r.message.pay_to_account_currency
 		})
 		cur_frm.check_run_component = this

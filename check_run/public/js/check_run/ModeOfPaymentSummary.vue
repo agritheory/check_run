@@ -42,15 +42,13 @@ export default {
 		calculate_totals() {
 			let modes_of_payments = this.aggregate(this.transactions, 'mode_of_payment', 'amount', 'pay')
 			var results = []
-
-			frappe.db
-				.get_value(
-					'Check Run Settings',
-					{ bank_account: cur_frm.doc.bank_account, pay_to_account: cur_frm.doc.pay_to_account },
-					'number_of_invoices_per_voucher'
-				)
+			if(!(cur_frm.doc.bank_account && cur_frm.doc.pay_to_account)){
+				return
+			}
+			frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', {doc: cur_frm.doc})
 				.then(r => {
-					let number_of_invoices_per_voucher = r.message.number_of_invoices_per_voucher
+					if(!r){ return }
+					let number_of_invoices_per_voucher = r.number_of_invoices_per_voucher
 					$(modes_of_payments).each(function (index) {
 						var mode_of_payment = modes_of_payments[index]
 						var amounts = mode_of_payment.amount.filter(elements => { return elements !== null })
