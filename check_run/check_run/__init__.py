@@ -17,6 +17,8 @@ def disallow_cancellation_if_in_check_run(doc, method=None):
 		"Check Run", ["name", "transactions"], {"docstatus": 0}
 	)
 	for draft_check_run in draft_check_runs:
+		if not draft_check_run.transactions:
+			continue
 		transactions = [
 			t.get("ref_number") or t.get("name")
 			for t in json.loads(draft_check_run.transactions)
