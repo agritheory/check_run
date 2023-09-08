@@ -3,41 +3,31 @@
 
 import frappe
 from frappe.desk.form.load import get_attachments
+from frappe.query_builder import DocType
+from pypika import Order
 
 
 def execute(filters=None):
 	return get_columns(filters), get_data(filters)
 
-
 def get_data(filters):
-	data = frappe.db.sql("""
-		SELECT 
-		pi.name AS purchase_invoice_name,
-		pi.title,
-		pi.supplier,
-		pi.company,
-		pi.posting_date,
-		pi.grand_total,
-		pi.status,
-		pi.currency,
-		pi.supplier_name,
-		pi.grand_total,
-		pi.outstanding_amount,
-		pi.due_date,
-		pi.is_return,
-		pi.release_date,
-		pi.represents_company,
-		pi.is_internal_supplier
-		FROM `tabPurchase Invoice` AS pi
-		ORDER BY pi.modified DESC
-		""",
-		as_dict=True,
-	)
-
+	PurchaseInvoice = DocType("Purchase Invoice")
+	data = (
+		frappe.qb.from_(PurchaseInvoice)
+			.select(
+				PurchaseInvoice.name, PurchaseInvoice.title, PurchaseInvoice.supplier, PurchaseInvoice.company,
+				PurchaseInvoice.posting_date, PurchaseInvoice.grand_total, PurchaseInvoice.status, PurchaseInvoice.currency,
+				PurchaseInvoice.supplier_name, PurchaseInvoice.grand_total, PurchaseInvoice.outstanding_amount,
+				PurchaseInvoice.due_date, PurchaseInvoice.is_return, PurchaseInvoice.release_date, PurchaseInvoice.represents_company,
+				PurchaseInvoice.is_internal_supplier
+		   )
+		   .orderby('modified', Order.desc)
+	).run(as_dict=True)
+	
 	for row in data:
 		row['attachments'] = "  ".join([
 			f"""<a data-pdf-preview="{attachment.file_url}" onclick="pdf_preview('{attachment.file_url}')">{attachment.file_name}</a>"""
-			for attachment in get_attachments('Purchase Invoice', row['purchase_invoice_name']) if attachment.file_url.endswith('.pdf')
+			for attachment in get_attachments('Purchase Invoice', row['name']) if attachment.file_url.endswith('.pdf')
 		])
 	return data
 
@@ -46,7 +36,7 @@ def get_columns(filters):
 		
 		{
 			"label": frappe._("Name"),
-			"fieldname": "purchase_invoice_name",
+			"fieldname": "name",
 			"fieldtype": "Link",
 			"options": "Purchase Invoice",
 			"width": "150px",
