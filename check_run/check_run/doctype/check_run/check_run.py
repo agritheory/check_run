@@ -5,6 +5,7 @@ import datetime
 import json
 from itertools import groupby, zip_longest
 from io import StringIO
+from typing_extensions import Self
 
 from PyPDF2 import PdfFileWriter
 
@@ -21,14 +22,18 @@ from frappe.query_builder.custom import ConstantColumn
 from frappe.query_builder.functions import Coalesce, Sum
 
 from erpnext.accounts.utils import get_balance_on
+from erpnext.accounts.doctype.payment_entry.payment_entry import PaymentEntry
 
 from atnacha import ACHEntry, ACHBatch, NACHAFile
-from check_run.check_run.doctype.check_run_settings.check_run_settings import create
+from check_run.check_run.doctype.check_run_settings.check_run_settings import (
+	CheckRunSettings,
+	create,
+)
 
 
 class CheckRun(Document):
 	@frappe.read_only()
-	def onload(self):
+	def onload(self: Self) -> None:
 		if self.is_new():
 			return
 		settings = get_check_run_settings(self)
@@ -43,21 +48,21 @@ class CheckRun(Document):
 		else:
 			self.set_onload("check_run_submitting", False)
 
-	def validate(self):
+	def validate(self: Self) -> None:
 		gl_account = frappe.get_value("Bank Account", self.bank_account, "account")
 		if not gl_account:
 			frappe.throw(frappe._("This Bank Account is not associated with a General Ledger Account."))
-		self.beg_balance = get_balance_on(gl_account, self.posting_date)
+		self.beg_balance = get_balance_on(gl_account, self.posting_date)  # type: ignore # datetime.date
 		if self.flags.in_insert:
-			if self.initial_check_number is None:
+			if self.initial_check_number is None:  # type: ignore # int or None
 				self.set_last_check_number()
 				self.set_default_payable_account()
 				self.set_default_dates()
 		else:
-			if self.status == "Draft":
+			if self.status == "Draft":  # type: ignore # str or None
 				self.filter_transactions()
 
-	def on_cancel(self):
+	def on_cancel(self: Self) -> None:
 		settings = get_check_run_settings(self)
 		if not settings.allow_cancellation:
 			frappe.throw(frappe._("The settings for this Check Run do not allow cancellation"))
@@ -72,40 +77,41 @@ class CheckRun(Document):
 			for pe in pes:
 				frappe.db.set_value("Payment Entry", pe, "check_run", "")
 
-	def on_update_after_submit(self):
+	def on_update_after_submit(self: Self) -> None:
+		# required to fire on_update_after_submit hook
 		pass
 
-	def set_status(self, status=None):
+	def set_status(self: Self, status: str | None = None) -> None:
 		if status:
 			self.db_set("status", status)
 			return
-		elif self.status == "Confirm Print":
+		elif self.status == "Confirm Print":  # type: ignore # str or None
 			pass
 		elif self.docstatus == 0:
 			self.status = "Draft"
-		elif self.docstatus == 1 and self.print_count > 0:
+		elif self.docstatus == 1 and self.print_count > 0:  # type: ignore # print_count: int
 			self.status = "Printed"
 		elif self.docstatus == 1:
 			self.status = "Submitted"
 
-	def set_last_check_number(self):
+	def set_last_check_number(self: Self) -> None:
 		if self.ach_only().ach_only:
 			return
 		check_number = frappe.get_value("Bank Account", self.bank_account, "check_number")
 		self.initial_check_number = int(check_number or 0) + 1
 
-	def set_default_payable_account(self):
-		if not self.pay_to_account:
+	def set_default_payable_account(self: Self) -> None:
+		if not self.pay_to_account:  # type: ignore # str or None
 			self.pay_to_account = frappe.get_value("Company", self.company, "default_payable_account")
 
-	def set_default_dates(self):
-		if not self.posting_date:
+	def set_default_dates(self: Self) -> None:
+		if not self.posting_date:  # type: ignore # datetime or None
 			self.posting_date = getdate()
-		if not self.end_date:
+		if not self.end_date:  # type: ignore # datetime or None
 			self.end_date = getdate()
 
 	@frappe.read_only()
-	def filter_transactions(self):
+	def filter_transactions(self: Self) -> None:
 		if not self.get("transactions"):
 			return
 		transactions = json.loads(self.get("transactions"))
@@ -119,7 +125,7 @@ class CheckRun(Document):
 				frappe.throw(frappe._(f"Mode of Payment Required: {t['party_name']} {t['ref_number']}"))
 
 	@frappe.read_only()
-	def not_outstanding_or_cancelled(self, transaction):
+	def not_outstanding_or_cancelled(self: Self, transaction: dict) -> bool:
 		filters = {
 			"name": transaction["name"]
 			if transaction["doctype"] != "Journal Entry"
@@ -152,9 +158,10 @@ class CheckRun(Document):
 		else:
 			if frappe.get_value(transaction["doctype"], filters, "outstanding_amount") == 0.0:
 				return True
+		return False
 
 	@frappe.whitelist()
-	def process_check_run(self):
+	def process_check_run(self: Self) -> None:
 		check_run_submitting = frappe.defaults.get_global_default("check_run_submitting")
 		if check_run_submitting:
 			frappe.throw(
@@ -171,20 +178,20 @@ class CheckRun(Document):
 			frappe.throw(frappe._("You must select at least one Invoice to pay."))
 		self.print_count = 0
 		if self.ach_only().ach_only:
-			self.initial_check_number = ""
+			self.initial_check_number = ""  # type: ignore
 			self.final_check_number = ""
 		frappe.enqueue_doc(
 			self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600, now=True
 		)
 
-	def _process_check_run(self, save=False):
+	def _process_check_run(self: Self, save: bool = False) -> None:
 		frappe.defaults.set_global_default("check_run_submitting", self.name)
 		frappe.db.sql("SAVEPOINT process_check_run")
 		try:
-			transactions = self.transactions
-			transactions = json.loads(transactions)
+			__transactions = self.transactions
+			_transactions = json.loads(__transactions)
 			transactions = sorted(
-				(frappe._dict(item) for item in transactions if item.get("pay")), key=lambda x: x.party
+				(frappe._dict(item) for item in _transactions if item.get("pay")), key=lambda x: x.party
 			)
 			_transactions = self.create_payment_entries(transactions)
 		except Exception as e:
@@ -203,7 +210,7 @@ class CheckRun(Document):
 		frappe.db.sql("RELEASE SAVEPOINT process_check_run")
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
-	def build_nacha_file(self, settings=None):
+	def build_nacha_file(self: Self, settings: CheckRunSettings) -> str:
 		electronic_mop = frappe.get_all(
 			"Mode of Payment", {"type": "Electronic", "enabled": 1}, "name", pluck="name"
 		)
@@ -219,7 +226,7 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	@frappe.read_only()
-	def ach_only(self):
+	def ach_only(self: Self) -> bool:
 		transactions = json.loads(self.transactions) if self.transactions else []
 		ach_only = frappe._dict({"ach_only": True, "print_checks_only": True})
 		if not self.transactions:
@@ -236,7 +243,7 @@ class CheckRun(Document):
 			ach_only.print_checks_only = False
 		return ach_only
 
-	def create_payment_entries(self, transactions):
+	def create_payment_entries(self: Self, transactions: list[frappe._dict]) -> list[frappe._dict]:
 		settings = get_check_run_settings(self)
 		split = 5
 		if settings and settings.number_of_invoices_per_voucher:
@@ -290,7 +297,7 @@ class CheckRun(Document):
 				if frappe.db.get_value("Mode of Payment", _group[0].mode_of_payment, "type") == "Bank":
 					pe.reference_no = int(self.initial_check_number) + check_count
 					check_count += 1
-					self.final_check_number = pe.reference_no
+					self.final_check_number = str(pe.reference_no)
 				else:
 					pe.reference_no = frappe._(
 						f"via {_group[0].mode_of_payment} {self.get_formatted('posting_date')}"
@@ -345,7 +352,7 @@ class CheckRun(Document):
 		return _transactions
 
 	@frappe.whitelist()
-	def increment_print_count(self, reprint_check_number=None):
+	def increment_print_count(self: Self, reprint_check_number: int | None = None) -> None:
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,
@@ -356,7 +363,7 @@ class CheckRun(Document):
 		)
 
 	@frappe.whitelist()
-	def render_check_pdf(self, reprint_check_number=None):
+	def render_check_pdf(self: Self, reprint_check_number: int | None = None) -> None:
 		self.print_count = self.print_count + 1
 		self.set_status("Submitted")
 		if not frappe.db.exists("File", "Home/Check Run"):
@@ -415,7 +422,7 @@ class CheckRun(Document):
 
 
 @frappe.whitelist()
-def check_for_draft_check_run(company, bank_account, payable_account):
+def check_for_draft_check_run(company: str, bank_account: str, payable_account: str) -> str:
 	existing = frappe.get_value(
 		"Check Run",
 		{
@@ -436,7 +443,7 @@ def check_for_draft_check_run(company, bank_account, payable_account):
 
 
 @frappe.whitelist()
-def confirm_print(docname):
+def confirm_print(docname: str) -> None:
 	# Remove PDF file(s)
 	remove_all("Check Run", docname, from_delete=False, delete_permanently=False)
 
@@ -449,7 +456,7 @@ def confirm_print(docname):
 
 @frappe.whitelist()
 @frappe.read_only()
-def get_entries(doc):
+def get_entries(doc: CheckRun | str) -> dict:
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	if isinstance(doc.end_date, str):
 		doc.end_date = getdate(doc.end_date)
@@ -620,16 +627,16 @@ def get_entries(doc):
 
 @frappe.whitelist()
 @frappe.read_only()
-def get_balance(doc):
+def get_balance(doc: CheckRun | str) -> str:
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	if not doc.bank_account or not doc.posting_date:
-		return
+		return ""
 	gl_account = frappe.get_value("Bank Account", doc.bank_account, "account")
 	return get_balance_on(gl_account, doc.posting_date)
 
 
 @frappe.whitelist()
-def download_checks(docname):
+def download_checks(docname: str) -> str:
 	has_permission(
 		"Payment Entry", ptype="print", verbose=False, user=frappe.session.user, raise_exception=True
 	)
@@ -639,7 +646,7 @@ def download_checks(docname):
 
 
 @frappe.whitelist()
-def download_nacha(docname):
+def download_nacha(docname: str) -> None:
 	has_permission(
 		"Payment Entry", ptype="print", verbose=False, user=frappe.session.user, raise_exception=True
 	)
@@ -668,7 +675,9 @@ def download_nacha(docname):
 	frappe.db.commit()
 
 
-def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
+def build_nacha_file_from_payment_entries(
+	doc: CheckRun, payment_entries: list[PaymentEntry], settings: CheckRunSettings
+) -> NACHAFile:
 	ach_entries = []
 	exceptions = []
 	company_bank = frappe.db.get_value("Bank Account", doc.bank_account, "bank")
@@ -751,7 +760,7 @@ def build_nacha_file_from_payment_entries(doc, payment_entries, settings):
 
 
 @frappe.whitelist()
-def get_check_run_settings(doc):
+def get_check_run_settings(doc: CheckRun | str) -> str:
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	if frappe.db.exists(
 		"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
@@ -763,7 +772,7 @@ def get_check_run_settings(doc):
 		return create(doc.company, doc.bank_account, doc.pay_to_account)
 
 
-def get_address(party, party_type, doctype, name):
+def get_address(party: str, party_type: str, doctype: str, name: str) -> str:
 	if doctype == "Purchase Invoice":
 		return frappe.get_value("Purchase Invoice", name, "supplier_address")
 	elif doctype == "Expense Claim":
@@ -773,11 +782,12 @@ def get_address(party, party_type, doctype, name):
 			return get_default_address("Supplier", party)
 		elif party_type == "Employee":
 			return frappe.get_value("Employee", name, "permanent_address")
+	return ""
 
 
 @frappe.whitelist()
 @frappe.read_only()
-def ach_only(docname):
+def ach_only(docname: str) -> dict:
 	if not frappe.db.exists("Check Run", docname):
 		return {"ach_only": False, "checks_only": False}
 	cr = frappe.get_doc("Check Run", docname)
@@ -785,6 +795,6 @@ def ach_only(docname):
 
 
 @frappe.whitelist()
-def process_check_run(docname):
+def process_check_run(docname: str) -> None:
 	doc = frappe.get_doc("Check Run", docname)
 	doc.process_check_run()

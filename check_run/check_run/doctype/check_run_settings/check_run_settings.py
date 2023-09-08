@@ -10,7 +10,7 @@ class CheckRunSettings(Document):
 
 
 @frappe.whitelist()
-def create(company, bank_account, pay_to_account):
+def create(company: str, bank_account: str, pay_to_account: str) -> str:
 	crs = frappe.new_doc("Check Run Settings")
 	crs.company = company
 	crs.bank_account = bank_account
