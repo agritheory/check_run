@@ -156,6 +156,7 @@ function get_entries(frm) {
 		frm.transactions = r.transactions
 		frm.modes_of_payment = r.modes_of_payment
 		check_run.mount_table(frm)
+		// TODO: make this role configurable
 		if (!frappe.user.has_role(['Accounts Manager'])) {
 			frm.disable_form()
 			cur_frm.$check_run.$children[0].state.status = frm.doc.status

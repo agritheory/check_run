@@ -1,14 +1,16 @@
 <template>
 	<div>
+		<ModeOfPaymentSummary :transactions="transactions" :pay_to_account_currency="pay_to_account_currency" :status="state.status"/>
 		<table class="table table-compact table-hover check-run-table" style="text-align: center; margin: 0">
 			<thead>
 				<tr>
 					<th style="text-align: left" class="col col-sm-2" id="check-run-party-filter">
 						<span class="party-onclick party-display">Party</span>
-						<span class="filter-icon"
-							><svg class="icon icon-sm" style="" @click="toggleShowPartyFilter()">
-								<use class="" href="#icon-filter"></use></svg
-						></span>
+						<span class="filter-icon">
+							<svg class="icon icon-sm" style="" @click="toggleShowPartyFilter()">
+								<use class="" href="#icon-filter"></use>
+							</svg>
+						</span>
 						<div class="party-filter" v-if="state.show_party_filter">
 							<input type="text" class="form-control" v-model="state.party_filter" />
 						</div>
@@ -93,7 +95,7 @@
 
 							<span v-else>{{ transactions[i].mode_of_payment }}</span>
 						</td>
-						<td>{{ format_currency(item.amount, 'USD', 2) }}</td>
+						<td>{{ format_currency(item.amount, pay_to_account_currency, 2) }}</td>
 						<td>{{ moment(item.due_date).format('MM/DD/YY') }}</td>
 						<td v-if="state.status == 'Draft'" style="text-align: left">
 							<input
@@ -116,11 +118,13 @@
 </template>
 <script>
 import ADropdown from './ADropdown.vue'
+import ModeOfPaymentSummary from './ModeOfPaymentSummary.vue'
 
 export default {
 	name: 'CheckRun',
 	components: {
 		ADropdown,
+		ModeOfPaymentSummary,
 	},
 	props: ['transactions', 'modes_of_payment', 'status', 'state'],
 	data() {
@@ -133,6 +137,7 @@ export default {
 				due_date: 1,
 			},
 			modeOfPaymentNames: this.modes_of_payment.map(mop => mop.name),
+			pay_to_account_currency: '',
 		}
 	},
 	watch: {
@@ -214,6 +219,9 @@ export default {
 	beforeMount() {
 		this.moment = moment
 		this.format_currency = format_currency
+		frappe.db.get_value('Account', cur_frm.doc.pay_to_account, 'account_currency').then(r => {
+			this.pay_to_account_currency = r.message.pay_to_account_currency
+		})
 		cur_frm.check_run_component = this
 	},
 }
