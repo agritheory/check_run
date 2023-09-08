@@ -11,6 +11,7 @@ from hrms.hr.doctype.expense_claim.expense_claim import ExpenseClaim
 
 
 @frappe.whitelist()
+@frappe.read_only()
 def show_bank_account_number(doctype: str, docname: str) -> dict:
 	doc = frappe.get_doc(doctype, docname)
 	routing_number = frappe.get_value("Bank", doc.bank, "aba_number") or ""

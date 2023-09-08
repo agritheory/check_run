@@ -32,6 +32,7 @@ from check_run.check_run.doctype.check_run_settings.check_run_settings import (
 
 
 class CheckRun(Document):
+	@frappe.read_only()
 	def onload(self: Self) -> None:
 		if self.is_new():
 			return
@@ -109,6 +110,7 @@ class CheckRun(Document):
 		if not self.end_date:  # type: ignore # datetime or None
 			self.end_date = getdate()
 
+	@frappe.read_only()
 	def filter_transactions(self: Self) -> None:
 		if not self.get("transactions"):
 			return
@@ -122,6 +124,7 @@ class CheckRun(Document):
 			if not t["mode_of_payment"]:
 				frappe.throw(frappe._(f"Mode of Payment Required: {t['party_name']} {t['ref_number']}"))
 
+	@frappe.read_only()
 	def not_outstanding_or_cancelled(self: Self, transaction: dict) -> bool:
 		filters = {
 			"name": transaction["name"]
@@ -222,6 +225,7 @@ class CheckRun(Document):
 		return build_nacha_file_from_payment_entries(self, payment_entries, settings)
 
 	@frappe.whitelist()
+	@frappe.read_only()
 	def ach_only(self: Self) -> bool:
 		transactions = json.loads(self.transactions) if self.transactions else []
 		ach_only = frappe._dict({"ach_only": True, "print_checks_only": True})
@@ -451,6 +455,7 @@ def confirm_print(docname: str) -> None:
 
 
 @frappe.whitelist()
+@frappe.read_only()
 def get_entries(doc: CheckRun | str) -> dict:
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	if isinstance(doc.end_date, str):
@@ -621,6 +626,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 
 
 @frappe.whitelist()
+@frappe.read_only()
 def get_balance(doc: CheckRun | str) -> str:
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	if not doc.bank_account or not doc.posting_date:
@@ -780,6 +786,7 @@ def get_address(party: str, party_type: str, doctype: str, name: str) -> str:
 
 
 @frappe.whitelist()
+@frappe.read_only()
 def ach_only(docname: str) -> dict:
 	if not frappe.db.exists("Check Run", docname):
 		return {"ach_only": False, "checks_only": False}
