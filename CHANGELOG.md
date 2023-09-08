@@ -2,6 +2,31 @@
 
 
 
+## v14.8.0 (2023-09-08)
+
+### Feature
+
+* feat: add read_only decorator ([`c7bb83c`](https://github.com/agritheory/check_run/commit/c7bb83ceba8fcfd291b6198ff1ee8b92edf1abca))
+
+### Unknown
+
+* Merge pull request #150 from agritheory/read_only
+
+feat: add read_only decorator ([`73d459d`](https://github.com/agritheory/check_run/commit/73d459d616b5190ba85ebe67c115f29cae2d11ba))
+
+* Merge branch &#39;version-14&#39; into read_only ([`aaca764`](https://github.com/agritheory/check_run/commit/aaca76471cb95480aef1a62459ae296767dafcd2))
+
+* Setup mypy (#149)
+
+* chore: add typing
+
+* ci: add mypy to pre-commit and CI
+
+---------
+
+Co-authored-by: Heather Kusmierz &lt;heather.kusmierz@gmail.com&gt; ([`5831fb8`](https://github.com/agritheory/check_run/commit/5831fb85f3b08e76f486c3b01fb671b3dba06225))
+
+
 ## v14.7.0 (2023-09-07)
 
 ### Ci
