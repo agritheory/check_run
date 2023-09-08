@@ -487,6 +487,11 @@ def config_expense_claim(settings):
 
 
 def create_employees(settings):
+	if frappe.db.exists("DocType", "Employment Type"):
+		et = frappe.new_doc("Employment Type")
+		et.employee_type_name = "Full-time"
+		et.save()
+
 	for employee_number, employee in enumerate(employees, start=10):
 		emp = frappe.new_doc("Employee")
 		emp.first_name = employee[0].split(" ")[0]
@@ -507,6 +512,13 @@ def create_employees(settings):
 
 
 def create_expense_claim(settings):
+	if frappe.db.exists("DocType", "Expense Claim Type"):
+		ect = frappe.new_doc("Expense Claim Type")
+		ect.expense_type = "Travel"
+		exp_acct = frappe.get_value("Account", {"name": ["like", "%Travel%"]}, "name")
+		ect.append("accounts", {"company": settings.company, "default_account": exp_acct})
+		ect.save()
+
 	cost_center = frappe.get_value("Company", settings.company, "cost_center")
 	payable_acct = frappe.get_value("Company", settings.company, "default_payable_account")
 	# first month - paid
