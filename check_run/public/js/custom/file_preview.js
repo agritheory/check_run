@@ -36,6 +36,14 @@ frappe.ui.form.Attachments.prototype.add_attachment = attachment => {
 				<span>${file_name}</span>
 			</a>`
 	let remove_action = null
+	if (frappe.model.can_write(cur_frm.doctype, cur_frm.name)) {
+		remove_action = function (target_id) {
+			frappe.confirm(__('Are you sure you want to delete the attachment?'), function () {
+				cur_frm.attachments.remove_attachment(target_id)
+			})
+			return false
+		}
+	}
 
 	let icon = `<a href="/app/file/${fileid}">
 				${frappe.utils.icon(attachment.is_private ? 'lock' : 'unlock', 'sm ml-0')}
