@@ -22,3 +22,5 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           root_options: -c package.json
+          git_committer_name: AgriTheory
+          git_committer_email: support@agritheory.dev
