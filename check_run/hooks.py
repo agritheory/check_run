@@ -18,6 +18,8 @@ required_apps = ["erpnext", "hrms"]
 app_include_js = [
 	"check_run.bundle.js",
 ]
+app_include_css = "/assets/check_run/css/file_preview.css"
+
 
 # include js, css files in header of web template
 # web_include_css = "/assets/check_run/css/check_run.css"

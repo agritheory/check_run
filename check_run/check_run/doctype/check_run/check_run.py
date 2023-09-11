@@ -20,6 +20,7 @@ from frappe.utils.password import get_decrypted_password
 from frappe.contacts.doctype.address.address import get_default_address
 from frappe.query_builder.custom import ConstantColumn
 from frappe.query_builder.functions import Coalesce, Sum
+from frappe.desk.form.load import get_attachments
 
 from erpnext.accounts.utils import get_balance_on
 from erpnext.accounts.doctype.payment_entry.payment_entry import PaymentEntry
@@ -607,6 +608,12 @@ def get_entries(doc: CheckRun | str) -> dict:
 		query, {"company": company, "pay_to_account": pay_to_account, "end_date": end_date}, as_dict=True
 	)
 	for transaction in transactions:
+		doc_name = transaction.ref_number if transaction.ref_number else transaction.name
+		transaction.attachments = [
+			attachment for attachment in get_attachments(transaction.doctype, doc_name)
+			if attachment.file_url.endswith('.pdf')
+		] or [{'file_name': doc_name, 'file_url': f'/app/Form/{transaction.doctype}/{doc_name}'}]
+
 		if settings and settings.pre_check_overdue_items:
 			if transaction.due_date < doc.posting_date:
 				transaction.pay = 1
