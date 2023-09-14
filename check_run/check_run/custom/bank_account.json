@@ -37,6 +37,7 @@
 			"length": 0,
 			"mandatory_depends_on": null,
 			"modified": "2022-06-30 11:20:02.666689",
+			"module": "Check Run",
 			"modified_by": "Administrator",
 			"name": "Bank Account-check_number",
 			"no_copy": 0,
