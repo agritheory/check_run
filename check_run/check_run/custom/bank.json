@@ -38,6 +38,7 @@
 			"mandatory_depends_on": null,
 			"modified": "2022-08-07 15:07:53.297493",
 			"modified_by": "Administrator",
+			"module": "Check Run",
 			"name": "Bank-aba_number",
 			"no_copy": 0,
 			"non_negative": 0,
