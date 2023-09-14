@@ -2,6 +2,69 @@
 
 
 
+## v14.8.1 (2023-09-14)
+
+### Ci
+
+* ci: update release action user and email (#155) ([`a3cfc97`](https://github.com/agritheory/check_run/commit/a3cfc975aac95696b943ecbd809a00cab6159ffd))
+
+### Fix
+
+* fix: customizations leaks, module specificity (#161) ([`ce6b9fc`](https://github.com/agritheory/check_run/commit/ce6b9fc2a79e9a1beea4f514b3c52d4fd442da50))
+
+### Unknown
+
+* Port preview to V14 (#153)
+
+* File Preview (#140)
+
+* wip: file preview
+
+* feat: preview in check run, allow to preview in non submittable documents
+
+* feat: WIP payables attachment report
+
+* feat: wip preview of attachments
+
+* style: prettify code
+
+* feat: close with space
+
+* fix: do not open sidebar in check run
+
+* wip: multiple attachments in check run
+
+* fix: merge
+
+* style: prettify code
+
+* fix: df-preview-wrapper-fw
+
+* feat: improve code
+
+* feat: improve code
+
+* feat: columns
+
+---------
+
+Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt;
+Co-authored-by: fproldan &lt;fproldan@users.noreply.github.com&gt;
+
+* feat: use query builder in payables attachments report&#39;
+
+* fix: build
+
+* fix: add remove btn
+
+* style: prettify code
+
+---------
+
+Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt;
+Co-authored-by: fproldan &lt;fproldan@users.noreply.github.com&gt; ([`78d2666`](https://github.com/agritheory/check_run/commit/78d2666c2c9b92831b90ee1c647737ef79375a44))
+
+
 ## v14.8.0 (2023-09-08)
 
 ### Feature
