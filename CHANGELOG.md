@@ -2,6 +2,17 @@
 
 
 
+## v14.8.2 (2023-09-22)
+
+### Fix
+
+* fix: required_apps (#162)
+
+* fix: required_apps
+
+* fix: required_apps ([`31b5297`](https://github.com/agritheory/check_run/commit/31b52975839424f9a9bfbded6cc03c241dcb44cd))
+
+
 ## v14.8.1 (2023-09-14)
 
 ### Ci
