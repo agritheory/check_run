@@ -264,6 +264,9 @@ class CheckRun(Document):
 				)
 		for party, __group in groupby(transactions, key=key_lookup):
 			_group = list(__group)
+			if _group[0].party_type == "Supplier":
+				supplier_split = frappe.db.get_value("Supplier", party, "number_of_invoices_per_check_voucher")
+				split = supplier_split if supplier_split else split
 			if frappe.db.get_value("Mode of Payment", _group[0].mode_of_payment, "type") == "Bank":
 				groups = list(zip_longest(*[iter(_group)] * split))
 			else:
@@ -610,9 +613,10 @@ def get_entries(doc: CheckRun | str) -> dict:
 	for transaction in transactions:
 		doc_name = transaction.ref_number if transaction.ref_number else transaction.name
 		transaction.attachments = [
-			attachment for attachment in get_attachments(transaction.doctype, doc_name)
-			if attachment.file_url.endswith('.pdf')
-		] or [{'file_name': doc_name, 'file_url': f'/app/Form/{transaction.doctype}/{doc_name}'}]
+			attachment
+			for attachment in get_attachments(transaction.doctype, doc_name)
+			if attachment.file_url.endswith(".pdf")
+		] or [{"file_name": doc_name, "file_url": f"/app/Form/{transaction.doctype}/{doc_name}"}]
 
 		if settings and settings.pre_check_overdue_items:
 			if transaction.due_date < doc.posting_date:

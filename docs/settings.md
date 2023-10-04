@@ -31,6 +31,7 @@ If the system doesn't find settings for the account combination you're using in 
     - Default value shows 0, which tells the system this setting is unmodified and it will use 5 invoices per voucher
     - This setting is an upper limit for the number of invoices per party to group into each voucher to that party
     - The screen shot below shows the output of a submitted Check Run where the Number of Invoices per Voucher setting was set to 2. Out of the four invoices paid to Exceptional Grid, they are grouped so two are paid under one voucher, then the other two are paid under a different voucher
+    - This can also be set per-Supplier in the "Number  of Invoices Per Check Voucher" field. Per-supplier configuration overrides the number in Check Run Settings
 - **Split Invoices By Address:**
     - If checked, this will validate if the same vendor is being paid to different addresses and split the payments entries appropriately
 - **Automatically Release On Hold Invoices:**

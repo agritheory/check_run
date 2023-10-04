@@ -236,6 +236,8 @@ def create_suppliers(settings):
 		biz.currency = "USD"
 		biz.default_price_list = "Standard Buying"
 		biz.payment_terms = supplier[4]
+		if supplier[0] == "Tireless Equipment Rental, Inc":
+			biz.number_of_invoices_per_check_voucher = 1
 		biz.save()
 
 		addr = frappe.new_doc("Address")
