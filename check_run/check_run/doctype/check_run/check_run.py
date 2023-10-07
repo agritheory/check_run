@@ -321,6 +321,13 @@ class CheckRun(Document):
 						reference_name = reference.ref_number
 					else:
 						reference_name = reference.name or reference.ref_number
+					payment_schedule = frappe.get_all(
+						"Payment Schedule",
+						filters={"parent": reference_name, "outstanding": ["!=", 0.0]},
+						fields=["payment_term"],
+						order_by="due_date ASC",
+						pluck="payment_term",
+					)
 					pe.append(
 						"references",
 						{
@@ -330,6 +337,7 @@ class CheckRun(Document):
 							"outstanding_amount": flt(reference.amount),
 							"allocated_amount": flt(reference.amount),
 							"total_amount": flt(reference.amount),
+							"payment_term": payment_schedule[0] if payment_schedule else "",
 						},
 					)
 					total_amount += reference.amount

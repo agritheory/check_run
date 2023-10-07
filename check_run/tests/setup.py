@@ -169,51 +169,77 @@ def setup_accounts():
 
 def create_payment_terms_templates(settings):
 	if not frappe.db.exists("Payment Terms Template", "Net 30"):
+		pt = frappe.new_doc("Payment Term")
+		pt.payment_term_name = "Net 30"
+		pt.due_date_based_on = "Day(s) after invoice date"
+		pt.invoice_portion = 100
+		pt.credit_days = 30
+		pt.save()
 		doc = frappe.new_doc("Payment Terms Template")
-		doc.template_name = "Net 30"
+		doc.template_name = pt.name
 		doc.append(
 			"terms",
 			{
-				"payment_term": "Net 30",
-				"invoice_portion": 100,
-				"due_date_based_on": "Day(s) after invoice date",
-				"credit_days": 30,
+				"payment_term": pt.name,
+				"invoice_portion": pt.invoice_portion,
+				"due_date_based_on": pt.due_date_based_on,
+				"credit_days": pt.credit_days,
 			},
 		)
 		doc.save()
 	if not frappe.db.exists("Payment Terms Template", "Due on Receipt"):
+		pt = frappe.new_doc("Payment Term")
+		pt.payment_term_name = "Due on Receipt"
+		pt.due_date_based_on = "Day(s) after invoice date"
+		pt.invoice_portion = 100
+		pt.credit_days = 0
+		pt.save()
 		doc = frappe.new_doc("Payment Terms Template")
-		doc.template_name = "Due on Receipt"
+		doc.template_name = pt.name
 		doc.append(
 			"terms",
 			{
-				"payment_term": "Due on Receipt",
-				"invoice_portion": 100,
-				"due_date_based_on": "Day(s) after invoice date",
-				"credit_days": 0,
+				"payment_term": pt.name,
+				"invoice_portion": pt.invoice_portion,
+				"due_date_based_on": pt.due_date_based_on,
+				"credit_days": pt.credit_days,
 			},
 		)
 		doc.save()
 	if not frappe.db.exists("Payment Terms Template", "Net 14"):
+		pt = frappe.new_doc("Payment Term")
+		pt.payment_term_name = "Net 14"
+		pt.due_date_based_on = "Day(s) after invoice date"
+		pt.invoice_portion = 100
+		pt.credit_days = 14
+		pt.save()
 		doc = frappe.new_doc("Payment Terms Template")
-		doc.template_name = "Net 14"
+		doc.template_name = pt.name
 		doc.append(
 			"terms",
 			{
-				"payment_term": "Net 14",
-				"invoice_portion": 100,
-				"due_date_based_on": "Day(s) after invoice date",
-				"credit_days": 14,
+				"payment_term": pt.name,
+				"invoice_portion": pt.invoice_portion,
+				"due_date_based_on": pt.due_date_based_on,
+				"credit_days": pt.credit_days,
 			},
 		)
 		doc.save()
+
 	if not frappe.db.exists("Payment Terms Template", "18 Month Rental Agreement"):
+		pt = frappe.new_doc("Payment Term")
+		pt.payment_term_name = "Rental Installment"
+		pt.due_date_based_on = "Day(s) after the end of the invoice month"
+		pt.invoice_portion = 100
+		pt.credit_days = 1
+		pt.save()
 		doc = frappe.new_doc("Payment Terms Template")
 		doc.template_name = "18 Month Rental Agreement"
 		for month in range(0, 18):
 			doc.append(
 				"terms",
 				{
+					"payment_term": pt.name,
 					"invoice_portion": 5.555555555555556,
 					"due_date_based_on": "Month(s) after the end of the invoice month",
 					"credit_months": month,

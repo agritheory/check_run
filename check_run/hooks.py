@@ -105,7 +105,7 @@ after_migrate = "check_run.customize.load_customizations"
 doc_events = {
 	"Bank": {"validate": ["check_run.overrides.bank.validate"]},
 	"Payment Entry": {
-		"on_submit": "check_run.overrides.payment_entry.update_check_number",
+		"on_submit": ["check_run.overrides.payment_entry.update_check_number"],
 	},
 	"Purchase Invoice": {
 		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
