@@ -31,7 +31,11 @@ function load_supplier_default_mode_of_payment(frm) {
 		})
 		.then(() => {
 			frappe.db
-				.get_list('Bank Account', { filters: { is_company_account: 1, account: frm.doc.paid_from } }, 'name')
+				.get_list(
+					'Bank Account',
+					{ filters: { is_company_account: 1, allow_quick_check: 1, account: frm.doc.paid_from } },
+					'name'
+				)
 				.then(r => {
 					if (r.length) {
 						frm.set_value('bank_account', r[0].name)
