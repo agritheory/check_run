@@ -51,6 +51,7 @@ Individual payment entries are linked with a Check Run. You can set the number o
 
 Follow the links below for more information about Check Run's features:
 
+- [Quick Check / Payment Entry Customizations](./payment_entry.md)
 - [ACH Generation](./achgeneration.md)
 - [Render PDF Sequence](./renderpdfsequence.md)
 - [Positive Pay Report](./positivepay.md)

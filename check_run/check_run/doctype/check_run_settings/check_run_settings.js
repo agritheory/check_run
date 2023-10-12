@@ -2,6 +2,22 @@
 // For license information, please see license.txt
 
 frappe.ui.form.on('Check Run Settings', {
-	// refresh: function(frm) {
-	// }
+	refresh: frm => {
+		frm.set_query('pay_to_account', () => {
+			return {
+				filters: {
+					company: frm.doc.company,
+					account_type: 'Payable',
+				},
+			}
+		})
+		frm.set_query('bank_account', () => {
+			return {
+				filters: {
+					is_company_account: 1,
+					company: frm.doc.company,
+				},
+			}
+		})
+	},
 })

@@ -11,6 +11,7 @@ frappe.ui.form.CheckRunQuickEntryForm = class CheckRunQuickEntryForm extends fra
 		this.dialog.fields_dict['bank_account'].get_query = () => {
 			return {
 				filters: {
+					is_company_account: 1,
 					company: this.dialog.get_field('company').value,
 				},
 			}
