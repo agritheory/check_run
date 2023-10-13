@@ -227,22 +227,22 @@ def create_payment_terms_templates(settings):
 		doc.save()
 
 	if not frappe.db.exists("Payment Terms Template", "18 Month Rental Agreement"):
-		pt = frappe.new_doc("Payment Term")
-		pt.payment_term_name = "Rental Installment"
-		pt.due_date_based_on = "Day(s) after the end of the invoice month"
-		pt.invoice_portion = 100
-		pt.credit_days = 1
-		pt.save()
 		doc = frappe.new_doc("Payment Terms Template")
 		doc.template_name = "18 Month Rental Agreement"
 		for month in range(0, 18):
+			pt = frappe.new_doc("Payment Term")
+			pt.payment_term_name = f"Rental Installment {month+1}"
+			pt.due_date_based_on = "Month(s) after the end of the invoice month"
+			pt.invoice_portion = 5.555555555555556
+			pt.credit_months = month
+			pt.save()
 			doc.append(
 				"terms",
 				{
 					"payment_term": pt.name,
-					"invoice_portion": 5.555555555555556,
-					"due_date_based_on": "Month(s) after the end of the invoice month",
-					"credit_months": month,
+					"invoice_portion": pt.invoice_portion,
+					"due_date_based_on": pt.due_date_based_on,
+					"credit_months": pt.credit_months,
 				},
 			)
 		doc.save()

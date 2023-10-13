@@ -321,13 +321,6 @@ class CheckRun(Document):
 						reference_name = reference.ref_number
 					else:
 						reference_name = reference.name or reference.ref_number
-					payment_schedule = frappe.get_all(
-						"Payment Schedule",
-						filters={"parent": reference_name, "outstanding": ["!=", 0.0]},
-						fields=["payment_term"],
-						order_by="due_date ASC",
-						pluck="payment_term",
-					)
 					pe.append(
 						"references",
 						{
@@ -337,7 +330,9 @@ class CheckRun(Document):
 							"outstanding_amount": flt(reference.amount),
 							"allocated_amount": flt(reference.amount),
 							"total_amount": flt(reference.amount),
-							"payment_term": payment_schedule[0] if payment_schedule else "",
+							"payment_term": reference.payment_term
+							if (reference.payment_term and reference.doctype == "Purchase Invoice")
+							else "",
 						},
 					)
 					total_amount += reference.amount
@@ -503,8 +498,8 @@ def get_entries(doc: CheckRun | str) -> dict:
 	)
 
 	pi_qb = (
-		frappe.qb.from_(payment_schedule)
-		.inner_join(purchase_invoices)
+		frappe.qb.from_(purchase_invoices)
+		.left_join(payment_schedule)
 		.on(purchase_invoices.name == payment_schedule.parent)
 		.select(
 			ConstantColumn("Purchase Invoice").as_("doctype"),
@@ -513,18 +508,18 @@ def get_entries(doc: CheckRun | str) -> dict:
 			(purchase_invoices.bill_no).as_("ref_number"),
 			(purchase_invoices.supplier).as_("party"),
 			(purchase_invoices.supplier_name).as_("party_name"),
-			(payment_schedule.outstanding).as_("amount"),
-			payment_schedule.due_date,
+			Coalesce(payment_schedule.outstanding, purchase_invoices.outstanding_amount).as_("amount"),
+			Coalesce(payment_schedule.due_date, purchase_invoices.due_date).as_("due_date"),
 			purchase_invoices.posting_date,
 			Coalesce(
 				purchase_invoices.supplier_default_mode_of_payment,
 				supplier_mop_sub_query,  # suppliers.supplier_default_mode_of_payment,
 				"\n",
 			).as_("mode_of_payment"),
+			(payment_schedule.payment_term).as_("payment_term"),
 		)
-		.where(payment_schedule.due_date <= end_date)
-		.where(payment_schedule.outstanding != 0)
-		.where(payment_schedule.parenttype == "Purchase Invoice")
+		.where(Coalesce(payment_schedule.due_date, purchase_invoices.due_date) <= end_date)
+		.where(Coalesce(payment_schedule.outstanding, purchase_invoices.outstanding_amount) != 0)
 		.where(purchase_invoices.company == company)
 		.where(purchase_invoices.docstatus == 1)
 		.where(purchase_invoices.credit_to == pay_to_account)
@@ -549,6 +544,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			(exp_claims.posting_date).as_("due_date"),
 			exp_claims.posting_date,
 			Coalesce(exp_claims.mode_of_payment, employees.mode_of_payment, "\n").as_("mode_of_payment"),
+			ConstantColumn("").as_("payment_term"),
 		)
 		.where(exp_claims.grand_total > exp_claims.total_amount_reimbursed)
 		.where(exp_claims.company == company)
@@ -588,6 +584,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			journal_entries.due_date,
 			journal_entries.posting_date,
 			Coalesce(journal_entries.mode_of_payment, "\n").as_("mode_of_payment"),
+			ConstantColumn("").as_("payment_term"),
 		)
 		.where(journal_entries.company == company)
 		.where(journal_entries.docstatus == 1)
