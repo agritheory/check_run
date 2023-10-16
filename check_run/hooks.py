@@ -105,6 +105,7 @@ after_migrate = "check_run.customize.load_customizations"
 doc_events = {
 	"Bank": {"validate": ["check_run.overrides.bank.validate"]},
 	"Payment Entry": {
+		"validate": ["check_run.overrides.payment_entry.validate_outstanding_payment_terms"],
 		"on_submit": ["check_run.overrides.payment_entry.update_check_number"],
 	},
 	"Purchase Invoice": {
