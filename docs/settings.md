@@ -10,7 +10,7 @@ If the system doesn't find settings for the account combination you're using in 
 
 - **Include Purchase Invoices:**
     - Selected by default
-    - Indicates whether or not purchase invoices are included in a Check Run
+    - Indicates whether or not purchase invoices are included in a Check Run. See below for more information and some considerations around purchase invoices with a payment schedule defined
 - **Include Journal Entries:**
     - Selected by default
     - Indicates whether or not journal entries are included in a Check Run. For example, the demo data has a journal entry for payroll taxes owed to the local tax authority - this will only show in a Check Run if this setting is selected
@@ -38,7 +38,7 @@ If the system doesn't find settings for the account combination you're using in 
     - By default, on hold invoices will not show if their 'release date' is not within the Check Run period. The checkbox allows invoices that _are_ on hold to be automatically released and paid in the Check Run.
 
 
-![Check Run output table showing a row for eight invoices paid (two for AgriTheory, two for Cooperative Ag Finance, and four for Exception Grid). The first two Exceptional Grid invoices have Check Reference Number ACC-PAY-2022-00003 and the next set of two invoices have Check Reference Number ACC-PAY-2022-00004. They were split into different vouchers because the setting limited two invoices per voucher.](./assets/VoucherGroup.png)
+![Check Run output table showing a row for eight invoices paid (two for AgriTheory, two for Cooperative Ag Finance, and four for Exceptional Grid). The first two Exceptional Grid invoices have Check Reference Number ACC-PAY-2022-00003 and the next set of two invoices have Check Reference Number ACC-PAY-2022-00004. They were split into different vouchers because the setting limited two invoices per voucher.](./assets/VoucherGroup.png)
 
 - **ACH File Extension:**
     - Default value is "ach"
@@ -53,3 +53,21 @@ If the system doesn't find settings for the account combination you're using in 
 - **ACH Description:**
     - Default is blank
     - Optional field to add a description to ACH files
+
+## Considerations for Purchase Invoices with Payment Schedules
+
+One feature of Check Run for purchase invoices with a defined Payment Schedule is it will break out and show separate transactions for each outstanding Payment Term from the Payment Schedule by due date instead of the entire Invoice amount.
+
+The below example assumes one Purchase Invoice for a $30,000 18-month equipment rental that's paid off via a Payment Schedule in 18 equal monthly installments.
+
+![Screen shot of a Check Run's transactions for Tireless Equipment Rental, Inc from the beginning of the year through May. It shows separate transactions for each month for $1,666.67 each, which reflects the monthly payments due on the Payment Schedule.](./assets/PaymentScheduleTransactions.png)
+
+Check Run leverages the built-in ERPNext mechanism that automatically updates an invoice's Payment Schedule when a Payment Entry links to a Payment Term in the schedule. There are some ERPNext assumptions and considerations to keep in mind when setting up your Payment Schedules or making Payment Entries against them to ensure this mechanism works properly, both within and outside of a Check Run:
+
+1. For a multi-row Payment Schedule, each row should link to a unique Payment Term. This acts as the "key" to correctly identify the installment in the Payment Schedule that links to the Payment Entry, and update the schedule accordingly.
+
+![Screen shot of an example Payment Schedule defined in a purchase invoice. The Payment Term column of the table links to unique documents, name "Rental Installment 1", "Rental Installment 2", etc. for the different rows.](./assets/InvoicePaymentScheduleExample.png)
+
+2. If you're creating a Payment Entry outside of a Check Run that's for a portion of an invoice (to satisfy a Payment Term), there's a validation in place to make sure the Payment Term field in the Payment References table is filled in. If the Payment Entry covers multiple Payment Terms, there should be a row for each portion of the payment with a link to its respective Payment Term.
+
+![Screen shot of the form dialog when a row in the Payment References table is edited. The Payment Term field shows a value of "Rental Installment 3" to link the allocated amount of the payment to the appropriate term in the invoice's Payment Schedule.](./assets/PaymentEntryPaymentTerm.png)
