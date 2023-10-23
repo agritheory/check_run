@@ -43,8 +43,8 @@ jobs:
           # cache: 'yarn'  # Should replace `Get yarn cache directory path` and `yarn-cache` steps
     
       # Uncomment if running locally, remove after local testing (already available in github actions environment)
-      # - name: Install Yarn
-      #   run: npm install -g yarn
+      - name: Install Yarn
+        run: npm install -g yarn
 
       - name: Add to Hosts
         run: echo "127.0.0.1 test_site" | sudo tee -a /etc/hosts

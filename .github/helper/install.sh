@@ -50,7 +50,7 @@ bench use test_site
 
 bench start &> bench_run_logs.txt &
 CI=Yes &
-bench --site test_site reinstall --yes --admin-password admin
+bench --site test_site reinstall --yes --admin-password admin --skip-assets
 
 # bench --site test_site install-app erpnext hrms check_run
 bench setup requirements --dev
