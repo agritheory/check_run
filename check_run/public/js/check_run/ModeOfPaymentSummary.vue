@@ -26,7 +26,7 @@ export default {
 		}
 	},
 	created() {
-		this.calculate_totals()
+		this.get_settings()
 	},
 	watch: {
 		transactions: {
@@ -39,39 +39,43 @@ export default {
 		},
 	},
 	methods: {
+		get_settings(){
+			frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', {doc: cur_frm.doc})
+				.then(r => {
+					if(!r){ return }
+					this.settings = r
+					this.calculate_totals()
+				})
+		},
 		calculate_totals() {
 			let modes_of_payments = this.aggregate(this.transactions, 'mode_of_payment', 'amount', 'pay')
 			var results = []
 			if(!(cur_frm.doc.bank_account && cur_frm.doc.pay_to_account)){
 				return
 			}
-			frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', {doc: cur_frm.doc})
-				.then(r => {
-					if(!r){ return }
-					let number_of_invoices_per_voucher = r.number_of_invoices_per_voucher
-					$(modes_of_payments).each(function (index) {
-						var mode_of_payment = modes_of_payments[index]
-						var amounts = mode_of_payment.amount.filter(elements => { return elements !== null })
-						if (mode_of_payment.mode_of_payment == 'Check') {
-							var qty = `(${amounts.length}/${number_of_invoices_per_voucher})`
-						} else {
-							var qty = `(${amounts.length})`
-						}
-						results.push({
-							mode_of_payment: mode_of_payment.mode_of_payment,
-							qty: qty,
-							amount: amounts.reduce(function (acc, val) {
-								return acc + val
-							}, 0),
-						})
-					})
-					this.results = results.sort(function(a, b) {
-						var keyA = a.mode_of_payment, keyB = b.mode_of_payment;
-						if (keyA < keyB) return -1
-						if (keyA > keyB) return 1
-						return 0
-					})
+			let number_of_invoices_per_voucher = this.settings.number_of_invoices_per_voucher
+			$(modes_of_payments).each(function (index) {
+				var mode_of_payment = modes_of_payments[index]
+				var amounts = mode_of_payment.amount.filter(elements => { return elements !== null })
+				if (mode_of_payment.mode_of_payment == 'Check') {
+					var qty = `(${amounts.length}/${number_of_invoices_per_voucher})`
+				} else {
+					var qty = `(${amounts.length})`
+				}
+				results.push({
+					mode_of_payment: mode_of_payment.mode_of_payment,
+					qty: qty,
+					amount: amounts.reduce(function (acc, val) {
+						return acc + val
+					}, 0),
 				})
+			})
+			this.results = results.sort(function(a, b) {
+				var keyA = a.mode_of_payment, keyB = b.mode_of_payment;
+				if (keyA < keyB) return -1
+				if (keyA > keyB) return 1
+				return 0
+			})
 		},
 		aggregate(arr, on, who, filter) {
 			const agg = arr.reduce((a, b) => {
