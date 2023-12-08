@@ -1,0 +1,26 @@
+
+#modeOfPaymentSummary[data-v-81e98d75] {
+	padding-bottom: 0.7rem;
+}
+
+.party-filter[data-v-3c0aadcb] {
+	margin-top: 5px;
+}
+.table thead th[data-v-3c0aadcb] {
+	vertical-align: top;
+}
+.checkrun-check-box[data-v-3c0aadcb] {
+	vertical-align: sub; /* weird but this gives the best alignment */
+}
+.check-run-table td[data-v-3c0aadcb],
+.check-run-table th[data-v-3c0aadcb] {
+	max-height: 1.5rem;
+	padding: 0.4rem;
+	vertical-align: middle;
+}
+.table tr.selectedRow[data-v-3c0aadcb] {
+	background-color: var(--yellow-highlight-color);
+}
+.table tr[data-v-3c0aadcb] {
+	height: 50px;
+}

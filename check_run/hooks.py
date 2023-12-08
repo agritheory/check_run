@@ -14,11 +14,11 @@ required_apps = ["frappe/erpnext", "frappe/hrms"]
 # ------------------
 
 # include js, css files in header of desk.html
-# app_include_css = "/assets/check_run/css/check_run.css"
+app_include_css = ["/assets/check_run/js/style.css", "/assets/check_run/css/file_preview.css"]
 app_include_js = [
 	"check_run.bundle.js",
+	"/assets/check_run/js/check_run.js",
 ]
-app_include_css = "/assets/check_run/css/file_preview.css"
 
 
 # include js, css files in header of web template

@@ -696,3 +696,33 @@ def example_post_processing_hook(check_run, settings, nacha) -> str:
 	b = "$$AAPAACH0094[TEST[NL$$\n"
 	a = str(nacha)
 	return b + a
+
+
+def create_extra_invoices(settings):
+	day = settings.day
+	for next_day in range(0, 365):
+		_day = settings.day + datetime.timedelta(days=next_day)
+		print(_day)
+		if _day.weekday in (5, 6):
+			continue
+
+		for supplier in suppliers:
+			if supplier[0].startswith("Tireless"):
+				continue
+			if frappe.get_value("Purchase Invoice", {"posting_date": _day, "supplier": supplier[0]}):
+				continue
+			pi = frappe.new_doc("Purchase Invoice")
+			pi.company = settings.company
+			pi.set_posting_time = 1
+			pi.posting_date = _day
+			pi.supplier = supplier[0]
+			pi.append(
+				"items",
+				{
+					"item_code": supplier[1],
+					"rate": supplier[3],
+					"qty": 1,
+				},
+			)
+			pi.save()
+			pi.submit()

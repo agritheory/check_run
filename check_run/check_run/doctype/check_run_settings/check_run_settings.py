@@ -16,4 +16,4 @@ def create(company: str, bank_account: str, pay_to_account: str) -> str:
 	crs.bank_account = bank_account
 	crs.pay_to_account = pay_to_account
 	crs.save()
-	return crs.name
+	return crs
