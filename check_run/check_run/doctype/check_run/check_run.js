@@ -6,8 +6,8 @@ frappe.provide('check_run')
 frappe.ui.form.on('Check Run', {
 	validate: frm => {
 		validate_mode_of_payment_mandatory(frm)
-		if (check_run.filters.party_filter.length > 0) {
-			check_run.filters.party_filter = ''
+		if (check_run.filters.party.length > 0) {
+			check_run.filters.party = ''
 			check_run.filters.show_party_filter = false
 			return new Promise(function (resolve, reject) {
 				reject(
