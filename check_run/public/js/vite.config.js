@@ -17,7 +17,7 @@ export default defineConfig({
 			name: 'check_run',
 			fileName: format => `check_run.js`, // creates module only output
 		},
-		outDir: './check_run/public/js',
+		outDir: './check_run/public/dist/js',
 		root: './',
 		target: 'es2015',
 		emptyOutDir: false,
