@@ -95,12 +95,12 @@
 				typeof globalThis !== 'undefined'
 					? globalThis
 					: typeof self !== 'undefined'
-					? self
-					: typeof window !== 'undefined'
-					? window
-					: typeof global !== 'undefined'
-					? global
-					: {})
+					  ? self
+					  : typeof window !== 'undefined'
+					    ? window
+					    : typeof global !== 'undefined'
+					      ? global
+					      : {})
 		)
 	}
 	function normalizeStyle(value) {
@@ -214,10 +214,10 @@
 		return isString(val)
 			? val
 			: val == null
-			? ''
-			: isArray(val) || (isObject(val) && (val.toString === objectToString || !isFunction(val.toString)))
-			? JSON.stringify(val, replacer, 2)
-			: String(val)
+			  ? ''
+			  : isArray(val) || (isObject(val) && (val.toString === objectToString || !isFunction(val.toString)))
+			    ? JSON.stringify(val, replacer, 2)
+			    : String(val)
 	}
 	const replacer = (_key, val) => {
 		if (val && val.__v_isRef) {
@@ -915,8 +915,8 @@
 				? shallowReadonlyInstrumentations
 				: shallowInstrumentations
 			: isReadonly2
-			? readonlyInstrumentations
-			: mutableInstrumentations
+			  ? readonlyInstrumentations
+			  : mutableInstrumentations
 		return (target, key, receiver) => {
 			if (key === '__v_isReactive') {
 				return !isReadonly2
@@ -2076,8 +2076,8 @@
 						oldValue === INITIAL_WATCHER_VALUE
 							? void 0
 							: isMultiSource && oldValue[0] === INITIAL_WATCHER_VALUE
-							? []
-							: oldValue,
+							  ? []
+							  : oldValue,
 						onCleanup,
 					])
 					oldValue = newValue
@@ -2544,8 +2544,8 @@
 				const get2 = isFunction(opt)
 					? opt.bind(publicThis, publicThis)
 					: isFunction(opt.get)
-					? opt.get.bind(publicThis, publicThis)
-					: NOOP
+					  ? opt.get.bind(publicThis, publicThis)
+					  : NOOP
 				const set2 = !isFunction(opt) && isFunction(opt.set) ? opt.set.bind(publicThis) : NOOP
 				const c = computed({
 					get: get2,
@@ -4810,14 +4810,14 @@
 		const shapeFlag = isString(type)
 			? 1
 			: isSuspense(type)
-			? 128
-			: isTeleport(type)
-			? 64
-			: isObject(type)
-			? 4
-			: isFunction(type)
-			? 2
-			: 0
+			  ? 128
+			  : isTeleport(type)
+			    ? 64
+			    : isObject(type)
+			      ? 4
+			      : isFunction(type)
+			        ? 2
+			        : 0
 		return createBaseVNode(type, props, children, patchFlag, dynamicProps, shapeFlag, isBlockNode, true)
 	}
 	function guardReactiveProps(props) {
@@ -5540,8 +5540,8 @@
 			key[0] === '.'
 				? ((key = key.slice(1)), true)
 				: key[0] === '^'
-				? ((key = key.slice(1)), false)
-				: shouldSetAsProp(el, key, nextValue, isSVG)
+				  ? ((key = key.slice(1)), false)
+				  : shouldSetAsProp(el, key, nextValue, isSVG)
 		) {
 			patchDOMProp(el, key, nextValue, prevChildren, parentComponent, parentSuspense, unmountChildren)
 		} else {
