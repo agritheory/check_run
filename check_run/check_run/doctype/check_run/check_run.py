@@ -524,7 +524,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			Coalesce(
 				purchase_invoices.supplier_default_mode_of_payment,
 				supplier_mop_sub_query,  # suppliers.supplier_default_mode_of_payment,
-				"\n",
+				f"{settings.purchase_invoice}" or "\n",
 			).as_("mode_of_payment"),
 			(payment_schedule.payment_term).as_("payment_term"),
 		)
@@ -553,7 +553,9 @@ def get_entries(doc: CheckRun | str) -> dict:
 			(exp_claims.grand_total).as_("amount"),
 			(exp_claims.posting_date).as_("due_date"),
 			exp_claims.posting_date,
-			Coalesce(exp_claims.mode_of_payment, employees.mode_of_payment, "\n").as_("mode_of_payment"),
+			Coalesce(
+				exp_claims.mode_of_payment, employees.mode_of_payment, f"{settings.expense_claim}" or "\n"
+			).as_("mode_of_payment"),
 			ConstantColumn("").as_("payment_term"),
 		)
 		.where(exp_claims.grand_total > exp_claims.total_amount_reimbursed)
@@ -593,7 +595,9 @@ def get_entries(doc: CheckRun | str) -> dict:
 			(je_accounts.credit_in_account_currency).as_("amount"),
 			journal_entries.due_date,
 			journal_entries.posting_date,
-			Coalesce(journal_entries.mode_of_payment, "\n").as_("mode_of_payment"),
+			Coalesce(journal_entries.mode_of_payment, f"{settings.journal_entry}" or "\n").as_(
+				"mode_of_payment"
+			),
 			ConstantColumn("").as_("payment_term"),
 		)
 		.where(journal_entries.company == company)
@@ -623,7 +627,9 @@ def get_entries(doc: CheckRun | str) -> dict:
 		query = query.orderby("due_date", "name").get_sql()
 
 	transactions = frappe.db.sql(
-		query, {"company": company, "pay_to_account": pay_to_account, "end_date": end_date}, as_dict=True
+		query,
+		{"company": company, "pay_to_account": pay_to_account, "end_date": end_date},
+		as_dict=True,
 	)
 	for transaction in transactions:
 		doc_name = transaction.ref_number if transaction.ref_number else transaction.name
@@ -639,13 +645,14 @@ def get_entries(doc: CheckRun | str) -> dict:
 		if transaction.doctype == "Journal Entry":
 			if transaction.party_type == "Supplier":
 				transaction.party_name = frappe.get_value("Supplier", transaction.party, "supplier_name")
-				transaction.mode_of_payment = frappe.get_value(
-					"Supplier", transaction.party, "supplier_default_mode_of_payment"
+				transaction.mode_of_payment = (
+					frappe.get_value("Supplier", transaction.party, "supplier_default_mode_of_payment")
+					or settings.journal_entry
 				)
 			if transaction.party_type == "Employee":
 				transaction.party_name = frappe.get_value("Employee", transaction.party, "employee_name")
-				transaction.mode_of_payment = frappe.get_value(
-					"Employee", transaction.party, "mode_of_payment"
+				transaction.mode_of_payment = (
+					frappe.get_value("Employee", transaction.party, "mode_of_payment") or settings.journal_entry
 				)
 
 	return {"transactions": transactions, "modes_of_payment": modes_of_payment}
