@@ -11,7 +11,7 @@ frappe.ui.form.on('Payment Entry', {
 })
 
 function get_next_check_number(frm) {
-	if (!(frm.doc.bank_account || frm.doc.mode_of_payment)) {
+	if (!(frm.doc.bank_account || frm.doc.mode_of_payment) || frm.doc.payment_type != 'Pay') {
 		return
 	}
 	frappe.db.get_value('Bank Account', frm.doc.bank_account, 'check_number').then(r => {
