@@ -1,3 +1,4 @@
+frappe.provide('check_run')
 frappe.provide('frappe.ui.form')
 
 frappe.ui.form.CheckRunQuickEntryForm = class CheckRunQuickEntryForm extends frappe.ui.form.QuickEntryForm {

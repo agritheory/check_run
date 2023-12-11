@@ -1,11 +1,14 @@
 // Copyright (c) 2022, AgriTheory and contributors
 // For license information, please see license.txt
+
+frappe.provide('check_run')
+
 frappe.ui.form.on('Check Run', {
 	validate: frm => {
 		validate_mode_of_payment_mandatory(frm)
-		if (frm.check_run_state.party_filter.length > 0) {
-			frm.check_run_state.party_filter = ''
-			frm.check_run_state.show_party_filter = false
+		if (check_run.filters.party.length > 0) {
+			check_run.filters.party = ''
+			check_run.filters.show_party_filter = false
 			return new Promise(function (resolve, reject) {
 				reject(
 					frappe.msgprint(
@@ -16,8 +19,7 @@ frappe.ui.form.on('Check Run', {
 				)
 			})
 		}
-		frm.doc.transactions = JSON.stringify(frm.check_run_state.transactions)
-		frm.doc.amount_check_run = frm.check_run_state.check_run_total()
+		frm.doc.transactions = JSON.stringify(check_run.transactions)
 	},
 	refresh: frm => {
 		frm.layout.show_message('')
@@ -74,7 +76,6 @@ frappe.ui.form.on('Check Run', {
 				),
 				'red'
 			)
-			cur_frm.$check_run.$children[0].state.status = 'Submitting'
 		}
 	},
 	end_date: frm => {
@@ -84,20 +85,13 @@ frappe.ui.form.on('Check Run', {
 		get_entries(frm)
 	},
 	start_date: frm => {
-		frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_balance', { doc: frm.doc }).then(r => {
-			frm.set_value('beg_balance', r)
-			get_entries(frm)
-		})
+		get_entries(frm)
+		get_balance(frm)
 	},
 	onload: frm => {
-		frm.$check_run = undefined
-		frm.transactions = []
-		frm.check_run_sort = {
-			partyInput: '',
-			docDate: false,
-			mop: false,
-			outstanding: false,
-			dueDate: false,
+		if (frm.doc.__onload.settings) {
+			frm.settings = frm.doc.__onload.settings
+			frm.pay_to_account_currency = frm.doc.__onload.pay_to_account_currency
 		}
 	},
 	pay_to_account: frm => {
@@ -112,7 +106,6 @@ frappe.ui.form.on('Check Run', {
 		frm.page.set_indicator(__('Submitting'), 'orange')
 		frm.disable_form()
 		frappe.xcall('check_run.check_run.doctype.check_run.check_run.process_check_run', { docname: frm.doc.name })
-		cur_frm.$check_run.$children[0].state.status = frm.doc.status
 	},
 	update_primary_action: frm => {
 		frm.disable_save()
@@ -152,21 +145,14 @@ function set_queries(frm) {
 }
 
 function get_entries(frm) {
-	frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_entries', { doc: frm.doc }).then(r => {
-		frm.transactions = r.transactions
-		frm.modes_of_payment = r.modes_of_payment
-		check_run.mount_table(frm)
-		// TODO: make this role configurable
-		if (!frappe.user.has_role(['Accounts Manager'])) {
-			frm.disable_form()
-			cur_frm.$check_run.$children[0].state.status = frm.doc.status
-		}
+	return new Promise(function (resolve, reject) {
+		resolve(window.check_run.mount(frm))
 	})
 }
 
 function total_check_run(frm) {
 	var total = 0
-	for (const [index, row] of frm.check_run_state.transactions.entries()) {
+	for (const [index, row] of frm.transactions.entries()) {
 		if (row.pay) {
 			total += row.amount
 		}
@@ -324,8 +310,8 @@ function ach_only(frm) {
 
 function validate_mode_of_payment_mandatory(frm) {
 	let mode_of_payment_required = []
-	for (const index in frm.check_run_state.transactions) {
-		let row = frm.check_run_state.transactions[index]
+	for (const index in frm.transactions) {
+		let row = frm.transactions[index]
 		if (row.pay && row.mode_of_payment.length < 2) {
 			mode_of_payment_required.push({ row: index + 1, party: row.party, ref_name: row.ref_number || row.name })
 		}

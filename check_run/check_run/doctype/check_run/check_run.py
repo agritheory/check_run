@@ -40,6 +40,8 @@ class CheckRun(Document):
 		settings = get_check_run_settings(self)
 		if not settings:
 			self.set_onload("settings_missing", True)
+		else:
+			self.set_onload("settings", json.loads(settings.as_json()))
 		errors = frappe.get_all("Error Log", {"method": ["like", f"%{self.name}%"]})
 		if errors and self.docstatus == 0:
 			self.set_onload("errors", True)
@@ -48,6 +50,11 @@ class CheckRun(Document):
 			self.set_onload("check_run_submitting", check_run_submitting)
 		else:
 			self.set_onload("check_run_submitting", False)
+		if self.pay_to_account:  # type: ignore # str or None
+			pay_to_account_currency = frappe.db.get_value(
+				"Account", self.pay_to_account, "account_currency"  # type: ignore # str or None
+			)
+			self.set_onload("pay_to_account_currency", pay_to_account_currency)
 
 	def validate(self: Self) -> None:
 		gl_account = frappe.get_value("Bank Account", self.bank_account, "account")
@@ -115,15 +122,18 @@ class CheckRun(Document):
 	def filter_transactions(self: Self) -> None:
 		if not self.get("transactions"):
 			return
-		transactions = json.loads(self.get("transactions"))
+		_t = json.loads(self.get("transactions"))
+		transactions = [value for k, value in _t.items()] if isinstance(_t, dict) else _t
 		for t in transactions:
 			if self.not_outstanding_or_cancelled(t):
 				transactions.remove(t)
 		self.transactions = json.dumps(transactions)
-		selected = [txn for txn in transactions if txn["pay"]]
+		selected = [t for t in transactions if t.get("pay")]
 		for t in selected:
-			if not t["mode_of_payment"]:
-				frappe.throw(frappe._(f"Mode of Payment Required: {t['party_name']} {t['ref_number']}"))
+			if not t.get("mode_of_payment"):
+				frappe.throw(
+					frappe._(f"Mode of Payment Required: {t.get('party_name')} {t.get('ref_number')}")
+				)
 
 	@frappe.read_only()
 	def not_outstanding_or_cancelled(self: Self, transaction: dict) -> bool:
@@ -173,8 +183,8 @@ class CheckRun(Document):
 			return
 		self.run_method("validate")
 		self.status = "Submitting"
-		transactions = self.transactions
-		transactions = json.loads(transactions)
+		self.filter_transactions()
+		transactions = [t for t in json.loads(self.transactions) if t.get("pay")]
 		if len(transactions) < 1:
 			frappe.throw(frappe._("You must select at least one Invoice to pay."))
 		self.print_count = 0
@@ -468,7 +478,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 	if isinstance(doc.end_date, str):
 		doc.end_date = getdate(doc.end_date)
 		doc.posting_date = getdate(doc.posting_date)
-	modes_of_payment = frappe.get_all("Mode of Payment", order_by="name")
+	modes_of_payment = [""] + frappe.get_all("Mode of Payment", order_by="name", pluck="name")
 	if frappe.db.exists(
 		"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
 	):
@@ -776,7 +786,7 @@ def build_nacha_file_from_payment_entries(
 
 
 @frappe.whitelist()
-def get_check_run_settings(doc: CheckRun | str) -> str:
+def get_check_run_settings(doc: CheckRun | str) -> CheckRunSettings:
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
 	if frappe.db.exists(
 		"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
