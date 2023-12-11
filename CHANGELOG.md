@@ -2,6 +2,13 @@
 
 
 
+## v14.8.4 (2023-12-11)
+
+### Fix
+
+* fix: only fetch check number on &#34;pay&#34; payment types (#179) ([`1b6dd48`](https://github.com/agritheory/check_run/commit/1b6dd488a6cf921c4497737f47d27627f19e510f))
+
+
 ## v14.8.3 (2023-12-11)
 
 ### Fix
