@@ -2,6 +2,58 @@
 
 
 
+## v14.8.3 (2023-12-11)
+
+### Fix
+
+* fix: mode of payment summary (#176)
+
+* fix: mode of payment summary
+
+* wip: refactor reactivity for performance
+
+* feat: improved reactivity
+
+* style: prettify code
+
+* fix: move built files to dist folder / ignored by git
+
+---------
+
+Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt;
+Co-authored-by: agritheory &lt;agritheory@users.noreply.github.com&gt; ([`40fd4ee`](https://github.com/agritheory/check_run/commit/40fd4ee3057f9808944258b9d7807522827f17a6))
+
+### Unknown
+
+* Draft: Paid Invoices appearing in the Check Run (#171)
+
+* wip: add correct setup data to remove payment terms bug
+
+* fix: paid invoices showing in check run
+
+* fix: add payment schedule validation in payment entry
+
+* docs: add purchase invoice payment term considerations
+
+---------
+
+Co-authored-by: Heather Kusmierz &lt;heather.kusmierz@gmail.com&gt; ([`bbb66d6`](https://github.com/agritheory/check_run/commit/bbb66d6b79fd2719b8ba6d691f73302a58362e4d))
+
+* Quick Check (#172)
+
+* feat: quick check poc
+
+* fix: add additional filters in check run settings and also in check run quick entry
+
+* docs: quick check and payment entry customization docs ([`37a39a1`](https://github.com/agritheory/check_run/commit/37a39a17f490e6e3d173707e36cd4467116f4e3b))
+
+* Per supplier invoices per voucher (#165)
+
+* feat: allow per-supplier override for number of invoices per voucher
+
+* docs: add docs for per supplier invoices per voucher ([`567762c`](https://github.com/agritheory/check_run/commit/567762c67c9cbbc89e57f345beca61a64e28961a))
+
+
 ## v14.8.2 (2023-09-22)
 
 ### Fix
