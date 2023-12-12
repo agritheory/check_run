@@ -527,6 +527,7 @@ def create_employees(settings):
 		emp.date_of_joining = employee[3]
 		emp.mode_of_payment = "Check" if employee_number % 3 == 0 else "ACH/EFT"
 		emp.mode_of_payment = "Cash" if employee_number == 10 else emp.mode_of_payment
+		emp.mode_of_payment = None if employee_number % 4 == 0 else emp.mode_of_payment
 		emp.expense_approver = "Administrator"
 		if emp.mode_of_payment == "ACH/EFT":
 			emp.bank = "Local Bank"

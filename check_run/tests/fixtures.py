@@ -16,7 +16,7 @@ suppliers = [
 	(
 		"Liu & Loewen Accountants LLP",
 		"Accounting Services",
-		"ACH/EFT",
+		None,
 		500.00,
 		"Net 30",
 		{
@@ -117,7 +117,7 @@ tax_authority = [
 	(
 		"Local Tax Authority",
 		"Payroll Taxes",
-		"Check",
+		None,
 		0.00,
 		"Due on Receipt",
 		{
