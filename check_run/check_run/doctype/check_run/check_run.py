@@ -19,7 +19,7 @@ from frappe.utils.file_manager import save_file, remove_all
 from frappe.utils.password import get_decrypted_password
 from frappe.contacts.doctype.address.address import get_default_address
 from frappe.query_builder.custom import ConstantColumn
-from frappe.query_builder.functions import Coalesce, Sum
+from frappe.query_builder.functions import Coalesce, Sum, NullIf
 from frappe.desk.form.load import get_attachments
 
 from erpnext.accounts.utils import get_balance_on
@@ -523,7 +523,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			purchase_invoices.posting_date,
 			Coalesce(
 				purchase_invoices.supplier_default_mode_of_payment,
-				supplier_mop_sub_query,  # suppliers.supplier_default_mode_of_payment,
+				NullIf(supplier_mop_sub_query, ""),  # suppliers.supplier_default_mode_of_payment,
 				f"{settings.purchase_invoice}" or "\n",
 			).as_("mode_of_payment"),
 			(payment_schedule.payment_term).as_("payment_term"),
@@ -554,7 +554,9 @@ def get_entries(doc: CheckRun | str) -> dict:
 			(exp_claims.posting_date).as_("due_date"),
 			exp_claims.posting_date,
 			Coalesce(
-				exp_claims.mode_of_payment, employees.mode_of_payment, f"{settings.expense_claim}" or "\n"
+				exp_claims.mode_of_payment,
+				NullIf(employees.mode_of_payment, ""),
+				f"{settings.expense_claim}" or "\n",
 			).as_("mode_of_payment"),
 			ConstantColumn("").as_("payment_term"),
 		)
