@@ -2,6 +2,27 @@
 
 
 
+## v14.9.0 (2023-12-12)
+
+### Documentation
+
+* docs: update settings section ([`b9b15f8`](https://github.com/agritheory/check_run/commit/b9b15f8ac16494d53399ccd7ab3f823fd1545620))
+
+### Feature
+
+* feat: add fallbacks for mode of payment per source document type ([`12f9160`](https://github.com/agritheory/check_run/commit/12f916000dbb96db2a1ea3474b55d226a7a1cb5a))
+
+### Fix
+
+* fix: empty string values to NULL in queries ([`75ab1c9`](https://github.com/agritheory/check_run/commit/75ab1c96629b0e2220dd30555a1498ddd2561291))
+
+### Unknown
+
+* Merge pull request #180 from agritheory/default_mode_of_payment_settings
+
+feat: add fallbacks for mode of payment per source document type ([`c609603`](https://github.com/agritheory/check_run/commit/c6096038c1363e14a2ba7abb29f2cf73d25ce860))
+
+
 ## v14.8.4 (2023-12-11)
 
 ### Fix
