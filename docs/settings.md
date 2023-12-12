@@ -6,7 +6,7 @@ A `Check Run Setting` entry determines the behavior in a Check Run for a specifi
 
 If the system doesn't find settings for the account combination you're using in an initiated Check Run, it will automatically take you to the settings page to confirm the options. Alternatively, you can access the setting list directly by searching for "Check Run Settings List" in the AwesomeBar and clicking the `Add Check Run Settings` button.
 
-![Screen shot showing the default settings for one Bank Account and Payable Account combination. A description of each setting and its default value is listed below.](./assets/SettingsDefaultScreen.png)
+![Screen shot showing the top portion of default settings for one Bank Account and Payable Account combination. A description of each setting and its default value is listed below.](./assets/Settings_Main.png)
 
 - **Include Purchase Invoices:**
     - Selected by default
@@ -37,8 +37,15 @@ If the system doesn't find settings for the account combination you're using in 
 - **Automatically Release On Hold Invoices:**
     - By default, on hold invoices will not show if their 'release date' is not within the Check Run period. The checkbox allows invoices that _are_ on hold to be automatically released and paid in the Check Run.
 
-
 ![Check Run output table showing a row for eight invoices paid (two for AgriTheory, two for Cooperative Ag Finance, and four for Exceptional Grid). The first two Exceptional Grid invoices have Check Reference Number ACC-PAY-2022-00003 and the next set of two invoices have Check Reference Number ACC-PAY-2022-00004. They were split into different vouchers because the setting limited two invoices per voucher.](./assets/VoucherGroup.png)
+
+The next section of settings allow for an optional default Mode of Payment for Purchase Invoices, Expense Claims, and Journal Entries. If there isn't a Mode of Payment specified in the Purchase Invoice, Expense Claim, or Journal Entry itself, and there isn't a default set for the party (see the [Configuration page](./configuration.md) for more details), then this field is used to populate the Mode of Payment column in the Check Run.
+
+![Screen shot showing the Default Mode of Payment section in settings.](./assets/Settings_MOP.png)
+
+There is also a section for all settings related to ACH payments.
+
+![Screen shot showing the ACH Settings section. A description of each setting and its default value is listed below.](./assets/Settings_ACH.png)
 
 - **ACH File Extension:**
     - Default value is "ach"
