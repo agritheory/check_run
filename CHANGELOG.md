@@ -2,6 +2,13 @@
 
 
 
+## v14.10.0 (2023-12-14)
+
+### Feature
+
+* feat: ignore PI where debit not has been issued (#181) ([`e085e96`](https://github.com/agritheory/check_run/commit/e085e9675a70c81fdc560e2341472d345c92ee70))
+
+
 ## v14.9.0 (2023-12-12)
 
 ### Documentation
