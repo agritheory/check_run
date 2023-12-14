@@ -533,6 +533,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 		.where(purchase_invoices.company == company)
 		.where(purchase_invoices.docstatus == 1)
 		.where(purchase_invoices.credit_to == pay_to_account)
+		.where(purchase_invoices.status != "Debit Note Issued")
 		.where(Coalesce(purchase_invoices.release_date, datetime.date(1900, 1, 1)) < end_date)
 	)
 
