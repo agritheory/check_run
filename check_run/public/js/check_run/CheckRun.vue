@@ -89,10 +89,7 @@
 							<a :href="transactionUrl(item)" target="_blank">
 								{{ item.ref_number || item.name }}
 							</a>
-							<div
-								v-if="file_preview_allowed && item.attachments.length > 1"
-								style="float: right"
-								class="dropdown show">
+							<div v-if="item.attachments && item.attachments.length > 1" style="float: right" class="dropdown show">
 								<a
 									class="btn btn-default btn-xs dropdown-toggle"
 									href="#"
@@ -115,7 +112,7 @@
 								</div>
 							</div>
 							<button
-								v-if="file_preview_allowed && item.attachments.length == 1"
+								v-if="item.attachments && item.attachments.length == 1"
 								style="float: right"
 								type="button"
 								class="btn btn-secondary btn-xs"
@@ -172,10 +169,6 @@ function showPreview(attachment) {
 	frappe.ui.addFilePreviewWrapper()
 	frappe.ui.pdfPreview(cur_frm, file_url)
 }
-
-let file_preview_allowed = computed(() => {
-	return Object.keys(transactions).length < 1000
-})
 
 let orderedTransactions = computed(() => {
 	let r = unref(
@@ -255,21 +248,27 @@ function paymentEntryUrl(transaction) {
 .party-filter {
 	margin-top: 5px;
 }
+
 .table thead th {
 	vertical-align: top;
 }
+
 .checkrun-check-box {
-	vertical-align: sub; /* weird but this gives the best alignment */
+	vertical-align: sub;
+	/* weird but this gives the best alignment */
 }
+
 .check-run-table td,
 .check-run-table th {
 	max-height: 1.5rem;
 	padding: 0.4rem;
 	vertical-align: middle;
 }
+
 .table tr.selectedRow {
 	background-color: var(--yellow-highlight-color);
 }
+
 .table tr {
 	height: 50px;
 }

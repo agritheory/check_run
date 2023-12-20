@@ -635,7 +635,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 		as_dict=True,
 	)
 
-	file_preview_allowed = False if len(transactions) > 1000 else True
+	file_preview_allowed = False if len(transactions) > settings.file_preview_threshold else True
 
 	for transaction in transactions:
 		if file_preview_allowed:
