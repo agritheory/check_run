@@ -89,6 +89,40 @@
 							<a :href="transactionUrl(item)" target="_blank">
 								{{ item.ref_number || item.name }}
 							</a>
+							<div
+								v-if="file_preview_allowed && item.attachments.length > 1"
+								style="float: right"
+								class="dropdown show">
+								<a
+									class="btn btn-default btn-xs dropdown-toggle"
+									href="#"
+									role="button"
+									:id="item.name"
+									data-toggle="dropdown"
+									aria-haspopup="true"
+									aria-expanded="false">
+									<i class="fa fa-search"></i>
+								</a>
+								<div class="dropdown-menu" :aria-labelledby="item.name">
+									<a
+										v-for="attachment in item.attachments"
+										class="dropdown-item"
+										href="javascript:;"
+										@click="showPreview(attachment.file_url)"
+										data-pdf-preview="item"
+										>{{ attachment.file_name }}</a
+									>
+								</div>
+							</div>
+							<button
+								v-if="file_preview_allowed && item.attachments.length == 1"
+								style="float: right"
+								type="button"
+								class="btn btn-secondary btn-xs"
+								@click="showPreview(item.attachments)"
+								data-pdf-preview="item">
+								<i @click="showPreview(item.attachments)" data-pdf-preview="item" class="fa fa-search"></i>
+							</button>
 						</td>
 						<td>{{ datetime.str_to_user(item.posting_date) }}</td>
 						<td class="mop-onclick">
@@ -131,6 +165,16 @@ let selectedRow = ref()
 
 onMounted(() => {
 	window.check_run.get_entries(window.cur_frm)
+})
+
+function showPreview(attachment) {
+	var file_url = typeof attachment == 'string' ? attachment : attachment[0].file_url
+	frappe.ui.addFilePreviewWrapper()
+	frappe.ui.pdfPreview(cur_frm, file_url)
+}
+
+let file_preview_allowed = computed(() => {
+	return Object.keys(transactions).length < 1000
 })
 
 let orderedTransactions = computed(() => {

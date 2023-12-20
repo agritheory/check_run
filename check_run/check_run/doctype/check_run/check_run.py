@@ -634,13 +634,19 @@ def get_entries(doc: CheckRun | str) -> dict:
 		{"company": company, "pay_to_account": pay_to_account, "end_date": end_date},
 		as_dict=True,
 	)
+
+	file_preview = True
+	if len(transactions) > 1000:
+		file_preview = False
+
 	for transaction in transactions:
-		doc_name = transaction.ref_number if transaction.ref_number else transaction.name
-		transaction.attachments = [
-			attachment
-			for attachment in get_attachments(transaction.doctype, doc_name)
-			if attachment.file_url.endswith(".pdf")
-		] or [{"file_name": doc_name, "file_url": f"/app/Form/{transaction.doctype}/{doc_name}"}]
+		if file_preview:
+			doc_name = transaction.ref_number if transaction.ref_number else transaction.name
+			transaction.attachments = [
+				attachment
+				for attachment in get_attachments(transaction.doctype, doc_name)
+				if attachment.file_url.endswith(".pdf")
+			] or [{"file_name": doc_name, "file_url": f"/app/Form/{transaction.doctype}/{doc_name}"}]
 
 		if settings and settings.pre_check_overdue_items:
 			if transaction.due_date < doc.posting_date:
