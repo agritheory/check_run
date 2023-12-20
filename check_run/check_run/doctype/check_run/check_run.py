@@ -635,12 +635,10 @@ def get_entries(doc: CheckRun | str) -> dict:
 		as_dict=True,
 	)
 
-	file_preview = True
-	if len(transactions) > 1000:
-		file_preview = False
+	file_preview_allowed = False if len(transactions) > 1000 else True
 
 	for transaction in transactions:
-		if file_preview:
+		if file_preview_allowed:
 			doc_name = transaction.ref_number if transaction.ref_number else transaction.name
 			transaction.attachments = [
 				attachment
