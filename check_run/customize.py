@@ -44,6 +44,179 @@ def load_customizations():
 			property_setter.insert()
 
 
+def add_workflow_for_voided_check():
+	
+	workflow_actions = [
+		{
+			"docstatus": 0,
+			"doctype": "Workflow Action Master",
+			"name": "Submit",
+			"workflow_action_name": "Submit"
+		},
+		{
+			"docstatus": 0,
+			"doctype": "Workflow Action Master",
+			"name": "Void",
+			"workflow_action_name": "Void"
+		},
+		{
+			"docstatus": 0,
+			"doctype": "Workflow Action Master",
+			"name": "Cancel",
+			"workflow_action_name": "Cancel"
+		},
+		{
+			"docstatus": 0,
+			"doctype": "Workflow Action Master",
+			"name": "Save",
+			"workflow_action_name": "Save"
+		},
+	]
+
+	for action in workflow_actions:
+		if not frappe.db.exists("Workflow Action Master", action['name']):
+			act = frappe.new_doc("Workflow Action Master")
+			act.update(action)
+			act.insert()
+
+	workflow_states = [
+		{
+			"docstatus": 0,
+			"icon": "",
+			"name": "Submitted",
+			"style": "Primary",
+			"workflow_state_name": "Submitted"
+		},
+		{
+			"docstatus": 0,
+			"icon": "",
+			"name": "Voided",
+			"style": "Info",
+			"workflow_state_name": "Voided"
+		},
+		{
+			"docstatus": 0,
+			"doctype": "Workflow State",
+			"icon": "",
+			"name": "Cancelled",
+			"style": "Inverse",
+			"workflow_state_name": "Cancelled"
+		},
+		{
+			"docstatus": 0,
+			"doctype": "Workflow State",
+			"icon": "",
+			"name": "Draft",
+			"style": "Warning",
+			"workflow_state_name": "Draft"
+		},
+	]
+
+	for state in workflow_states:
+		if not frappe.db.exists("Workflow State", state['name']):
+			ws = frappe.new_doc("Workflow State")
+			ws.update(state)
+			ws.insert()
+	
+	workflow_data = {
+		"docstatus": 0,
+		"doctype": "Workflow",
+		"document_type": "Payment Entry",
+		"is_active": 0,
+		"name": "Payment Entry",
+		"override_status": 1,
+		"send_email_alert": 0,
+		"states": [
+			{
+				"allow_edit": "Accounts User",
+				"doc_status": "0",
+				"is_optional_state": 0,
+				"parent": "Payment Entry",
+				"parentfield": "states",
+				"parenttype": "Workflow",
+				"state": "Draft",
+			},
+			{
+				"allow_edit": "Accounts User",
+				"doc_status": "1",
+				"is_optional_state": 0,
+				"parent": "Payment Entry",
+				"parentfield": "states",
+				"parenttype": "Workflow",
+				"state": "Submitted",
+			},
+			{
+				"allow_edit": "Accounts User",
+				"doc_status": "2",
+				"is_optional_state": 0,
+				"parent": "Payment Entry",
+				"parentfield": "states",
+				"parenttype": "Workflow",
+				"state": "Cancelled",
+			},
+			{
+				"allow_edit": "Accounts User",
+				"doc_status": "2",
+				"is_optional_state": 0,
+				"parent": "Payment Entry",
+				"parentfield": "states",
+				"parenttype": "Workflow",
+				"state": "Voided",
+				"update_field": "status",
+				"update_value": "Voided"
+			}
+			],
+			"transitions": [
+			{
+				"action": "Save",
+				"allow_self_approval": 1,
+				"allowed": "Accounts User",
+				"next_state": "Draft",
+				"parent": "Payment Entry",
+				"parentfield": "transitions",
+				"parenttype": "Workflow",
+				"state": "Draft"
+			},
+			{
+				"action": "Submit",
+				"allow_self_approval": 1,
+				"allowed": "Accounts User",
+				"next_state": "Submitted",
+				"parent": "Payment Entry",
+				"parentfield": "transitions",
+				"parenttype": "Workflow",
+				"state": "Draft"
+			},
+			{
+				"action": "Cancel",
+				"allow_self_approval": 1,
+				"allowed": "Accounts User",
+				"next_state": "Cancelled",
+				"parent": "Payment Entry",
+				"parentfield": "transitions",
+				"parenttype": "Workflow",
+				"state": "Submitted"
+			},
+			{
+				"action": "Void",
+				"allow_self_approval": 1,
+				"allowed": "Accounts User",
+				"next_state": "Voided",
+				"parent": "Payment Entry",
+				"parentfield": "transitions",
+				"parenttype": "Workflow",
+				"state": "Submitted"
+			}
+		],
+		"workflow_name": "Payment Entry",
+		"workflow_state_field": "status"
+	}
+	if not frappe.db.exists("Workflow", workflow_data['workflow_name']):
+		workflow = frappe.new_doc("Workflow")
+		workflow.update(workflow_data)
+		workflow.insert()
+
+
 def after_install():
 	if not frappe.db.exists("File", "Home/Check Run"):
 		try:
@@ -52,3 +225,5 @@ def after_install():
 			cr_folder.save()
 		except Exception as e:
 			pass
+
+	add_workflow_for_voided_check()
