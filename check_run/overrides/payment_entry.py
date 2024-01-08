@@ -3,6 +3,53 @@
 
 import frappe
 from erpnext.accounts.doctype.payment_entry.payment_entry import PaymentEntry
+from erpnext.accounts.general_ledger import make_gl_entries, process_gl_map
+from frappe.utils.data import getdate
+
+
+class CustomPaymentEntry(PaymentEntry):
+	def make_gl_entries(self, cancel=0, adv_adj=0):
+		if self.payment_type in ("Receive", "Pay") and not self.get("party_account_field"):
+			self.setup_party_account_field()
+
+		if self.status == "Voided":
+			original_posting_date = self.posting_date
+			self.voided_date = self.posting_date = getdate()
+
+		gl_entries = []
+		self.add_party_gl_entries(gl_entries)
+		self.add_bank_gl_entries(gl_entries)
+		self.add_deductions_gl_entries(gl_entries)
+		self.add_tax_gl_entries(gl_entries)
+
+		gl_entries = process_gl_map(gl_entries)
+		make_gl_entries(gl_entries, cancel=cancel, adv_adj=adv_adj)
+
+		if self.status == "Voided":
+			self.posting_date = original_posting_date
+
+	def set_status(self):
+		if self.status == "Voided":
+			pass
+		elif self.docstatus == 2:
+			self.status = "Cancelled"
+		elif self.docstatus == 1:
+			self.status = "Submitted"
+		else:
+			self.status = "Draft"
+
+		self.db_set("status", self.status, update_modified=True)
+
+	# Bug Fix
+	def get_valid_reference_doctypes(self):
+		if self.party_type == "Customer":
+			return ("Sales Order", "Sales Invoice", "Journal Entry", "Dunning")
+		elif self.party_type == "Supplier":
+			return ("Purchase Order", "Purchase Invoice", "Journal Entry")
+		elif self.party_type == "Shareholder":
+			return ("Journal Entry",)
+		elif self.party_type == "Employee":
+			return ("Journal Entry", "Expense Claim")  # Expense Claim
 
 
 @frappe.whitelist()
