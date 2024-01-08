@@ -1,15 +1,15 @@
 <template>
 	<div>
-		<ModeOfPaymentSummary :transactions="orderedTransactions"/>
+		<ModeOfPaymentSummary :transactions="orderedTransactions" />
 		<table class="table table-compact table-hover check-run-table" style="text-align: center; margin: 0">
 			<thead>
 				<tr>
 					<th style="text-align: left" class="col col-sm-2" id="check-run-party-filter">
 						<div>
-							<span class="party-onclick party-display" v-if="!show_party_filter">Party
+							<span class="party-onclick party-display" v-if="!show_party_filter"
+								>Party
 								<span class="filter-icon">
-									<svg class="icon icon-sm" style=""
-										@click="show_party_filter = !show_party_filter">
+									<svg class="icon icon-sm" style="" @click="show_party_filter = !show_party_filter">
 										<use class="" href="#icon-filter"></use>
 									</svg>
 								</span>
@@ -21,33 +21,48 @@
 					</th>
 					<th class="col col-sm-2">Document</th>
 					<th class="col col-sm-2" style="white-space: nowrap; width: 12.49%">
-						<span 
-							@click="filters.key = 'posting_date'; filters.posting_date *= -1"
+						<span
+							@click="
+								filters.key = 'posting_date'
+								filters.posting_date *= -1
+							"
 							class="check-run-sort-indicator"
-							id="check-run-doc-date-sort"
-						> Document Date &#11021;</span>
+							id="check-run-doc-date-sort">
+							Document Date &#11021;</span
+						>
 					</th>
 					<th class="col col-sm-2" tyle="white-space: nowrap; width: 12.49%">
-						<span 
-							@click="filters.key = 'mode_of_payment'; filters.mode_of_payment *= -1"
+						<span
+							@click="
+								filters.key = 'mode_of_payment'
+								filters.mode_of_payment *= -1
+							"
 							class="check-run-sort-indicator"
-							id="check-run-mop-sort"
-						> Mode of Payment &#11021;
-					</span>
+							id="check-run-mop-sort">
+							Mode of Payment &#11021;
+						</span>
 					</th>
 					<th class="col col-sm-2">
-						<span 
-							@click="filters.key = 'amount'; filters.amount *= -1"
+						<span
+							@click="
+								filters.key = 'amount'
+								filters.amount *= -1
+							"
 							class="check-run-sort-indicator"
-							id="check-run-outstanding-sort"
-						> Outstanding Amount &#11021;</span>
+							id="check-run-outstanding-sort">
+							Outstanding Amount &#11021;</span
+						>
 					</th>
 					<th class="col col-sm-1">
 						<span
-						@click="filters.key = 'due_date'; filters.due_date *= -1"
-						class="check-run-sort-indicator"
-						id="check-run-due-date-sort"
-						>Due Date &#11021;</span>
+							@click="
+								filters.key = 'due_date'
+								filters.due_date *= -1
+							"
+							class="check-run-sort-indicator"
+							id="check-run-due-date-sort"
+							>Due Date &#11021;</span
+						>
 					</th>
 					<th v-if="frm.doc.status == 'Draft'" class="col col-sm-1" style="text-align: left">
 						<input
@@ -55,56 +70,55 @@
 							autocomplete="off"
 							class="input-with-feedback reconciliation"
 							data-fieldtype="Check"
-							v-model="selectAll"
-						/><span>Select All</span>
+							v-model="selectAll" /><span>Select All</span>
 					</th>
 					<th v-else class="col col-sm-1">Check Number | Reference</th>
 				</tr>
 			</thead>
 			<tbody>
-	<template v-for="(item, i) in orderedTransactions">
-						<tr v-if="partyIsInFilter(item.party)" :key="i" class="checkrun-row-container"
-							:class="{ selectedRow: selectedRow == i }" tabindex="1" @click="selectedRow = i">
-							<td style="text-align: left">{{ item.party_name || item.party }}</td>
-							<td style="text-align: left;white-space: nowrap;">
-								<a :href="transactionUrl(item)" target="_blank">
-									{{ item.ref_number || item.name }}
-								</a>
-							</td>
-							<td>{{ datetime.str_to_user(item.posting_date) }}</td>
-							<td class="mop-onclick">
-								<select class="form-control form-select form-select-lg mb-3"
-									@change="onMOPChange($event, item.name)"
-								>
-									<option v-for="mop in modes_of_payment"
-										:selected="transactions[item.name].mode_of_payment == mop"
-									>
-										{{ mop }}
-									</option>
-								</select>
-							</td>
-							<td>{{ format_currency(item.amount, frm.pay_to_account_currency, 2) }}</td>
-							<td>{{ datetime.str_to_user(item.due_date) }}</td>
-							<td v-if="frm.doc.status == 'Draft'" style="text-align: left">
-								<input
-									type="checkbox"
-									class="input-with-feedback checkrun-check-box"
-									data-fieldtype="Check"
-									@change="onPayChange($event, item.name)"
-									:checked="transactions[item.name].pay"
-								/>Pay
-							</td>
-							<td v-else>
-								<a target="_blank" :href="paymentEntryUrl(item)"> {{ item.payment_entry }}</a>
-							</td>
-						</tr>
-					</template>
+				<template v-for="(item, i) in orderedTransactions">
+					<tr
+						v-if="partyIsInFilter(item.party)"
+						:key="i"
+						class="checkrun-row-container"
+						:class="{ selectedRow: selectedRow == i }"
+						tabindex="1"
+						@click="selectedRow = i">
+						<td style="text-align: left">{{ item.party_name || item.party }}</td>
+						<td style="text-align: left; white-space: nowrap">
+							<a :href="transactionUrl(item)" target="_blank">
+								{{ item.ref_number || item.name }}
+							</a>
+						</td>
+						<td>{{ datetime.str_to_user(item.posting_date) }}</td>
+						<td class="mop-onclick">
+							<select class="form-control form-select form-select-lg mb-3" @change="onMOPChange($event, item.name)">
+								<option v-for="mop in modes_of_payment" :selected="transactions[item.name].mode_of_payment == mop">
+									{{ mop }}
+								</option>
+							</select>
+						</td>
+						<td>{{ format_currency(item.amount, frm.pay_to_account_currency, 2) }}</td>
+						<td>{{ datetime.str_to_user(item.due_date) }}</td>
+						<td v-if="frm.doc.status == 'Draft'" style="text-align: left">
+							<input
+								type="checkbox"
+								class="input-with-feedback checkrun-check-box"
+								data-fieldtype="Check"
+								@change="onPayChange($event, item.name)"
+								:checked="transactions[item.name].pay" />Pay
+						</td>
+						<td v-else>
+							<a target="_blank" :href="paymentEntryUrl(item)"> {{ item.payment_entry }}</a>
+						</td>
+					</tr>
+				</template>
 			</tbody>
 		</table>
 	</div>
 </template>
 <script setup>
-import { computed, onMounted, ref, reactive, watch, unref} from 'vue'
+import { computed, onMounted, ref, reactive, watch, unref } from 'vue'
 import ModeOfPaymentSummary from './ModeOfPaymentSummary.vue'
 
 frappe.provide('check_run')
@@ -120,9 +134,14 @@ onMounted(() => {
 })
 
 let orderedTransactions = computed(() => {
-	let r = unref(Object.keys(transactions).sort().reduce((r, k) => (r[k] = transactions[k], r), {}))
-	return Object.values(r)
-	.sort((a, b) => (a[filters.key] > b[filters.key] ? filters[filters.key] : filters[filters.key] * -1))
+	let r = unref(
+		Object.keys(transactions)
+			.sort()
+			.reduce((r, k) => ((r[k] = transactions[k]), r), {})
+	)
+	return Object.values(r).sort((a, b) =>
+		a[filters.key] > b[filters.key] ? filters[filters.key] : filters[filters.key] * -1
+	)
 })
 
 let modes_of_payment = computed(() => {
@@ -145,19 +164,16 @@ watch(selectAll, (val, oldVal) => {
 })
 
 function partyIsInFilter(party) {
-	if (!party) { return }
-	return (
-		filters.party.length < 1 ||
-		party.toLowerCase().includes(filters.party.toLowerCase())
-	)
+	if (!party) {
+		return
+	}
+	return filters.party.length < 1 || party.toLowerCase().includes(filters.party.toLowerCase())
 }
 
-function transactionUrl(transaction){
+function transactionUrl(transaction) {
 	if (transaction.doctype !== 'Journal Entry') {
 		return encodeURI(
-			`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${
-				transaction.name
-			}`
+			`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${transaction.name}`
 		)
 	} else {
 		return encodeURI(
@@ -176,21 +192,20 @@ function onPayChange(event, rowName) {
 	}
 }
 
-function onMOPChange(event, rowName){
+function onMOPChange(event, rowName) {
 	transactions[rowName].mode_of_payment = modes_of_payment.value[event.target.selectedIndex]
 }
 
-function format_currency(v2, currency, decimals){
+function format_currency(v2, currency, decimals) {
 	return window.format_currency(v2, currency, decimals)
 }
 
-function paymentEntryUrl(transaction){
+function paymentEntryUrl(transaction) {
 	if (!transaction.payment_entry) {
 		return ''
 	}
 	return encodeURI(`${frappe.urllib.get_base_url()}/app/payment-entry/${transaction.payment_entry}`)
 }
-
 </script>
 <style scoped>
 .party-filter {

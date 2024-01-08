@@ -59,6 +59,15 @@ repos:
         exclude: ^tests/
         args: [--ignore-missing-imports]
 
+  - repo: local
+    hooks:
+      - id: validate_customizations
+        always_run: true
+        name: .github/validate_customizations.py
+        entry: python .github/validate_customizations.py
+        language: system
+        types: [python]
+
 ci:
   autoupdate_schedule: weekly
   skip: []
