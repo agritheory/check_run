@@ -45,36 +45,36 @@ def load_customizations():
 
 
 def add_workflow_for_voided_check():
-	
+
 	workflow_actions = [
 		{
 			"docstatus": 0,
 			"doctype": "Workflow Action Master",
 			"name": "Submit",
-			"workflow_action_name": "Submit"
+			"workflow_action_name": "Submit",
 		},
 		{
 			"docstatus": 0,
 			"doctype": "Workflow Action Master",
 			"name": "Void",
-			"workflow_action_name": "Void"
+			"workflow_action_name": "Void",
 		},
 		{
 			"docstatus": 0,
 			"doctype": "Workflow Action Master",
 			"name": "Cancel",
-			"workflow_action_name": "Cancel"
+			"workflow_action_name": "Cancel",
 		},
 		{
 			"docstatus": 0,
 			"doctype": "Workflow Action Master",
 			"name": "Save",
-			"workflow_action_name": "Save"
+			"workflow_action_name": "Save",
 		},
 	]
 
 	for action in workflow_actions:
-		if not frappe.db.exists("Workflow Action Master", action['name']):
+		if not frappe.db.exists("Workflow Action Master", action["name"]):
 			act = frappe.new_doc("Workflow Action Master")
 			act.update(action)
 			act.insert()
@@ -85,14 +85,14 @@ def add_workflow_for_voided_check():
 			"icon": "",
 			"name": "Submitted",
 			"style": "Primary",
-			"workflow_state_name": "Submitted"
+			"workflow_state_name": "Submitted",
 		},
 		{
 			"docstatus": 0,
 			"icon": "",
 			"name": "Voided",
-			"style": "Info",
-			"workflow_state_name": "Voided"
+			"style": "Inverse",
+			"workflow_state_name": "Voided",
 		},
 		{
 			"docstatus": 0,
@@ -100,7 +100,7 @@ def add_workflow_for_voided_check():
 			"icon": "",
 			"name": "Cancelled",
 			"style": "Inverse",
-			"workflow_state_name": "Cancelled"
+			"workflow_state_name": "Cancelled",
 		},
 		{
 			"docstatus": 0,
@@ -108,23 +108,23 @@ def add_workflow_for_voided_check():
 			"icon": "",
 			"name": "Draft",
 			"style": "Warning",
-			"workflow_state_name": "Draft"
+			"workflow_state_name": "Draft",
 		},
 	]
 
 	for state in workflow_states:
-		if not frappe.db.exists("Workflow State", state['name']):
+		if not frappe.db.exists("Workflow State", state["name"]):
 			ws = frappe.new_doc("Workflow State")
 			ws.update(state)
 			ws.insert()
-	
+
 	workflow_data = {
 		"docstatus": 0,
 		"doctype": "Workflow",
 		"document_type": "Payment Entry",
 		"is_active": 0,
-		"name": "Payment Entry",
-		"override_status": 1,
+		"name": "Void Payment Entry",
+		"override_status": 0,
 		"send_email_alert": 0,
 		"states": [
 			{
@@ -163,10 +163,10 @@ def add_workflow_for_voided_check():
 				"parenttype": "Workflow",
 				"state": "Voided",
 				"update_field": "status",
-				"update_value": "Voided"
-			}
-			],
-			"transitions": [
+				"update_value": "Voided",
+			},
+		],
+		"transitions": [
 			{
 				"action": "Save",
 				"allow_self_approval": 1,
@@ -175,7 +175,7 @@ def add_workflow_for_voided_check():
 				"parent": "Payment Entry",
 				"parentfield": "transitions",
 				"parenttype": "Workflow",
-				"state": "Draft"
+				"state": "Draft",
 			},
 			{
 				"action": "Submit",
@@ -185,7 +185,7 @@ def add_workflow_for_voided_check():
 				"parent": "Payment Entry",
 				"parentfield": "transitions",
 				"parenttype": "Workflow",
-				"state": "Draft"
+				"state": "Draft",
 			},
 			{
 				"action": "Cancel",
@@ -195,7 +195,7 @@ def add_workflow_for_voided_check():
 				"parent": "Payment Entry",
 				"parentfield": "transitions",
 				"parenttype": "Workflow",
-				"state": "Submitted"
+				"state": "Submitted",
 			},
 			{
 				"action": "Void",
@@ -205,13 +205,13 @@ def add_workflow_for_voided_check():
 				"parent": "Payment Entry",
 				"parentfield": "transitions",
 				"parenttype": "Workflow",
-				"state": "Submitted"
-			}
+				"state": "Submitted",
+			},
 		],
-		"workflow_name": "Payment Entry",
-		"workflow_state_field": "status"
+		"workflow_name": "Voidable Payment Entry",
+		"workflow_state_field": "status",
 	}
-	if not frappe.db.exists("Workflow", workflow_data['workflow_name']):
+	if not frappe.db.exists("Workflow", workflow_data["workflow_name"]):
 		workflow = frappe.new_doc("Workflow")
 		workflow.update(workflow_data)
 		workflow.insert()
