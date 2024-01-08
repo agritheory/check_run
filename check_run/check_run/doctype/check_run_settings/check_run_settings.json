@@ -18,10 +18,12 @@
   "pre_check_overdue_items",
   "allow_cancellation",
   "cascade_cancellation",
+  "validate_unique_check_number",
   "column_break_9",
   "number_of_invoices_per_voucher",
   "split_by_address",
   "automatically_release_on_hold_invoices",
+  "file_preview_threshold",
   "default_modes_of_payment_section_section",
   "purchase_invoice",
   "journal_entry",
@@ -210,10 +212,23 @@
   {
    "fieldname": "column_break_27",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "validate_unique_check_number",
+   "fieldtype": "Check",
+   "label": "Validate Unique Check Number"
+  },
+  {
+   "default": "1000",
+   "description": "File preview is enabled up to this number of transactions",
+   "fieldname": "file_preview_threshold",
+   "fieldtype": "Int",
+   "label": "File Preview Threshold"
   }
  ],
  "links": [],
- "modified": "2023-12-11 16:08:19.536271",
+ "modified": "2024-01-08 06:56:16.408829",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",
