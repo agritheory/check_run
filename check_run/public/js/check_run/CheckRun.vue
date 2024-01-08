@@ -21,46 +21,22 @@
 					</th>
 					<th class="col col-sm-2">Document</th>
 					<th class="col col-sm-2" style="white-space: nowrap; width: 12.49%">
-						<span
-							@click="
-								filters.key = 'posting_date'
-								filters.posting_date *= -1
-							"
-							class="check-run-sort-indicator"
-							id="check-run-doc-date-sort">
+						<span @click="update_sort('posting_date')" class="check-run-sort-indicator" id="check-run-doc-date-sort">
 							Document Date &#11021;</span
 						>
 					</th>
-					<th class="col col-sm-2" tyle="white-space: nowrap; width: 12.49%">
-						<span
-							@click="
-								filters.key = 'mode_of_payment'
-								filters.mode_of_payment *= -1
-							"
-							class="check-run-sort-indicator"
-							id="check-run-mop-sort">
+					<th class="col col-sm-2" style="white-space: nowrap; width: 12.49%">
+						<span @click="update_sort('mode_of_payment')" class="check-run-sort-indicator" id="check-run-mop-sort">
 							Mode of Payment &#11021;
 						</span>
 					</th>
 					<th class="col col-sm-2">
-						<span
-							@click="
-								filters.key = 'amount'
-								filters.amount *= -1
-							"
-							class="check-run-sort-indicator"
-							id="check-run-outstanding-sort">
+						<span @click="update_sort('amount')" class="check-run-sort-indicator" id="check-run-outstanding-sort">
 							Outstanding Amount &#11021;</span
 						>
 					</th>
 					<th class="col col-sm-1">
-						<span
-							@click="
-								filters.key = 'due_date'
-								filters.due_date *= -1
-							"
-							class="check-run-sort-indicator"
-							id="check-run-due-date-sort"
+						<span @click="update_sort('due_date')" class="check-run-sort-indicator" id="check-run-due-date-sort"
 							>Due Date &#11021;</span
 						>
 					</th>
@@ -159,16 +135,7 @@ let filters = reactive(window.check_run.filters)
 let show_party_filter = ref(false)
 let selectAll = ref(false)
 let selectedRow = ref()
-
-onMounted(() => {
-	window.check_run.get_entries(window.cur_frm)
-})
-
-function showPreview(attachment) {
-	var file_url = typeof attachment == 'string' ? attachment : attachment[0].file_url
-	frappe.ui.addFilePreviewWrapper()
-	frappe.ui.pdfPreview(cur_frm, file_url)
-}
+let location = ref(window.location)
 
 let orderedTransactions = computed(() => {
 	let r = unref(
@@ -193,11 +160,25 @@ let datetime = computed(() => {
 	return unref(window.frappe.datetime)
 })
 
+onMounted(() => {
+	window.check_run.get_entries(window.cur_frm)
+})
+
+function showPreview(attachment) {
+	var file_url = typeof attachment == 'string' ? attachment : attachment[0].file_url
+	frappe.ui.addFilePreviewWrapper()
+	frappe.ui.pdfPreview(cur_frm, file_url)
+}
+
 watch(selectAll, (val, oldVal) => {
 	Object.values(transactions).forEach(row => {
 		row.pay = val
 	})
 	check_run.total(frm)
+})
+
+watch(location, (val, oldVal) => {
+	window.check_run.get_entries(window.cur_frm)
 })
 
 function partyIsInFilter(party) {
@@ -227,6 +208,11 @@ function onPayChange(event, rowName) {
 	if (transactions[rowName].pay && !transactions[rowName].mode_of_payment) {
 		frappe.show_alert(__('Please add a Mode of Payment for this row'))
 	}
+}
+
+function update_sort(key_name) {
+	filters.key = key_name
+	filters[key_name] *= -1
 }
 
 function onMOPChange(event, rowName) {
