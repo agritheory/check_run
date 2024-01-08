@@ -21,46 +21,22 @@
 					</th>
 					<th class="col col-sm-2">Document</th>
 					<th class="col col-sm-2" style="white-space: nowrap; width: 12.49%">
-						<span
-							@click="
-								filters.key = 'posting_date'
-								filters.posting_date *= -1
-							"
-							class="check-run-sort-indicator"
-							id="check-run-doc-date-sort">
+						<span @click="update_sort('posting_date')" class="check-run-sort-indicator" id="check-run-doc-date-sort">
 							Document Date &#11021;</span
 						>
 					</th>
-					<th class="col col-sm-2" tyle="white-space: nowrap; width: 12.49%">
-						<span
-							@click="
-								filters.key = 'mode_of_payment'
-								filters.mode_of_payment *= -1
-							"
-							class="check-run-sort-indicator"
-							id="check-run-mop-sort">
+					<th class="col col-sm-2" style="white-space: nowrap; width: 12.49%">
+						<span @click="update_sort('mode_of_payment')" class="check-run-sort-indicator" id="check-run-mop-sort">
 							Mode of Payment &#11021;
 						</span>
 					</th>
 					<th class="col col-sm-2">
-						<span
-							@click="
-								filters.key = 'amount'
-								filters.amount *= -1
-							"
-							class="check-run-sort-indicator"
-							id="check-run-outstanding-sort">
+						<span @click="update_sort('amount')" class="check-run-sort-indicator" id="check-run-outstanding-sort">
 							Outstanding Amount &#11021;</span
 						>
 					</th>
 					<th class="col col-sm-1">
-						<span
-							@click="
-								filters.key = 'due_date'
-								filters.due_date *= -1
-							"
-							class="check-run-sort-indicator"
-							id="check-run-due-date-sort"
+						<span @click="update_sort('due_date')" class="check-run-sort-indicator" id="check-run-due-date-sort"
 							>Due Date &#11021;</span
 						>
 					</th>
@@ -89,6 +65,37 @@
 							<a :href="transactionUrl(item)" target="_blank">
 								{{ item.ref_number || item.name }}
 							</a>
+							<div v-if="item.attachments && item.attachments.length > 1" style="float: right" class="dropdown show">
+								<a
+									class="btn btn-default btn-xs dropdown-toggle"
+									href="#"
+									role="button"
+									:id="item.name"
+									data-toggle="dropdown"
+									aria-haspopup="true"
+									aria-expanded="false">
+									<i class="fa fa-search"></i>
+								</a>
+								<div class="dropdown-menu" :aria-labelledby="item.name">
+									<a
+										v-for="attachment in item.attachments"
+										class="dropdown-item"
+										href="javascript:;"
+										@click="showPreview(attachment.file_url)"
+										data-pdf-preview="item"
+										>{{ attachment.file_name }}</a
+									>
+								</div>
+							</div>
+							<button
+								v-if="item.attachments && item.attachments.length == 1"
+								style="float: right"
+								type="button"
+								class="btn btn-secondary btn-xs"
+								@click="showPreview(item.attachments)"
+								data-pdf-preview="item">
+								<i @click="showPreview(item.attachments)" data-pdf-preview="item" class="fa fa-search"></i>
+							</button>
 						</td>
 						<td>{{ datetime.str_to_user(item.posting_date) }}</td>
 						<td class="mop-onclick">
@@ -128,10 +135,7 @@ let filters = reactive(window.check_run.filters)
 let show_party_filter = ref(false)
 let selectAll = ref(false)
 let selectedRow = ref()
-
-onMounted(() => {
-	window.check_run.get_entries(window.cur_frm)
-})
+let location = ref(window.location)
 
 let orderedTransactions = computed(() => {
 	let r = unref(
@@ -156,11 +160,25 @@ let datetime = computed(() => {
 	return unref(window.frappe.datetime)
 })
 
+onMounted(() => {
+	window.check_run.get_entries(window.cur_frm)
+})
+
+function showPreview(attachment) {
+	var file_url = typeof attachment == 'string' ? attachment : attachment[0].file_url
+	frappe.ui.addFilePreviewWrapper()
+	frappe.ui.pdfPreview(cur_frm, file_url)
+}
+
 watch(selectAll, (val, oldVal) => {
 	Object.values(transactions).forEach(row => {
 		row.pay = val
 	})
 	check_run.total(frm)
+})
+
+watch(location, (val, oldVal) => {
+	window.check_run.get_entries(window.cur_frm)
 })
 
 function partyIsInFilter(party) {
@@ -192,6 +210,11 @@ function onPayChange(event, rowName) {
 	}
 }
 
+function update_sort(key_name) {
+	filters.key = key_name
+	filters[key_name] *= -1
+}
+
 function onMOPChange(event, rowName) {
 	transactions[rowName].mode_of_payment = modes_of_payment.value[event.target.selectedIndex]
 }
@@ -211,21 +234,27 @@ function paymentEntryUrl(transaction) {
 .party-filter {
 	margin-top: 5px;
 }
+
 .table thead th {
 	vertical-align: top;
 }
+
 .checkrun-check-box {
-	vertical-align: sub; /* weird but this gives the best alignment */
+	vertical-align: sub;
+	/* weird but this gives the best alignment */
 }
+
 .check-run-table td,
 .check-run-table th {
 	max-height: 1.5rem;
 	padding: 0.4rem;
 	vertical-align: middle;
 }
+
 .table tr.selectedRow {
 	background-color: var(--yellow-highlight-color);
 }
+
 .table tr {
 	height: 50px;
 }
