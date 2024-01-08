@@ -19,5 +19,13 @@ frappe.ui.form.on('Check Run Settings', {
 				},
 			}
 		})
+		frm.set_query('print_format', () => {
+			return {
+				filters: {
+					disabled: 0,
+					doc_type: 'Payment Entry',
+				},
+			}
+		})
 	},
 })
