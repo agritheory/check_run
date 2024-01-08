@@ -2,14 +2,15 @@
 	<div>
 		<div id="modeOfPaymentSummary" class="row">
 			<div v-for="result in results" class="col">
-				{{ result.qty }} {{ result.mode_of_payment }}: {{ format_currency(result.amount, frm.pay_to_account_currency, 2) }}
+				{{ result.qty }} {{ result.mode_of_payment }}:
+				{{ format_currency(result.amount, frm.pay_to_account_currency, 2) }}
 			</div>
 		</div>
 	</div>
 </template>
 
 <script setup>
-import { computed, defineProps, unref} from 'vue'
+import { computed, defineProps, unref } from 'vue'
 
 frappe.provide('check_run')
 
@@ -30,10 +31,14 @@ function format_currency(v2, currency, decimals) {
 function calculate_totals() {
 	let modes_of_payments = aggregate(props.transactions, 'mode_of_payment', 'amount', 'pay')
 	let results = []
-	if(!(frm.value.doc && frm.value.settings)){ return }
+	if (!(frm.value.doc && frm.value.settings)) {
+		return
+	}
 	let number_of_invoices_per_voucher = frm.value.settings.number_of_invoices_per_voucher
 	modes_of_payments.forEach(mop => {
-		let amounts = mop.amount.filter(elements => { return elements !== null })
+		let amounts = mop.amount.filter(elements => {
+			return elements !== null
+		})
 		let qty = `(${amounts.length})`
 		if (mop.mode_of_payment == 'Check') {
 			qty = `(${amounts.length}/${number_of_invoices_per_voucher})`
@@ -47,7 +52,8 @@ function calculate_totals() {
 		})
 	})
 	return results.sort((a, b) => {
-		let keyA = a.mode_of_payment, keyB = b.mode_of_payment;
+		let keyA = a.mode_of_payment,
+			keyB = b.mode_of_payment
 		if (keyA < keyB) return -1
 		if (keyA > keyB) return 1
 		return 0
