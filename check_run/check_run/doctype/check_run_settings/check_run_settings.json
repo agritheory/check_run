@@ -18,7 +18,7 @@
 		"pre_check_overdue_items",
 		"allow_cancellation",
 		"cascade_cancellation",
-        "validate_unique_check_number",
+		"validate_unique_check_number",
 		"column_break_9",
 		"number_of_invoices_per_voucher",
 		"split_by_address",
@@ -220,12 +220,12 @@
 			"fieldtype": "Int",
 			"label": "File Preview Threshold"
 		},
-        {
-            "default": "0",
-            "fieldname": "validate_unique_check_number",
-            "fieldtype": "Check",
-            "label": "Validate Unique Check Number"
-         }
+		{
+			"default": "0",
+			"fieldname": "validate_unique_check_number",
+			"fieldtype": "Check",
+			"label": "Validate Unique Check Number"
+		 }
 	],
 	"links": [],
 	"modified": "2024-01-11 10:49:46.062226",
