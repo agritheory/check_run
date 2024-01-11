@@ -23,7 +23,6 @@
   "number_of_invoices_per_voucher",
   "split_by_address",
   "automatically_release_on_hold_invoices",
-  "file_preview_threshold",
   "default_modes_of_payment_section_section",
   "purchase_invoice",
   "journal_entry",
@@ -218,13 +217,6 @@
    "fieldname": "validate_unique_check_number",
    "fieldtype": "Check",
    "label": "Validate Unique Check Number"
-  },
-  {
-   "default": "1000",
-   "description": "File preview is enabled up to this number of transactions",
-   "fieldname": "file_preview_threshold",
-   "fieldtype": "Int",
-   "label": "File Preview Threshold"
   }
  ],
  "links": [],
