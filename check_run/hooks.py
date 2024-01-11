@@ -40,6 +40,7 @@ doctype_js = {
 	"Payment Entry": "public/js/custom/payment_entry_custom.js",
 	"Supplier": "public/js/custom/supplier_custom.js",
 }
+
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
@@ -95,7 +96,10 @@ after_migrate = "check_run.customize.load_customizations"
 # DocType Class
 # ---------------
 # Override standard doctype classes
-# override_doctype_class = {"Bank": "check_run.overrides.bank.CustomBank"}
+override_doctype_class = {
+	# "Bank": "check_run.overrides.bank.CustomBank",
+	"Payment Entry": "check_run.overrides.payment_entry.CustomPaymentEntry",
+}
 
 # Document Events
 # ---------------
@@ -105,9 +109,9 @@ doc_events = {
 	"Bank": {"validate": ["check_run.overrides.bank.validate"]},
 	"Payment Entry": {
 		"validate": [
-            "check_run.overrides.payment_entry.validate_outstanding_payment_terms",
-            "check_run.overrides.payment_entry.validate_duplicate_check_number"
-        ],
+			"check_run.overrides.payment_entry.validate_outstanding_payment_terms",
+			"check_run.overrides.payment_entry.validate_duplicate_check_number",
+		],
 		"on_submit": ["check_run.overrides.payment_entry.update_check_number"],
 	},
 	"Purchase Invoice": {

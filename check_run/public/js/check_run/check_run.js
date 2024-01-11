@@ -31,6 +31,16 @@ check_run.get_entries = frm => {
 }
 
 check_run.mount = frm => {
+	check_run.transactions = reactive({})
+	check_run.modes_of_payment = ref([])
+	check_run.filters = reactive({
+		key: 'posting_date',
+		posting_date: 1,
+		mode_of_payment: 1,
+		amount: 1,
+		due_date: 1,
+		party: '',
+	})
 	if (frm.$check_run != undefined && frm.$check_run._isVue) {
 		return
 	}
