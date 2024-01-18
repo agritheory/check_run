@@ -2,6 +2,13 @@
 
 
 
+## v14.11.3 (2024-01-18)
+
+### Fix
+
+* fix: add docstatus check first before fetching supplier MOP (#195) ([`9691364`](https://github.com/agritheory/check_run/commit/9691364f52248e4dfd2c79eaa89bdaba41c5d148))
+
+
 ## v14.11.2 (2024-01-18)
 
 ### Fix
