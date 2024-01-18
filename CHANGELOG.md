@@ -2,6 +2,78 @@
 
 
 
+## v14.11.1 (2024-01-18)
+
+### Fix
+
+* fix: payment terms validation (#192) ([`036177d`](https://github.com/agritheory/check_run/commit/036177d6e4b82455e90e9e9d5d58e60f58845749))
+
+### Unknown
+
+* Optionally validate if check number has been used already (#189)
+
+* feat: add &#34;validate unique check number&#34; setting
+
+* feat: Optionally validate if check number has been used already
+
+* feat: Optionally validate if check number has been used already
+
+* fix: tabulation ([`e374b97`](https://github.com/agritheory/check_run/commit/e374b9797985a9842541335cba3bfb40f9e74bfd))
+
+* File preview in check run (#182)
+
+* feat: file preview
+
+* feat: improvement
+
+* feat: file preview treshold
+
+* fix: refactor filters to work with prettier, also fix rendering bug
+
+---------
+
+Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt; ([`1e8cd26`](https://github.com/agritheory/check_run/commit/1e8cd268786cb8dcea94bb7f279643a48570aa77))
+
+* Validate customizations (#166)
+
+* fix: validate customizations
+
+* Per supplier invoices per voucher (#165)
+
+* feat: allow per-supplier override for number of invoices per voucher
+
+* docs: add docs for per supplier invoices per voucher
+
+* Quick Check (#172)
+
+* feat: quick check poc
+
+* fix: add additional filters in check run settings and also in check run quick entry
+
+* docs: quick check and payment entry customization docs
+
+* fix: validate customizations
+
+* chore: prettier ([`6fd59cb`](https://github.com/agritheory/check_run/commit/6fd59cb5dea2f7b7e84387796c18ebd83ad18442))
+
+* Add workflow for voided check  (#187)
+
+* feat: voided check
+
+* style: prettify code
+
+* fix: rename workflow
+
+* chore: remove list JS, use workflow instead
+
+* chore: tab spacing
+
+---------
+
+Co-authored-by: fproldan &lt;fproldan@users.noreply.github.com&gt;
+Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt; ([`a84c566`](https://github.com/agritheory/check_run/commit/a84c5667edafa09b876a17f80661f0ced65a796e))
+
+
 ## v14.11.0 (2024-01-08)
 
 ### Feature
