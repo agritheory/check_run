@@ -2,6 +2,13 @@
 
 
 
+## v14.11.2 (2024-01-18)
+
+### Fix
+
+* fix: remove validation (#194) ([`efda8ae`](https://github.com/agritheory/check_run/commit/efda8ae0f58ce272eae7888a0dd867a7ede4c792))
+
+
 ## v14.11.1 (2024-01-18)
 
 ### Fix
