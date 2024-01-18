@@ -14,6 +14,7 @@ function get_next_check_number(frm) {
 	if (!(frm.doc.bank_account || frm.doc.mode_of_payment) || frm.doc.payment_type != 'Pay') {
 		return
 	}
+
 	frappe.db.get_value('Bank Account', frm.doc.bank_account, 'check_number').then(r => {
 		let check_number = Number(r.message.check_number) + 1
 		frm.set_value('reference_no', check_number)
@@ -21,7 +22,10 @@ function get_next_check_number(frm) {
 }
 
 function load_supplier_default_mode_of_payment(frm) {
-	if (!(frm.is_new() || frm.doc.dostatus == 0 || frm.doc.party_type != 'Supplier')) {
+	if (frm.doc.dostatus != 0) {
+		return
+	}
+	if (!(frm.is_new() || frm.doc.party_type != 'Supplier')) {
 		return
 	}
 	frappe.db
