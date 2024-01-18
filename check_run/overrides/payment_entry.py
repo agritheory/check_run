@@ -5,7 +5,7 @@ import frappe
 from frappe.utils import get_link_to_form
 from erpnext.accounts.doctype.payment_entry.payment_entry import PaymentEntry
 from erpnext.accounts.general_ledger import make_gl_entries, process_gl_map
-from frappe.utils.data import getdate
+from frappe.utils.data import getdate, flt
 
 
 class CustomPaymentEntry(PaymentEntry):
@@ -68,9 +68,14 @@ def validate_outstanding_payment_terms(doc: PaymentEntry, method: str | None = N
 		if r.reference_doctype != "Purchase Invoice":
 			continue
 		pmt_terms = frappe.get_all(
-			"Payment Schedule", {"parent": r.reference_name, "outstanding": ["!=", 0.0]}
+			"Payment Schedule",
+			[
+				["parent", "=", r.reference_name],
+				["outstanding", "NOT IN", [0.0, flt(r.allocated_amount)]],
+			],
+			debug=True,
 		)
-		if pmt_terms and not r.payment_term:
+		if doc.check_run and pmt_terms and not r.payment_term:
 			errors.append((r.idx, r.reference_name))
 
 	if errors:
@@ -78,10 +83,7 @@ def validate_outstanding_payment_terms(doc: PaymentEntry, method: str | None = N
 		message = frappe._(
 			f"There is at least one outstanding Payment Schedule Payment Term for the following Purchase Invoices in the Payment References table:<br><br><ul><li>{list_items}</li></ul><br>Please update the Payment Term field to tie this Payment Entry to the invoice's Payment Schedule and prevent paid invoice portions from showing up in a Check Run."
 		)
-		frappe.throw(
-			msg=message,
-			title="Missing Field",
-		)
+		frappe.throw(msg=message, title=frappe._("Partially Paid Invoices"))
 
 
 @frappe.whitelist()
