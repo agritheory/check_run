@@ -2,10 +2,11 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import get_link_to_form
+from frappe.utils import get_link_to_form, comma_and
 from erpnext.accounts.doctype.payment_entry.payment_entry import PaymentEntry
 from erpnext.accounts.general_ledger import make_gl_entries, process_gl_map
 from frappe.utils.data import getdate
+import json
 
 
 class CustomPaymentEntry(PaymentEntry):
@@ -93,3 +94,31 @@ def validate_duplicate_check_number(doc: PaymentEntry, method: str | None = None
 		),
 		title="Check Number already exists",
 	)
+
+
+@frappe.whitelist()
+def validate_add_payment_term(doc: PaymentEntry, method: str | None = None):
+	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+	if doc.check_run:
+		return
+	adjusted_refs = []
+	for r in doc.get("references"):
+		if r.reference_doctype == "Purchase Invoice" and not r.payment_term:
+			pmt_term = frappe.get_all(
+				"Payment Schedule",
+				{"parent": r.reference_name, "outstanding": [">", 0.0]},
+				["payment_term"],
+				order_by="due_date ASC",
+				limit=1,
+			)
+			if pmt_term:
+				r.payment_term = pmt_term[0].get("payment_term")
+				adjusted_refs.append(r.reference_name)
+	if adjusted_refs:
+		frappe.msgprint(
+			msg=frappe._(
+				f"An outstanding Payment Schedule term was detected and added for {comma_and(adjusted_refs)} in the references table.<br>Please review - "
+				"this field must be filled in for the Payment Schedule to synchronize and to prevent a paid invoice portion from showing up in a Check Run."
+			),
+			title=frappe._("Payment Schedule Term Added"),
+		)

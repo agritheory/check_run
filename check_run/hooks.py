@@ -110,6 +110,7 @@ doc_events = {
 	"Payment Entry": {
 		"validate": [
 			"check_run.overrides.payment_entry.validate_duplicate_check_number",
+			"check_run.overrides.payment_entry.validate_add_payment_term",
 		],
 		"on_submit": ["check_run.overrides.payment_entry.update_check_number"],
 	},
