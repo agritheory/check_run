@@ -2,6 +2,21 @@
 
 
 
+## v14.11.4 (2024-01-22)
+
+### Fix
+
+* fix: always include payment term for purchase invoice (#197)
+
+* ci: update app name in path string check
+
+* fix: add PI payment term in Pmt Entry outside a Check Run
+
+* tests: add manual payment entry to test payment term
+
+* docs: update for Payment Entry payment term customizations ([`1156621`](https://github.com/agritheory/check_run/commit/1156621b4b80f0e7a5cc3f7c10076910305ad29b))
+
+
 ## v14.11.3 (2024-01-18)
 
 ### Fix
