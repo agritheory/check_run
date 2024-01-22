@@ -2,6 +2,7 @@ import datetime
 import types
 
 import frappe
+from frappe.utils.data import add_days, flt
 from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
 from erpnext.setup.utils import enable_all_roles_and_domains, set_defaults_for_tests
 from erpnext.accounts.doctype.account.account import update_account_number
@@ -71,6 +72,7 @@ def create_test_data():
 	for month in range(1, 13):
 		create_payroll_journal_entry(settings)
 		settings.day = settings.day.replace(month=month)
+	create_manual_payment_entry(settings)
 
 
 def create_bank_and_bank_account(settings):
@@ -727,3 +729,59 @@ def create_extra_invoices(settings):
 			)
 			pi.save()
 			pi.submit()
+
+
+def create_manual_payment_entry(settings):
+	frappe.db.commit()
+	party = "Cooperative Ag Finance"
+	to_pay = 1000.00
+	docs = frappe.get_all(
+		"Purchase Invoice",
+		{"supplier": party, "grand_total": [">=", to_pay]},
+		order_by="name ASC",
+		limit=1,
+	)
+	pi = frappe.get_doc("Purchase Invoice", docs[0])
+	# pi = frappe.get_doc(
+	# 	"Purchase Invoice",
+	# 	{"supplier": party, "grand_total": [">=", 5000], "posting_date": ["<=", settings.day]}
+	# )  # posting date filter not working in runtime
+	pe = frappe.new_doc("Payment Entry")
+	pe.payment_type = "Pay"
+	pe.posting_date = add_days(settings.day, 2)
+	pe.mode_of_payment = "Bank Draft"
+	pe.company = settings.company
+	pe.bank_account = frappe.get_value("Bank Account", {"account": settings.company_account})
+	pe.paid_from = settings.company_account
+	pe.paid_to = frappe.get_value(
+		"Account", {"company": settings.company, "name": ["like", "%Accounts Payable%"]}
+	)
+	pe.paid_to_account_currency = frappe.get_value(
+		"Account", settings.company_account, "account_currency"
+	)
+	pe.paid_from_account_currency = pe.paid_to_account_currency
+	pe.reference_no = "via Bank Draft " + str(pe.posting_date)
+	pe.reference_date = pe.posting_date
+	pe.party_type = "Supplier"
+	pe.party = party
+	pe.paid_amount = to_pay
+
+	pe.append(
+		"references",
+		{
+			"reference_doctype": pi.doctype,
+			"reference_name": pi.name,
+			"due_date": pi.due_date,
+			"total_amount": flt(pi.grand_total),
+			"outstanding_amount": flt(pi.outstanding_amount),
+			"allocated_amount": to_pay,
+		},
+	)
+	pe.received_amount = to_pay
+	pe.base_received_amount = to_pay
+	pe.paid_amount = to_pay
+	pe.base_paid_amount = to_pay
+	pe.base_grand_total = to_pay
+
+	pe.save()
+	pe.submit()
