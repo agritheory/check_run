@@ -109,7 +109,6 @@
 						<td>{{ datetime.str_to_user(item.due_date) }}</td>
 						<td v-if="frm.doc.status == 'Draft'" style="text-align: left">
 							<input
-								:id = item.name
 								type="checkbox"
 								class="input-with-feedback checkrun-check-box"
 								data-fieldtype="Check"
@@ -217,19 +216,6 @@ function update_sort(key_name) {
 }
 
 function onMOPChange(event, rowName) {
-	// change of mode of payment make document Unsaved
-	//start
-	var element1 = document.querySelector(`#${rowName}`)
-	element1.checked = !element1.checked
-	console.log(element1.checked)
-	var changeEvent1 = new Event('change');
-	element1.dispatchEvent(changeEvent1);
-	var element2 = document.querySelector(`#${rowName}`)
-	element2.checked = !element1.checked
-	var changeEvent2 = new Event('change');
-	element2.dispatchEvent(changeEvent2);
-	frm.refresh()
-	//end
 	transactions[rowName].mode_of_payment = modes_of_payment.value[event.target.selectedIndex]
 }
 
