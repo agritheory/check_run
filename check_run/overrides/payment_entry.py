@@ -9,7 +9,7 @@ from frappe.utils.data import getdate
 import json
 
 
-class CheckRunPaymentEntry(PaymentEntry):
+class CustomPaymentEntry(PaymentEntry):
 	def make_gl_entries(self, cancel=0, adv_adj=0):
 		if self.payment_type in ("Receive", "Pay") and not self.get("party_account_field"):
 			self.setup_party_account_field()
