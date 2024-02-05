@@ -57,7 +57,7 @@ class CustomPaymentEntry(PaymentEntry):
 		elif self.party_type == "Employee":
 			return ("Journal Entry", "Expense Claim")  # Expense Claim
 
-	#
+	# validation msg improvement
 	def validate_allocated_amount(self):
 		if self.payment_type == "Internal Transfer":
 			return
