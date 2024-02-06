@@ -103,8 +103,8 @@ class CustomPaymentEntry(PaymentEntry):
 
 	def validate_allocated_amount_with_latest_data(self):
 		if self.references:
-			uniq_vouchers = {(x.reference_doctype, x.reference_name) for x in self.references}
-			vouchers = [frappe._dict({"voucher_type": x[0], "voucher_no": x[1]}) for x in uniq_vouchers]
+			unique_vouchers = {(x.reference_doctype, x.reference_name) for x in self.references}
+			vouchers = [frappe._dict({"voucher_type": x[0], "voucher_no": x[1]}) for x in unique_vouchers]
 			latest_references = get_outstanding_reference_documents(
 				{
 					"posting_date": self.posting_date,
