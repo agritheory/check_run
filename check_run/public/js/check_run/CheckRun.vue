@@ -99,11 +99,16 @@
 						</td>
 						<td>{{ datetime.str_to_user(item.posting_date) }}</td>
 						<td class="mop-onclick">
-							<select class="form-control form-select form-select-lg mb-3" @change="onMOPChange($event, item.name)">
+							<select
+								v-if="frm.doc.status == 'Draft'"
+								class="form-control form-select form-select-lg mb-3"
+								@change="onMOPChange(frm, $event, item.name)"
+							>
 								<option v-for="mop in modes_of_payment" :selected="transactions[item.name].mode_of_payment == mop">
 									{{ mop }}
 								</option>
 							</select>
+							<span v-else>{{ transactions[item.name].mode_of_payment }}</span>
 						</td>
 						<td>{{ format_currency(item.amount, frm.pay_to_account_currency, 2) }}</td>
 						<td>{{ datetime.str_to_user(item.due_date) }}</td>
@@ -215,9 +220,10 @@ function update_sort(key_name) {
 	filters[key_name] *= -1
 }
 
-function onMOPChange(event, rowName) {
-	window.cur_frm.dirty()
+function onMOPChange(frm, event, rowName) {
 	transactions[rowName].mode_of_payment = modes_of_payment.value[event.target.selectedIndex]
+	frm.dirty()
+	frm.page.set_indicator('Unsaved', 'orange')
 }
 
 function format_currency(v2, currency, decimals) {
