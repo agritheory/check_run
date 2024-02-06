@@ -2,6 +2,43 @@
 
 
 
+## v14.11.5 (2024-02-06)
+
+### Fix
+
+* fix: disallow mop selection on submitted doc, fix indicator (#207) ([`0429e48`](https://github.com/agritheory/check_run/commit/0429e484c38227ac0f4136f94d128d5ef26580f9))
+
+* fix: onchanges of mode_of_payment make enable to save form (#206)
+
+Co-authored-by: viralpatel15 &lt;viralkansodiya167@gmail.com&gt; ([`0b4bff0`](https://github.com/agritheory/check_run/commit/0b4bff0d5de5e76d6e0127e53081775a8056554b))
+
+### Unknown
+
+* Override a function to improve error msg (#205)
+
+* Allocated ammount validation override for msg improvement
+
+* comment add
+
+* add a comment on function
+
+* Refactor: Rename &#39;uniq_vouchers&#39; to &#39;unique_vouchers&#39; in payment_entry.py
+
+---------
+
+Co-authored-by: viralpatel15 &lt;viralkansodiya167@gmail.com&gt; ([`80fa4cf`](https://github.com/agritheory/check_run/commit/80fa4cf564b8f437eaccfc042af10c23b54b895b))
+
+* Remove paid document on Process check run  (#202)
+
+* class name has been change
+
+* fix: remove paid invoice and changes related to manually paid case
+
+* changes to remove class name changes ([`43cc33e`](https://github.com/agritheory/check_run/commit/43cc33ee6f192271b5c10b5c1efea7c09b17375f))
+
+* class name has been changed (#201) ([`8d46b53`](https://github.com/agritheory/check_run/commit/8d46b535748949e1d5467b05f69abc6d68dc077b))
+
+
 ## v14.11.4 (2024-01-22)
 
 ### Fix
