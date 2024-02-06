@@ -184,9 +184,18 @@ class CheckRun(Document):
 		self.run_method("validate")
 		self.status = "Submitting"
 		self.filter_transactions()
-		transactions = [t for t in json.loads(self.transactions) if t.get("pay")]
-		if len(transactions) < 1:
-			frappe.throw(frappe._("You must select at least one Invoice to pay."))
+		transactions = [
+			t
+			for t in json.loads(self.transactions)
+			if t.get("pay") and not self.not_outstanding_or_cancelled(t)
+		]
+		if not len(transactions):
+			frappe.msgprint(
+				"Please check; maybe you have not selected any document to pay, or the selected document has already been paid.<br><br>Kindly refresh the page."
+			)
+			return
+		# if len(transactions) < 1:
+		# 	frappe.throw(frappe._("You must select at least one Invoice to pay."))
 		self.print_count = 0
 		if self.ach_only().ach_only:
 			self.initial_check_number = ""  # type: ignore
@@ -490,7 +499,14 @@ def get_entries(doc: CheckRun | str) -> dict:
 	if frappe.db.exists("Check Run", doc.name):
 		db_doc = frappe.get_doc("Check Run", doc.name)
 		if doc.end_date == db_doc.end_date and db_doc.transactions:
-			return {"transactions": json.loads(db_doc.transactions), "modes_of_payment": modes_of_payment}
+			if db_doc.docstatus == 0:
+				outstanding_transaction = []
+				for row in json.loads(db_doc.transactions):
+					if not db_doc.not_outstanding_or_cancelled(row):
+						outstanding_transaction.append(row)
+			else:
+				outstanding_transaction = json.loads(db_doc.transactions)
+			return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
 
 	company = doc.company
 	pay_to_account = doc.pay_to_account
@@ -644,7 +660,9 @@ def get_entries(doc: CheckRun | str) -> dict:
 				attachment
 				for attachment in get_attachments(transaction.doctype, doc_name)
 				if attachment.file_url.endswith(".pdf")
-			] or [{"file_name": doc_name, "file_url": f"/app/Form/{transaction.doctype}/{doc_name}"}]
+			] or [
+				{"file_name": doc_name, "file_url": f"/app/Form/{transaction.doctype}/{doc_name}"}
+			]
 
 		if settings and settings.pre_check_overdue_items:
 			if transaction.due_date < doc.posting_date:
@@ -661,8 +679,15 @@ def get_entries(doc: CheckRun | str) -> dict:
 				transaction.mode_of_payment = (
 					frappe.get_value("Employee", transaction.party, "mode_of_payment") or settings.journal_entry
 				)
-
-	return {"transactions": transactions, "modes_of_payment": modes_of_payment}
+	# Process Unpaid Transaction
+	# start
+	outstanding_transaction = []
+	db_doc = frappe.get_doc("Check Run", doc.name)
+	for row in transactions:
+		if not db_doc.not_outstanding_or_cancelled(row):
+			outstanding_transaction.append(row)
+	# end
+	return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
 
 
 @frappe.whitelist()
