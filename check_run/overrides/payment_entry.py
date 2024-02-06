@@ -57,7 +57,16 @@ class CustomPaymentEntry(PaymentEntry):
 		elif self.party_type == "Employee":
 			return ("Journal Entry", "Expense Claim")  # Expense Claim
 
-	# validation msg improvement
+	"""
+	Because Check Run processes multiple payment entries in a background queue, errors generally do not include
+	enough data to identify the problem since there were written and remain appropriate for the context of an individual
+	Payment Entry. This code is copied from: 
+
+	https://github.com/frappe/erpnext/blob/version-14/erpnext/accounts/doctype/payment_entry/payment_entry.py#L164
+
+	https://github.com/frappe/erpnext/blob/version-14/erpnext/accounts/doctype/payment_entry/payment_entry.py#L194
+	"""
+
 	def validate_allocated_amount(self):
 		if self.payment_type == "Internal Transfer":
 			return
