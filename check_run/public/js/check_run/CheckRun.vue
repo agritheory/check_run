@@ -216,6 +216,7 @@ function update_sort(key_name) {
 }
 
 function onMOPChange(event, rowName) {
+	window.cur_frm.dirty()
 	transactions[rowName].mode_of_payment = modes_of_payment.value[event.target.selectedIndex]
 }
 
