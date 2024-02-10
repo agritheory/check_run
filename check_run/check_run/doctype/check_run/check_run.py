@@ -301,13 +301,12 @@ class CheckRun(Document):
 			_group = list(__group)
 			if _group[0].party_type == "Supplier":
 				supplier_split = frappe.db.get_value("Supplier", party, "number_of_invoices_per_check_voucher")
-				if not settings.print_format:
+				if not settings.secondary_print_format:
 					split = supplier_split if supplier_split else split
 			if (
 				frappe.db.get_value("Mode of Payment", _group[0].mode_of_payment, "type") == "Bank"
-				and not settings.print_format
+				and not settings.secondary_print_format
 			):
-
 				groups = list(zip_longest(*[iter(_group)] * split))
 			else:
 				groups = [_group]
