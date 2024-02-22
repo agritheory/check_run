@@ -265,10 +265,9 @@ class CheckRun(Document):
 
 	def create_payment_entries(self: Self, transactions: list[frappe._dict]) -> list[frappe._dict]:
 		settings = get_check_run_settings(self)
-		if not settings.secondary_print_format:
-			split = 5
-			if settings and settings.number_of_invoices_per_voucher:
-				split = settings.number_of_invoices_per_voucher
+		split = 5
+		if settings and settings.number_of_invoices_per_voucher:
+			split = settings.number_of_invoices_per_voucher
 		check_count = 0
 		_transactions = []
 		gl_account = frappe.get_value("Bank Account", self.bank_account, "account")
