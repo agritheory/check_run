@@ -3,6 +3,7 @@
 
 import datetime
 import json
+import timeit
 from itertools import groupby, zip_longest
 from io import StringIO
 from typing_extensions import Self
@@ -263,6 +264,14 @@ class CheckRun(Document):
 			ach_only.print_checks_only = False
 		return ach_only
 
+	def get_eta(self, current, total, processing_time):
+		self.last_eta = getattr(self, "last_eta", 0)
+		remaining = total - current
+		eta = processing_time * remaining
+		if not self.last_eta or eta < self.last_eta:
+			self.last_eta = eta
+		return self.last_eta
+
 	def create_payment_entries(self: Self, transactions: list[frappe._dict]) -> list[frappe._dict]:
 		settings = get_check_run_settings(self)
 		split = 5
@@ -281,17 +290,27 @@ class CheckRun(Document):
 					transaction.get("doctype"),
 					transaction.get("name"),
 				)
+
+		idx = 0
+		total = len(transactions)
+
 		for party, __group in groupby(transactions, key=key_lookup):
+			idx += 1
+			start = timeit.default_timer()
+
 			_group = list(__group)
 			if _group[0].party_type == "Supplier":
 				supplier_split = frappe.db.get_value("Supplier", party, "number_of_invoices_per_check_voucher")
 				split = supplier_split if supplier_split else split
+
 			if frappe.db.get_value("Mode of Payment", _group[0].mode_of_payment, "type") == "Bank":
 				groups = list(zip_longest(*[iter(_group)] * split))
 			else:
 				groups = [_group]
+
 			if not groups:
 				continue
+
 			for group in groups:
 				_references = []
 				if group[0].doctype == "Purchase Invoice":
@@ -375,6 +394,19 @@ class CheckRun(Document):
 				for reference in _references:
 					reference.payment_entry = pe.name
 					_transactions.append(reference)
+
+				processing_time = timeit.default_timer() - start
+				eta = self.get_eta(idx, len(transactions), processing_time)
+				frappe.publish_realtime(
+					"process_check_run_progress",
+					{
+						"current": idx,
+						"total": total,
+						"check_run": self.name,
+						"eta": eta,
+					},
+					user=frappe.session.user,
+				)
 		return _transactions
 
 	@frappe.whitelist()
