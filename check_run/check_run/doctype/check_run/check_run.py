@@ -1,6 +1,5 @@
 # Copyright (c) 2022, AgriTheory and contributors
 # For license information, please see license.txt
-
 import datetime
 import json
 import timeit
@@ -439,7 +438,12 @@ class CheckRun(Document):
 		transactions = json.loads(self.transactions)
 		check_increment = 0
 		_transactions = []
+		idx = 0
+		total = len(transactions)
+
 		for pe, _group in groupby(transactions, key=lambda x: x.get("payment_entry")):
+			idx += 1
+			start = timeit.default_timer()
 			group = list(_group)
 			mode_of_payment, docstatus = frappe.db.get_value(
 				"Payment Entry", pe, ["mode_of_payment", "docstatus"]
@@ -464,6 +468,19 @@ class CheckRun(Document):
 			elif docstatus == 1:
 				for ref in group:
 					_transactions.append(ref)
+
+			processing_time = timeit.default_timer() - start
+			eta = self.get_eta(idx, len(transactions), processing_time)
+			frappe.publish_realtime(
+				"render_check_progress",
+				{
+					"current": idx,
+					"total": total,
+					"check_run": self.name,
+					"eta": eta,
+				},
+				user=frappe.session.user,
+			)
 
 		if _transactions and reprint_check_number:
 			self.db_set("transactions", json.dumps(_transactions))
