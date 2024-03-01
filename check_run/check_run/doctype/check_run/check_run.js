@@ -4,6 +4,14 @@
 frappe.provide('check_run')
 
 frappe.ui.form.on('Check Run', {
+	setup: frm => {
+		frappe.realtime.on('process_check_run_progress', data => {
+			show_progress_bar(frm, data, 'Processing')
+		})
+		frappe.realtime.on('render_check_progress', data => {
+			show_progress_bar(frm, data, 'Printing')
+		})
+	},
 	validate: frm => {
 		validate_mode_of_payment_mandatory(frm)
 		if (check_run.filters.party.length > 0) {
@@ -119,6 +127,34 @@ frappe.ui.form.on('Check Run', {
 		}
 	},
 })
+
+function show_progress_bar(frm, data, action) {
+	if (data.check_run !== frm.doc.name) {
+		return
+	}
+	let percent = Math.floor((data.current * 100) / data.total)
+	let seconds = Math.floor(data.eta)
+	let minutes = Math.floor(data.eta / 60)
+	let eta_message =
+		// prettier-ignore
+		seconds < 60
+			? __('About {0} seconds remaining', [seconds])
+			: minutes === 1
+				? __('About {0} minute remaining', [minutes])
+				: __('About {0} minutes remaining', [minutes])
+
+	let message_args = [action, data.current, data.total, eta_message]
+	let message = __('{0} {1} of {2}, {3}', message_args)
+	frm.dashboard.show_progress(__('{0} Progress', action), percent, message)
+
+	// hide progress when complete
+	if (data.current === data.total) {
+		setTimeout(() => {
+			frm.dashboard.hide()
+			frm.refresh()
+		}, 2000)
+	}
+}
 
 function get_balance(frm) {
 	frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_balance', { doc: frm.doc }).then(r => {
