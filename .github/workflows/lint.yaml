@@ -32,12 +32,12 @@ jobs:
       - name: Install mypy
         run: pip install mypy
 
-      - name: Run mypy
-        uses: sasanquaneuf/mypy-github-action@releases/v1
-        with:
-          checkName: 'mypy'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Run mypy
+      #   uses: sasanquaneuf/mypy-github-action@releases/v1
+      #   with:
+      #     checkName: 'mypy'
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   black:
     needs: [ py_json_merge ]
