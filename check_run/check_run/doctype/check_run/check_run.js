@@ -200,7 +200,6 @@ function get_defaults(frm) {
 	if (!frm.is_new()) {
 		return
 	}
-	frm.set_value('start_date', moment().startOf('week').format())
 	frm.set_value('end_date', moment().endOf('week').format())
 }
 
