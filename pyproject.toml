@@ -41,7 +41,7 @@ version_variables = [
 ]
 
 [tool.semantic_release.branches.version]
-match = "version-(13|14)"
+match = "version-(14|15)"
 prerelease = false
 
 [tool.semantic_release.changelog]
