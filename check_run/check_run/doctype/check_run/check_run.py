@@ -265,7 +265,7 @@ class CheckRun(Document):
 
 	def create_payment_entries(self: Self, transactions: list[frappe._dict]) -> list[frappe._dict]:
 		settings = get_check_run_settings(self)
-		if not settings.secondary_print_format:
+		if not settings.print_format:
 			split = 5
 			if settings and settings.number_of_invoices_per_voucher:
 				split = settings.number_of_invoices_per_voucher
@@ -286,11 +286,11 @@ class CheckRun(Document):
 			_group = list(__group)
 			if _group[0].party_type == "Supplier":
 				supplier_split = frappe.db.get_value("Supplier", party, "number_of_invoices_per_check_voucher")
-				if not settings.secondary_print_format:
+				if not settings.print_format:
 					split = supplier_split if supplier_split else split
 			if (
 				frappe.db.get_value("Mode of Payment", _group[0].mode_of_payment, "type") == "Bank"
-				and not settings.secondary_print_format
+				and not settings.print_format
 			):
 				groups = list(zip_longest(*[iter(_group)] * split))
 			else:
