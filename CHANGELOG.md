@@ -2,6 +2,38 @@
 
 
 
+## v15.1.0 (2024-03-18)
+
+### Feature
+
+* feat: add v15 to release config ([`41e329d`](https://github.com/agritheory/check_run/commit/41e329d5f58b8d2c1550a334495fe2c57ff0bc5b))
+
+* feat: update init version ([`f53307b`](https://github.com/agritheory/check_run/commit/f53307bbdd631b1e2dd869cb2c3a7892d9acc870))
+
+* feat: release version-15 ([`6cd1a27`](https://github.com/agritheory/check_run/commit/6cd1a2788dc6597b3236d867b2dfd3f047dd4d6f))
+
+* feat: version-15 ([`0f2cd0a`](https://github.com/agritheory/check_run/commit/0f2cd0ada07d1cb3e13ebe5325a0b9d6ab2e3876))
+
+
+## v15.0.0 (2024-03-05)
+
+### Ci
+
+* ci: add frappe black to CI (#214)
+
+* ci: add frappe black to CI
+
+* chore: black, flake8 ([`771e57c`](https://github.com/agritheory/check_run/commit/771e57c166f6516c4a518d5960ff1371b254b038))
+
+### Unknown
+
+* Add Progress Bar for &#34;Process Check Run&#34; and &#34;Rendering Checks&#34;  (#212)
+
+* feat: progress bar in check run processing
+
+* feat: improvement and progress in print ([`d98f198`](https://github.com/agritheory/check_run/commit/d98f1985e853d68b9e7bb3661b370b6b0b194e82))
+
+
 ## v14.11.5 (2024-02-06)
 
 ### Fix
