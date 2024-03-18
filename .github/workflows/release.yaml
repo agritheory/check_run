@@ -2,8 +2,8 @@ name: Release
 on:
   push:
     branches:
-      - version-13
       - version-14
+      - version-15
 jobs:
   release:
     name: Release
