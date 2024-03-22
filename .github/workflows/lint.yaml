@@ -33,7 +33,7 @@ jobs:
         run: pip install mypy
 
       - name: Install mypy types
-        run: mypy ./check_run/. --install-types
+        run: mypy ./check_run/. --install-types --non-interactive
 
       - name: Run mypy
         uses: sasanquaneuf/mypy-github-action@releases/v1
@@ -142,6 +142,14 @@ jobs:
             echo "D,${file}" >> base/mrd.txt
           done
 
+      - name: Setup requirements and script
+        run: |
+          pip install rich
+          pip install json_source_map
+          git clone --depth 1 https://gist.github.com/3eea518743067f1b971114f1a2016f69 fsjd
+
+      - name: Diff table
+        run: python3 fsjd/frappe_schema_json_diff.py base/mrd.txt head/acmr.txt 1
 
   py_json_merge:
     runs-on: ubuntu-latest
