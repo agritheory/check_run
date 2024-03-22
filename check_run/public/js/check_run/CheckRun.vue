@@ -63,7 +63,7 @@
 						<td style="text-align: left">{{ item.party_name || item.party }}</td>
 						<td style="text-align: left; white-space: nowrap">
 							<a :href="transactionUrl(item)" target="_blank">
-								{{ item.ref_number || item.name }}
+								{{ item.doctype != 'Sales Invoice' ? item.ref_number : item.name }}
 							</a>
 							<div v-if="item.attachments && item.attachments.length > 1" style="float: right" class="dropdown show">
 								<a
