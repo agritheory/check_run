@@ -3,8 +3,12 @@
 
 import base64
 import copy
+import json
 
 import frappe
+from erpnext.accounts.doctype.invoice_discounting.invoice_discounting import (
+	get_party_account_based_on_invoice_discounting,
+)
 from erpnext.accounts.doctype.payment_entry.payment_entry import (
 	PaymentEntry,
 	add_regional_gl_entries,
@@ -22,9 +26,9 @@ from erpnext.accounts.general_ledger import (
 	validate_disabled_accounts,
 )
 from erpnext.accounts.utils import get_payment_ledger_entries, is_immutable_ledger_enabled
-from frappe import _, safe_decode
+from frappe import _, safe_decode, scrub
 from frappe.core.doctype.file.utils import get_local_image
-from frappe.utils import flt, get_link_to_form, now
+from frappe.utils import comma_and, comma_or, flt, get_link_to_form, now
 from frappe.utils.data import getdate
 
 
@@ -91,11 +95,83 @@ class CheckRunPaymentEntry(PaymentEntry):
 		if self.party_type == "Customer":
 			return ("Sales Order", "Sales Invoice", "Journal Entry", "Dunning")
 		elif self.party_type == "Supplier":
-			return ("Purchase Order", "Purchase Invoice", "Journal Entry")
+			return (
+				"Purchase Order",
+				"Purchase Invoice",
+				"Journal Entry",
+				"Sales Taxes and Charges",
+			)  # Tax Payable
 		elif self.party_type == "Shareholder":
 			return ("Journal Entry",)
 		elif self.party_type == "Employee":
 			return ("Journal Entry", "Expense Claim")  # Expense Claim
+
+	def validate_reference_documents(self):
+		valid_reference_doctypes = self.get_valid_reference_doctypes()
+
+		if not valid_reference_doctypes:
+			return
+
+		for d in self.get("references"):
+			if not d.allocated_amount:
+				continue
+			if d.reference_doctype not in valid_reference_doctypes:
+				frappe.throw(
+					_("Reference Doctype must be one of {0}").format(
+						comma_or(_(d) for d in valid_reference_doctypes)
+					)
+				)
+
+			elif d.reference_name:
+				if not frappe.db.exists(d.reference_doctype, d.reference_name):
+					frappe.throw(_("{0} {1} does not exist").format(d.reference_doctype, d.reference_name))
+				else:
+					ref_doc = frappe.get_doc(d.reference_doctype, d.reference_name)
+					if d.reference_doctype == "Sales Taxes and Charges":
+						if self.party != ref_doc.party:
+							frappe.throw(
+								_("{0} {1} is not associated with {2} {3}").format(
+									_(d.reference_doctype), d.reference_name, _(self.party_type), self.party
+								)
+							)
+					elif d.reference_doctype != "Journal Entry":
+						if self.party != ref_doc.get(scrub(self.party_type)):
+							frappe.throw(
+								_("{0} {1} is not associated with {2} {3}").format(
+									_(d.reference_doctype), d.reference_name, _(self.party_type), self.party
+								)
+							)
+					else:
+						self.validate_journal_entry()
+
+					if d.reference_doctype in frappe.get_hooks("invoice_doctypes"):
+						if self.party_type == "Customer":
+							ref_party_account = (
+								get_party_account_based_on_invoice_discounting(d.reference_name) or ref_doc.debit_to
+							)
+						elif self.party_type == "Supplier":
+							ref_party_account = ref_doc.credit_to
+						elif self.party_type == "Employee":
+							ref_party_account = ref_doc.payable_account
+
+						if (
+							ref_party_account != self.party_account
+							and not self.book_advance_payments_in_separate_party_account
+						):
+							frappe.throw(
+								_("{0} {1} is associated with {2}, but Party Account is {3}").format(
+									_(d.reference_doctype), d.reference_name, ref_party_account, self.party_account
+								)
+							)
+
+						if ref_doc.doctype == "Purchase Invoice" and ref_doc.get("on_hold"):
+							frappe.throw(
+								_("{0} {1} is on hold").format(_(d.reference_doctype), d.reference_name),
+								title=_("Invalid Purchase Invoice"),
+							)
+
+					if ref_doc.docstatus != 1:
+						frappe.throw(_("{0} {1} must be submitted").format(_(d.reference_doctype), d.reference_name))
 
 	"""
 	Because Check Run processes multiple payment entries in a background queue, errors generally do not include
@@ -177,20 +253,22 @@ class CheckRunPaymentEntry(PaymentEntry):
 				d = frappe._dict(d)
 				latest_lookup.setdefault((d.voucher_type, d.voucher_no), frappe._dict())[d.payment_term] = d
 
-			for idx, d in enumerate(self.get("references"), start=1):
-				latest = latest_lookup.get((d.reference_doctype, d.reference_name)) or frappe._dict()
+		for idx, d in enumerate(self.get("references"), start=1):
+			if d.reference_doctype == "Sales Taxes and Charges":
+				continue
+			latest = latest_lookup.get((d.reference_doctype, d.reference_name)) or frappe._dict()
 
-				# If term based allocation is enabled, throw
-				if (
-					d.payment_term is None or d.payment_term == ""
-				) and self.term_based_allocation_enabled_for_reference(
-					d.reference_doctype, d.reference_name
-				):
-					frappe.throw(
-						_(
-							"{0} has Payment Term based allocation enabled. Select a Payment Term for Row #{1} in Payment References section"
-						).format(frappe.bold(d.reference_name), frappe.bold(idx))
-					)
+			# If term based allocation is enabled, throw
+			if (
+				d.payment_term is None or d.payment_term == ""
+			) and self.term_based_allocation_enabled_for_reference(
+				d.reference_doctype, d.reference_name
+			):
+				frappe.throw(
+					_(
+						"{0} has Payment Term based allocation enabled. Select a Payment Term for Row #{1} in Payment References section"
+					).format(frappe.bold(d.reference_name), frappe.bold(idx))
+				)
 
 				# if no payment template is used by invoice and has a custom term(no `payment_term`), then invoice outstanding will be in 'None' key
 				latest = latest.get(d.payment_term) or latest.get(None)
@@ -623,3 +701,30 @@ def set_voided_date(doctype, docname, voided_date):
 			title=_("Invalid Void As Of Date"),
 		)
 	frappe.db.set_value(doctype, docname, "voided_date", voided_date, update_modified=False)
+
+
+def validate_add_payment_term(doc: PaymentEntry, method: str | None = None):
+	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+	if doc.check_run:
+		return
+	adjusted_refs = []
+	for r in doc.get("references"):
+		if r.reference_doctype == "Purchase Invoice" and not r.payment_term:
+			pmt_term = frappe.get_all(
+				"Payment Schedule",
+				{"parent": r.reference_name, "outstanding": [">", 0.0]},
+				["payment_term"],
+				order_by="due_date ASC",
+				limit=1,
+			)
+			if pmt_term:
+				r.payment_term = pmt_term[0].get("payment_term")
+				adjusted_refs.append(r.reference_name)
+	if adjusted_refs:
+		frappe.msgprint(
+			msg=frappe._(
+				f"An outstanding Payment Schedule term was detected and added for {comma_and(adjusted_refs)} in the references table.<br>Please review - "
+				"this field must be filled in for the Payment Schedule to synchronize and to prevent a paid invoice portion from showing up in a Check Run."
+			),
+			title=frappe._("Payment Schedule Term Added"),
+		)

@@ -1,0 +1,13 @@
+# Copyright (c) 2026, AgriTheory and contributors
+# For license information, please see license.txt
+
+import frappe
+from erpnext.accounts.doctype.sales_taxes_and_charges.sales_taxes_and_charges import (
+	SalesTaxesandCharges,
+)
+
+
+class CheckRunSalesTaxesandCharges(SalesTaxesandCharges):
+	@property
+	def company(self):
+		return frappe.get_value("Sales Invoice", self.parent, "company")

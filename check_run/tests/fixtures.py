@@ -246,3 +246,113 @@ employees = [
 		"55975",
 	),
 ]
+
+sales_tax_templates = [
+	{
+		"name": "MA Sales Tax - CFC",
+		"doctype": "Sales Taxes and Charges Template",
+		"title": "MA Sales Tax",
+		"is_default": 1,
+		"company": "Chelsea Fruit Co",
+		"taxes": [
+			{
+				"charge_type": "On Net Total",
+				"account_head": "2320 - Sales Tax Payable - CFC",
+				"description": "Sales Tax 6% ",
+				"cost_center": "Main - CFC",
+				"rate": 6.25,
+				"party_type": "Supplier",
+				"party": "Massachusetts Department of Revenue",
+			}
+		],
+	},
+	{
+		"name": "VT Sales Tax - CFC",
+		"doctype": "Sales Taxes and Charges Template",
+		"title": "VT Sales Tax",
+		"is_default": 0,
+		"company": "Chelsea Fruit Co",
+		"taxes": [
+			{
+				"charge_type": "On Net Total",
+				"account_head": "2320 - Sales Tax Payable - CFC",
+				"description": "Sales Tax 6.25% ",
+				"cost_center": "Main - CFC",
+				"rate": 6,
+				"party_type": "Supplier",
+				"party": "Vermont Department of Taxes",
+			}
+		],
+	},
+	{
+		"name": "RI Sales Tax - CFC",
+		"doctype": "Sales Taxes and Charges Template",
+		"title": "RI Sales Tax",
+		"is_default": 0,
+		"company": "Chelsea Fruit Co",
+		"taxes": [
+			{
+				"charge_type": "On Net Total",
+				"account_head": "2320 - Sales Tax Payable - CFC",
+				"description": "Sales Tax 7% ",
+				"cost_center": "Main - CFC",
+				"rate": 7,
+				"party_type": "Supplier",
+				"party": "Rhode Island Division of Taxation",
+			}
+		],
+	},
+]
+
+customers = [
+	(
+		"Almacs Food Group",
+		{
+			"address_line1": "1103 Storey Road",
+			"city": "Edina",
+			"state": "AZ",
+			"country": "United States",
+			"pincode": "24632",
+		},
+	),
+	(
+		"Beans and Dreams Roasters",
+		{
+			"address_line1": "743 Dorcas Road",
+			"city": "Salina",
+			"state": "CT",
+			"country": "United States",
+			"pincode": "25901",
+		},
+	),
+	(
+		"Cafe 27 Cafeteria",
+		{
+			"address_line1": "1340 Cook Street",
+			"city": "Salina",
+			"state": "OK",
+			"country": "United States",
+			"pincode": "93312",
+		},
+	),
+	(
+		"Capital Grille Restaurant Group",
+		{
+			"address_line1": "4 South Gate",
+			"city": "Salina",
+			"state": "MA",
+			"country": "United States",
+			"pincode": "08385",
+		},
+	),
+	(
+		"Downtown Deli",
+		{
+			"address_line1": "1302 Sibley Road",
+			"city": "Salina",
+			"state": "MT",
+			"country": "United States",
+			"pincode": "24654",
+		},
+	),
+]
