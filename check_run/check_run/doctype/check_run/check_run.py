@@ -317,6 +317,8 @@ class CheckRun(Document):
 					party = frappe.db.get_value("Expense Claim", group[0].name, "employee")
 				elif group[0].doctype == "Journal Entry":
 					party = frappe.db.get_value("Journal Entry Account", group[0].name, "party")
+				elif group[0].doctype == "Sales Invoice":
+					party = group[0].party
 				pe = frappe.new_doc("Payment Entry")
 				pe.payment_type = "Pay"
 				pe.posting_date = nowdate()
@@ -353,14 +355,17 @@ class CheckRun(Document):
 					):
 						if frappe.get_value(reference.doctype, reference.name, "on_hold"):
 							frappe.db.set_value(reference.doctype, reference.name, "on_hold", 0)
-					if reference.doctype == "Journal Entry":
+					if reference.doctype in ("Journal Entry", "Sales Invoice"):
 						reference_name = reference.ref_number
 					else:
 						reference_name = reference.name or reference.ref_number
+
 					pe.append(
 						"references",
 						{
-							"reference_doctype": reference.doctype,
+							"reference_doctype": reference.doctype
+							if reference.doctype != "Sales Invoice"
+							else "Sales Taxes and Charges",
 							"reference_name": reference_name,
 							"due_date": reference.get("due_date"),
 							"outstanding_amount": flt(reference.amount),
@@ -675,6 +680,39 @@ def get_entries(doc: CheckRun | str) -> dict:
 		.where((journal_entries.name).notin(sub_q))
 	)
 
+	# build Sales Taxes and Charges query
+	sales_taxes = frappe.qb.DocType("Sales Taxes and Charges")
+	sales_invoice = frappe.qb.DocType("Sales Invoice")
+	st_qb = (
+		frappe.qb.from_(sales_taxes)
+		.inner_join(sales_invoice)
+		.on(sales_taxes.parent == sales_invoice.name)
+		.inner_join(suppliers)
+		.on(suppliers.name == sales_taxes.party)
+		.select(
+			ConstantColumn("Sales Invoice").as_("doctype"),
+			sales_taxes.party_type,
+			sales_taxes.parent.as_("ref_number"),
+			sales_taxes.name,
+			sales_taxes.party,
+			(sales_taxes.party).as_("party_name"),
+			(sales_taxes.tax_amount_after_discount_amount).as_("amount"),
+			Coalesce(sales_taxes.due_date, sales_invoice.posting_date).as_("due_date"),
+			sales_invoice.posting_date,
+			Coalesce(
+				NullIf(suppliers.supplier_default_mode_of_payment, ""),
+				f"{settings.tax_payable}" or "\n",
+			).as_("mode_of_payment"),
+			ConstantColumn("").as_("payment_term"),
+		)
+		.where(sales_invoice.company == company)
+		.where(sales_invoice.docstatus == 1)
+		.where(sales_taxes.account_head == pay_to_account)
+		.where(sales_invoice.posting_date <= end_date)
+		.where(sales_invoice.outstanding_amount > 0.0)
+		# .where((sales_taxes.name).notin(sub_q)) # TODO: reference not in payment entry references
+	)
+
 	if not settings:
 		query = pi_qb.union(ec_qb).union(je_qb)
 	else:
@@ -683,8 +721,9 @@ def get_entries(doc: CheckRun | str) -> dict:
 			settings.include_purchase_invoices,
 			settings.include_expense_claims,
 			settings.include_journal_entries,
+			settings.include_tax_payable,
 		)
-		for flag, qb in zip(flags, (pi_qb, ec_qb, je_qb)):
+		for flag, qb in zip(flags, (pi_qb, ec_qb, je_qb, st_qb)):
 			if not flag:
 				continue
 			if not query:
