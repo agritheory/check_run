@@ -96,9 +96,11 @@ after_migrate = "check_run.customize.load_customizations"
 # DocType Class
 # ---------------
 # Override standard doctype classes
+
 override_doctype_class = {
-	# "Bank": "check_run.overrides.bank.CustomBank",
 	"Payment Entry": "check_run.overrides.payment_entry.CheckRunPaymentEntry",
+	"Sales Invoice": "check_run.overrides.sales_invoice.CheckRunSalesInvoice",
+	"Sales Taxes and Charges": "check_run.overrides.sales_taxes_and_charges.CheckRunSalesTaxesandCharges",
 }
 
 # Document Events
