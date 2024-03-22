@@ -884,4 +884,4 @@ def create_sales_invoices(settings):
 		for tax in taxes:
 			si.append("taxes", tax)
 		si.save()
-		# si.submit()
+		si.submit()
