@@ -832,7 +832,6 @@ def get_entries(doc: CheckRun | str) -> dict:
 		.where(sales_taxes.account_head == pay_to_account)
 		.where(sales_invoice.posting_date <= end_date)
 		.where(sales_taxes.outstanding_amount > 0.0)
-		# .where((sales_taxes.name).notin(sub_q)) # TODO: reference not in payment entry references - not strictly required
 	)
 
 	if not settings:
