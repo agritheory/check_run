@@ -200,9 +200,13 @@ class CheckRun(Document):
 		if self.ach_only().ach_only:
 			self.initial_check_number = ""  # type: ignore
 			self.final_check_number = ""
-		frappe.enqueue_doc(
-			self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600, now=True
-		)
+		print(self.flags)
+		if self.flags.in_test:
+			self._process_check_run(save=True)
+		else:
+			frappe.enqueue_doc(
+				self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600, now=True
+			)
 
 	def _process_check_run(self: Self, save: bool = False) -> None:
 		frappe.defaults.set_global_default("check_run_submitting", self.name)
