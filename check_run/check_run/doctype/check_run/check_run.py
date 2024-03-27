@@ -417,6 +417,14 @@ class CheckRun(Document):
 			mode_of_payment, docstatus = frappe.db.get_value(
 				"Payment Entry", pe, ["mode_of_payment", "docstatus"]
 			) or (None, None)
+			se_print_output = frappe.get_print(
+				"Payment Entry",
+				pe,
+				settings.secondary_print_format or frappe.get_meta("Payment Entry").default_print_format,
+				as_pdf=True,
+				output=output,
+				no_letterhead=0,
+			)
 			if docstatus == 1 and frappe.db.get_value("Mode of Payment", mode_of_payment, "type") == "Bank":
 				output = frappe.get_print(
 					"Payment Entry",
@@ -447,6 +455,15 @@ class CheckRun(Document):
 		frappe.db.set_value("Bank Account", self.bank_account, "check_number", self.final_check_number)
 		save_file(
 			f"{self.name}.pdf", read_multi_pdf(output), "Check Run", self.name, "Home/Check Run", False, 0
+		)
+		save_file(
+			f"{self.name}.pdf",
+			read_multi_pdf(se_print_output),
+			"Check Run",
+			self.name,
+			"Home/Check Run",
+			False,
+			0,
 		)
 		frappe.db.commit()
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
