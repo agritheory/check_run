@@ -49,7 +49,7 @@ frappe.ui.form.on('Check Run', {
 		permit_first_user(frm)
 		get_defaults(frm)
 		set_queries(frm)
-		if(frm.doc.docstatus == 1){
+		if (frm.doc.docstatus == 1) {
 			gen_sepa_xml(frm)
 		}
 		frappe.realtime.off('reload')
@@ -432,31 +432,32 @@ function check_settings(frm) {
 	}
 }
 
-function gen_sepa_xml(frm){
-	frm.add_custom_button("Download SEPA", ()=>{
+function gen_sepa_xml(frm) {
+	frm.add_custom_button('Download SEPA', () => {
 		frappe.call({
-			method:"check_run.check_run.doctype.check_run.gen_sepa_xml.gen_sepa_xml_file",
-			args:{
-				data : frm.doc.transactions,
-				company : frm.doc.company,
-				pay_to_account : frm.doc.pay_to_account
+			method: 'check_run.check_run.doctype.check_run.gen_sepa_xml.gen_sepa_xml_file',
+			args: {
+				data: frm.doc.transactions,
+				company: frm.doc.company,
+				pay_to_account: frm.doc.pay_to_account,
+				check_run: frm.doc.name,
 			},
-			callback:function(r){
-				downloadXML("payments.xml", r.message);
-			}
+			callback: function (r) {
+				downloadXML('payments.xml', r.message)
+			},
 		})
 	})
 }
 
 function downloadXML(filename, content) {
-	var element = document.createElement('a');
-	element.setAttribute('href', 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(content));
-	element.setAttribute('download', filename);
-  
-	element.style.display = 'none';
-	document.body.appendChild(element);
-  
-	element.click();
-  
-	document.body.removeChild(element);
-  }
+	var element = document.createElement('a')
+	element.setAttribute('href', 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(content))
+	element.setAttribute('download', filename)
+
+	element.style.display = 'none'
+	document.body.appendChild(element)
+
+	element.click()
+
+	document.body.removeChild(element)
+}
