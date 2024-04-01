@@ -349,3 +349,18 @@ def validate_add_payment_term(doc: PaymentEntry, method: str | None = None):
 			),
 			title=frappe._("Payment Schedule Term Added"),
 		)
+
+
+@frappe.whitelist()
+def update_sales_tax_payable_outstanding(doc, method=None):
+	for r in doc.get("references"):
+		if r.reference_doctype == "Sales Taxes and Charges":
+			currently_outstanding = frappe.db.get_value(
+				"Sales Taxes and Charges", r.reference_name, "outstanding_amount"
+			)
+			frappe.db.set_value(
+				"Sales Taxes and Charges",
+				r.reference_name,
+				"outstanding_amount",
+				flt(currently_outstanding - r.allocated_amount),
+			)

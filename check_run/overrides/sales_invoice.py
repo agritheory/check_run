@@ -18,7 +18,8 @@ class CheckRunSalesInvoice(SalesInvoice):
 
 	def on_submit(self):
 		for row in self.taxes:
-			row.outstanding_amount = row.tax_amount
+			if row.party and row.party_type:
+				row.outstanding_amount = row.tax_amount
 		super().validate()
 
 	def make_tax_gl_entries(self, gl_entries):
