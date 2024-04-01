@@ -3,8 +3,8 @@
 
 import frappe
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
-from erpnext.accounts.utils import get_account_currency
 from erpnext.accounts.party import get_due_date
+from erpnext.accounts.utils import get_account_currency
 from frappe.utils.data import cint, flt
 
 
@@ -21,7 +21,8 @@ class CheckRunSalesInvoice(SalesInvoice):
 
 	def on_submit(self):
 		for row in self.taxes:
-			row.outstanding_amount = row.tax_amount
+			if row.party and row.party_type:
+				row.outstanding_amount = row.tax_amount
 		super().validate()
 
 	def make_tax_gl_entries(self, gl_entries):

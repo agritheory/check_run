@@ -120,6 +120,7 @@ doc_events = {
 		"on_submit": [
 			"check_run.overrides.payment_entry.update_outstanding_amount",
 			"check_run.overrides.payment_entry.update_check_number",
+			"check_run.overrides.payment_entry.update_sales_tax_payable_outstanding",
 		],
 		"on_cancel": [
 			"check_run.overrides.payment_entry.update_outstanding_amount",

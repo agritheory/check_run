@@ -240,6 +240,10 @@ let datetime = computed(() => {
 	return unref(window.frappe.datetime)
 })
 
+let pay_to_account_currency = computed(() => {
+	return unref(frm.fields_dict.pay_to_account.df.options)
+})
+
 onMounted(() => {
 	window.check_run.get_entries(window.cur_frm)
 })
