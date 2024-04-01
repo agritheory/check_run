@@ -114,7 +114,10 @@ doc_events = {
 			"check_run.overrides.payment_entry.validate_duplicate_check_number",
 			"check_run.overrides.payment_entry.validate_add_payment_term",
 		],
-		"on_submit": ["check_run.overrides.payment_entry.update_check_number"],
+		"on_submit": [
+			"check_run.overrides.payment_entry.update_check_number",
+			"check_run.overrides.payment_entry.update_sales_tax_payable_outstanding",
+		],
 	},
 	"Purchase Invoice": {
 		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
