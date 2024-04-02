@@ -1,7 +1,7 @@
 import frappe
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
-from erpnext.accounts.utils import get_account_currency
 from erpnext.accounts.party import get_due_date
+from erpnext.accounts.utils import get_account_currency
 from frappe.utils.data import cint, flt
 
 
@@ -21,6 +21,7 @@ class CheckRunSalesInvoice(SalesInvoice):
 			if row.party and row.party_type:
 				row.outstanding_amount = row.tax_amount
 		super().validate()
+		super().on_submit()
 
 	def make_tax_gl_entries(self, gl_entries):
 		enable_discount_accounting = cint(
