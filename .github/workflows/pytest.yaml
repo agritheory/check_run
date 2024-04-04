@@ -1,22 +1,28 @@
-name: UI Tests
+name: Pytest CI
 
 on:
   push:
     branches: [ version-14 ]
   pull_request:
     branches: [ version-14 ]
+env:
+    BRANCH_NAME: ${{ github.base_ref || github.ref_name }}
 
 jobs:
-  cypress-run:
-    runs-on: ubuntu-20.04
-    timeout-minutes: 25
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+      fail-fast: false
+    name: Server
 
-    name: UI Tests (Cypress)
     services:
       mysql:
-        image: mariadb:10.3
+        image: mariadb:10.6
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: YES
+          MYSQL_ROOT_PASSWORD: 'admin'
         ports:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
@@ -30,19 +36,21 @@ jobs:
         with:
           python-version: '3.10'
 
-      - uses: actions/setup-node@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: 18
           check-latest: true
+          cache: 'yarn'  # Replaces `Get yarn cache directory path` and `yarn-cache` steps
 
       - name: Add to Hosts
         run: echo "127.0.0.1 test_site" | sudo tee -a /etc/hosts
 
       - name: Cache pip
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt', '**/pyproject.toml', '**/setup.py', '**/setup.cfg') }}
           restore-keys: |
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
@@ -59,37 +67,22 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
+      - name: Install JS Dependencies
+        run: yarn --prefer-offline
 
-      - uses: actions/cache@v2
-        id: yarn-cache
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - name: Cache cypress binary
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache
-          key: ${{ runner.os }}-cypress-
-          restore-keys: |
-            ${{ runner.os }}-cypress-
-            ${{ runner.os }}-
-
-      - name: Install Dependencies
+      - name: Install App Dependencies
         run: bash ${{github.workspace}}/.github/helper/install_dependencies.sh
 
-      - name: Install
+      - name: Install Bench Site and Apps
+        env:
+          MYSQL_HOST: 'localhost'
+          MYSQL_PWD: 'admin'
+          BRANCH_NAME: ${{ env.BRANCH_NAME}}
         run: |
-          bash ${{github.workspace}}/.github/helper/install.sh
+          bash ${{ github.workspace }}/.github/helper/install.sh
 
-      - name: Cypress run
-        uses: cypress-io/github-action@v4
-        with:
-          spec: cypress/integration/*
-          config-file: cypress.json
-          
+      - name: Run Tests
+        working-directory: /home/runner/frappe-bench
+        run: |
+          source env/bin/activate
+          pytest ./apps/check_run/check_run/tests/ --disable-warnings -s
