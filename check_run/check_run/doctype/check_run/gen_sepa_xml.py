@@ -5,21 +5,25 @@ import time
 
 
 @frappe.whitelist()
-def gen_sepa_xml_file(data, company, pay_to_account, check_run):
-	data = json.loads(data)
+def gen_sepa_xml_file(doc):
+	doc = frappe.parse_json(doc)
+	payments = frappe.parse_json(doc.transactions)
 	posting_date = getdate()
-	content = genrate_file_for_sepa(data, company, pay_to_account, posting_date, check_run)
+	content = genrate_file_for_sepa(payments, doc, posting_date)
 	return content
 
 
-def genrate_file_for_sepa(payments, company, pay_to_account, posting_date, check_run):
-	# remove empty items in case there should be any (bigfix for issue #2)
+def genrate_file_for_sepa(payments, doc, posting_date):
+	#Message Root
 	content = make_line("<?xml version='1.0' encoding='UTF-8'?>")
 	content += make_line("<!-- SEB ISO 20022 V03 MIG, 6.1 SEPA CT IBAN ONLY -->")
 	content += make_line(
 		"<Document xmlns='urn:iso:std:iso:20022:tech:xsd:pain.001.001.03' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>"
 	)
 	content += make_line("  <CstmrCdtTrfInitn>")
+
+
+	# Group Header
 	content += make_line("      <GrpHdr>")
 	content += make_line("          <MsgId>{}</MsgId>".format(time.strftime("%Y%m%d%H%M%S")))
 	content += make_line("          <CreDtTm>{}</CreDtTm>".format(time.strftime("%Y-%m-%dT%H:%M:%S")))
@@ -30,7 +34,7 @@ def genrate_file_for_sepa(payments, company, pay_to_account, posting_date, check
 	control_sum_identifier = "<!-- $CONTROL_SUM -->"
 	content += make_line(f"          <CtrlSum>{control_sum_identifier}</CtrlSum>")
 	content += make_line("          <InitgPty>")
-	content += make_line(f"              <Nm>{company}</Nm>")
+	content += make_line(f"              <Nm>{doc.company}</Nm>")
 	content += make_line("              <Id>")
 	content += make_line("                  <OrgId>")
 	content += make_line("                      <Othr>")
@@ -43,8 +47,11 @@ def genrate_file_for_sepa(payments, company, pay_to_account, posting_date, check
 	content += make_line("              </Id>")
 	content += make_line("          </InitgPty>")
 	content += make_line("      </GrpHdr>")
+
+
+	#Payment Information Elements
 	content += make_line("      <PmtInf>")
-	content += make_line(f"          <PmtInfId>{check_run}</PmtInfId>")
+	content += make_line(f"          <PmtInfId>{doc.name}</PmtInfId>")
 	content += make_line("          <PmtMtd>TRF</PmtMtd>")
 	content += make_line("          <BtchBookg>false</BtchBookg>")
 	content += make_line(f"          <NbOfTxs>{transaction_count_identifier}</NbOfTxs>")
@@ -58,7 +65,7 @@ def genrate_file_for_sepa(payments, company, pay_to_account, posting_date, check
 	required_execution_date = posting_date
 	content += make_line(f"          <ReqdExctnDt>{required_execution_date}</ReqdExctnDt>")
 	content += make_line("          <Dbtr>")
-	content += make_line(f"              <Nm>{company}</Nm>")
+	content += make_line(f"              <Nm>{doc.company}</Nm>")
 	content += make_line("              <Id>")
 	content += make_line("                  <OrgId>")
 	content += make_line("                      <Othr>")
@@ -73,7 +80,7 @@ def genrate_file_for_sepa(payments, company, pay_to_account, posting_date, check
 	content += make_line("          </Dbtr>")
 	content += make_line("          <DbtrAcct>")
 	content += make_line("              <Id>")
-	iban = get_iban_number(company, pay_to_account)
+	iban = get_iban_number(company = doc.company, pay_to_account = doc.pay_to_account)
 	content += make_line(f"                  <IBAN>{iban}</IBAN>")
 	content += make_line("              </Id>")
 	content += make_line("              <Ccy>EUR</Ccy>")
@@ -126,8 +133,10 @@ def genrate_file_for_sepa(payments, company, pay_to_account, posting_date, check
 		content += make_line("              </Cdtr>")
 		content += make_line("              <CdtrAcct>")
 		content += make_line("                  <Id>")
+
 		iban_code = get_party_iban_code(payment_record.party_type, payment_record.party)
-		content += make_line("                      <IBAN>{}</IBAN>".format(iban_code.strip() or ""))
+
+		content += make_line("                      <IBAN>{}</IBAN>".format(iban_code.strip() if iban_code else ""))
 		content += make_line("                  </Id>")
 		content += make_line("              </CdtrAcct>")
 		content += make_line("              <RmtInf>")
@@ -142,6 +151,8 @@ def genrate_file_for_sepa(payments, company, pay_to_account, posting_date, check
 		transaction_count += 1
 		control_sum += payment_record.paid_amount
 	content += make_line("      </PmtInf>")
+
+	#Finished tags
 	content += make_line("  </CstmrCdtTrfInitn>")
 	content += make_line("</Document>")
 	content = content.replace(transaction_count_identifier, f"{transaction_count}")
@@ -159,7 +170,7 @@ def make_line(line):
 
 def get_iban_number(company, pay_to_account):
 	bank_iban = frappe.db.sql(
-		f""" 
+							f""" 
                             Select iban
                             From `tabBank Account` 
                             Where is_company_account = 1 and account = '{pay_to_account}' and company = '{company}'
