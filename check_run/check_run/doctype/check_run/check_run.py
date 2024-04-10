@@ -409,6 +409,7 @@ class CheckRun(Document):
 		if reprint_check_number and reprint_check_number != "undefined":
 			self.initial_check_number = int(reprint_check_number)
 		output = PdfFileWriter()
+		se_print_output = PdfFileWriter()
 		transactions = json.loads(self.transactions)
 		check_increment = 0
 		_transactions = []
@@ -422,7 +423,7 @@ class CheckRun(Document):
 				pe,
 				settings.secondary_print_format or frappe.get_meta("Payment Entry").default_print_format,
 				as_pdf=True,
-				output=output,
+				output=se_print_output,
 				no_letterhead=0,
 			)
 			if docstatus == 1 and frappe.db.get_value("Mode of Payment", mode_of_payment, "type") == "Bank":
