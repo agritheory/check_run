@@ -1,5 +1,5 @@
 import frappe
-from frappe.utils import getdate
+from frappe.utils import getdate, get_link_to_form
 import time
 
 
@@ -139,11 +139,15 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 		content += make_line("                  </Id>")
 		content += make_line("              </CdtrAcct>")
 		content += make_line("              <RmtInf>")
-		sup_invoice_no = frappe.db.get_value(
-			"Purchase Invoice", payment_record.references[0].reference_name, "bill_no"
-		)
+		sup_invoice_no = [
+			frappe.db.get_value("Purchase Invoice", row.reference_name, "bill_no")
+			for row in payment_record.references
+		]
+
 		content += make_line(
-			"                  <Ustrd>{}</Ustrd>".format(sup_invoice_no if sup_invoice_no else "")
+			"                  <Ustrd>{}</Ustrd>".format(
+				", ".join(sup_invoice_no) if sup_invoice_no else ""
+			)
 		)
 		content += make_line("              </RmtInf>")
 		content += make_line("          </CdtTrfTxInf>")
@@ -193,4 +197,7 @@ def get_party_iban_code(party_type, party):
 
 	if party_iban:
 		return party_iban[0].iban
-	return
+	else:
+		frappe.throw(
+			frappe._(f"Iban Code is not available for {party_type} {get_link_to_form(party_type, party)}")
+		)
