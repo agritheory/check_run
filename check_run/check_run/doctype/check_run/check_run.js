@@ -437,7 +437,7 @@ function gen_sepa_xml(frm) {
 		frappe.call({
 			method: 'check_run.check_run.doctype.check_run.gen_sepa_xml.gen_sepa_xml_file',
 			args: {
-				doc : frm.doc
+				doc: frm.doc,
 				// data: frm.doc.transactions,
 				// company: frm.doc.company,
 				// pay_to_account: frm.doc.pay_to_account,
