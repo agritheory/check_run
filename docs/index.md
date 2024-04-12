@@ -27,7 +27,11 @@ The Check Run then returns a list of all outstanding payables for the given acco
 
 ![Check Run parameters and results. The user can edit the Check Run End Date, Posting Date, Initial Check Number, Company, Paid From (Bank Account), and Accounts Payable fields. The Beginning Bank Account Balance, Final Check Number, and Amount in Check Run are calculated. The table shows a list of outstanding payables, with columns for Party, Document, Document Date, Mode of Payment, Outstanding Amount, Due Date, and a check box to Pay.](./assets/CheckRunScreen.png)
 
-The user checks which payables to pay and the mode of payment for each one. The mode of payment dropdown options will correspond to the `Mode of Payment` documents you have set up in your system. You can configure a default mode of payment for each supplier and employee that will then automatically show as the selection in a Check Run. 
+The user checks which payables to pay and the mode of payment for each one. The mode of payment dropdown options will correspond to the `Mode of Payment` documents you have set up in your system. You can configure a default mode of payment for each supplier and employee that will then automatically show as the selection in a Check Run.
+
+If a Check Run is set to include purchase invoices (see the [settings page](./settings.md) for more details), it will also include any returns (debit notes) against purchase invoices as separate transactions. A transaction row showing a return amount from a certain party may be selected to "pay", and be used to offset amounts owed to other invoices from the same party. The net total amount of the return and other transactions for that party must net to more than zero - a Check Run won't allow for a negative payment.
+
+![Screen shot showing three transactions for a party in a Check Run, where one of the transactions is a return for $500. This row may be selected to "pay" and offset other row amounts as long as the total amount to pay the given party is greater than zero.](./assets/return-debit_note.png)
 
 <markdown-tip>
 
