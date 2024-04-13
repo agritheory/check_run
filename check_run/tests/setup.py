@@ -2,19 +2,19 @@ import datetime
 import types
 
 import frappe
-from frappe.utils.data import add_days, flt
-from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
-from erpnext.setup.utils import enable_all_roles_and_domains, set_defaults_for_tests
 from erpnext.accounts.doctype.account.account import update_account_number
 from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import make_debit_note
-
+from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_sales_return
+from erpnext.setup.utils import enable_all_roles_and_domains, set_defaults_for_tests
+from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
+from frappe.utils.data import add_days, flt
 
 from check_run.tests.fixtures import (
+	customers,
 	employees,
+	sales_tax_templates,
 	suppliers,
 	tax_authority,
-	customers,
-	sales_tax_templates,
 )
 
 
@@ -885,3 +885,8 @@ def create_sales_invoices(settings):
 			si.append("taxes", tax)
 		si.save()
 		si.submit()
+	doc_cn = make_sales_return(si.name)
+	doc_cn.update_outstanding_for_self = 0
+	doc_cn.update_billed_amount_in_delivery_note = 0
+	doc_cn.save()
+	doc_cn.submit()

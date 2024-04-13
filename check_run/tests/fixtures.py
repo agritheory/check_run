@@ -381,4 +381,14 @@ customers = [
 			"pincode": "24654",
 		},
 	),
+	(
+		"NRK Dry Fruits",
+		{
+			"address_line1": "1300 Sibley Road",
+			"city": "Salina",
+			"state": "MT",
+			"country": "United States",
+			"pincode": "24655",
+		},
+	),
 ]
