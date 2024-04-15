@@ -865,13 +865,16 @@ def create_sales_invoices(settings):
 	se.save()
 	se.submit()
 
-	for customer in customers:
+	for i, customer in enumerate(customers):
 		si = frappe.new_doc("Sales Invoice")
 		si.customer = customer[0]
 		si.set_posting_time = 1
 		si.company = settings.company
 		si.posting_date = settings.day
-		si.append("items", {"item_code": "Cloudberry", "qty": 100, "rate": 1.30})
+		if i == len(customers) - 1:
+			si.append("items", {"item_code": "Cloudberry", "qty": 100, "rate": 2})
+		else:
+			si.append("items", {"item_code": "Cloudberry", "qty": 100, "rate": 1.3})
 		si.taxes_and_charges = "MA Sales Tax - CFC"
 		# this API is typically only called from the browser
 		taxes = frappe.call(
