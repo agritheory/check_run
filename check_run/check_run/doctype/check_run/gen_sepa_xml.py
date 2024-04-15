@@ -34,9 +34,15 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 	content += make_line("          <InitgPty>")
 	content += make_line(f"              <Nm>{doc.company}</Nm>")
 	content += make_line("              <Id>")
+
+	orgid = get_party_orgid(doc.company, doc.bank_account, doc.pay_to_account)
+
+	initiating_party_org_id = orgid.get("initiating_party_org_id", None)
+	if not initiating_party_org_id:
+		frappe.throw(frappe._("Please specify <b>Initiating Party OrgID</b> in check run settings"))
 	content += make_line("                  <OrgId>")
 	content += make_line("                      <Othr>")
-	content += make_line("                          <Id>556036867100</Id>")
+	content += make_line(f"                          <Id>{initiating_party_org_id}</Id>")
 	content += make_line("                          <SchmeNm>")
 	content += make_line("                              <Cd>BANK</Cd>")
 	content += make_line("                          </SchmeNm>")
@@ -66,7 +72,10 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 	content += make_line("              <Id>")
 	content += make_line("                  <OrgId>")
 	content += make_line("                      <Othr>")
-	content += make_line("                          <Id>55667755110004</Id>")
+	debtor_org_id = orgid.get("initiating_party_org_id", None)
+	if not debtor_org_id:
+		frappe.throw(frappe._("Please specify <b>Debtor Org Id</b> in check run settings"))
+	content += make_line(f"                          <Id>{debtor_org_id}</Id>")
 	content += make_line("                          <SchmeNm>")
 	content += make_line("                              <Cd>BANK</Cd>")
 	content += make_line("                          </SchmeNm>")
@@ -171,7 +180,7 @@ def make_line(line):
 	return line + "\r\n"
 
 
-def get_iban_number(company, bank_account):
+def get_iban_number(company, bank_account, pay_to_account):
 	bank_iban = frappe.db.get_value("Bank Account", bank_account, "iban")
 
 	if bank_iban:
@@ -198,3 +207,15 @@ def get_party_iban_code(party_type, party):
 		frappe.throw(
 			frappe._(f"Iban Code is not available for {party_type} {get_link_to_form(party_type, party)}")
 		)
+
+
+def get_party_orgid(company, bank_account, pay_to_account):
+	orgid = frappe.db.sql(
+		f""" 
+				Select initiating_party_org_id, debtor_org_id
+				From `tabCheck Run Settings`
+				Where company = '{company}' and pay_to_account = '{pay_to_account}' and bank_account = '{bank_account}'
+			""",
+		as_dict=1,
+	)
+	return orgid[0]
