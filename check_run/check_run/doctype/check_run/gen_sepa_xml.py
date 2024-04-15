@@ -171,26 +171,15 @@ def make_line(line):
 	return line + "\r\n"
 
 
-def get_iban_number(company, bank_account, pay_to_account):
-	bank_iban = frappe.db.sql(
-		f"""
-		Select ba.iban
-		From `tabCheck Run Settings` as crs
-		Left Join `tabBank Account` as ba ON ba.name = crs.company_bank_account
-		where crs.company = '{company}' and crs.bank_account = '{bank_account}' and crs.pay_to_account = '{pay_to_account}'
-	""",
-		as_dict=1,
-	)
+def get_iban_number(company, bank_account):
+	bank_iban = frappe.db.get_value("Bank Account", bank_account, "iban")
 
 	if bank_iban:
-		if bank_iban[0].iban:
-			return bank_iban[0].iban
-		else:
-			frappe.throw(
-				frappe._(
-					f"Iban no is missing in bank account {get_link_to_form('Bank Account', bank_account)}"
-				)
-			)
+		return bank_iban
+	else:
+		frappe.throw(
+			frappe._(f"Iban no is missing in bank account {get_link_to_form('Bank Account', bank_account)}")
+		)
 
 
 def get_party_iban_code(party_type, party):

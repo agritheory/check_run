@@ -39,7 +39,6 @@
   "company_discretionary_data",
   "custom_post_processing_hook",
   "sepa_payment_settings_section",
-  "company_bank_account",
   "initiating_party_org_id",
   "debtor_org_id"
  ],
@@ -236,12 +235,6 @@
    "label": "SEPA Payment Settings"
   },
   {
-   "fieldname": "company_bank_account",
-   "fieldtype": "Link",
-   "label": "Company Bank Account(Currency=EUR)",
-   "options": "Bank Account"
-  },
-  {
    "fieldname": "initiating_party_org_id",
    "fieldtype": "Data",
    "label": "Initiating Party Org Id"
@@ -253,7 +246,7 @@
   }
  ],
  "links": [],
- "modified": "2024-04-15 07:11:53.018423",
+ "modified": "2024-04-15 07:57:00.135495",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",
