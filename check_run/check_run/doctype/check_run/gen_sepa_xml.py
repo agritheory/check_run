@@ -77,7 +77,7 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 	content += make_line("          </Dbtr>")
 	content += make_line("          <DbtrAcct>")
 	content += make_line("              <Id>")
-	iban = get_iban_number(company=doc.company, pay_to_account=doc.pay_to_account)
+	iban = get_iban_number(doc.company, doc.bank_account, doc.pay_to_account)
 	content += make_line(f"                  <IBAN>{iban}</IBAN>")
 	content += make_line("              </Id>")
 	content += make_line("              <Ccy>EUR</Ccy>")
@@ -146,7 +146,7 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 
 		content += make_line(
 			"                  <Ustrd>{}</Ustrd>".format(
-				", ".join(sup_invoice_no) if sup_invoice_no else ""
+				", ".join(sup_invoice_no) if sup_invoice_no[0] else ""
 			)
 		)
 		content += make_line("              </RmtInf>")
@@ -171,18 +171,26 @@ def make_line(line):
 	return line + "\r\n"
 
 
-def get_iban_number(company, pay_to_account):
+def get_iban_number(company, bank_account, pay_to_account):
 	bank_iban = frappe.db.sql(
-		f""" 
-                            Select iban
-                            From `tabBank Account` 
-                            Where is_company_account = 1 and account = '{pay_to_account}' and company = '{company}'
-                            """,
+		f"""
+		Select ba.iban
+		From `tabCheck Run Settings` as crs
+		Left Join `tabBank Account` as ba ON ba.name = crs.company_bank_account
+		where crs.company = '{company}' and crs.bank_account = '{bank_account}' and crs.pay_to_account = '{pay_to_account}'
+	""",
 		as_dict=1,
 	)
+
 	if bank_iban:
-		return bank_iban[0].iban
-	return
+		if bank_iban[0].iban:
+			return bank_iban[0].iban
+		else:
+			frappe.throw(
+				frappe._(
+					f"Iban no is missing in bank account {get_link_to_form('Bank Account', bank_account)}"
+				)
+			)
 
 
 def get_party_iban_code(party_type, party):
