@@ -97,6 +97,8 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 	)
 	content += make_line("              <FinInstnId>")
 	content += make_line("                  <Othr>")
+	bank_bic = frappe.db.get_value("Bank Account", doc.bank_account, "branch_code")  # optional
+	content += make_line("                  	<BIC>{}</BIC>".format(bank_bic if bank_bic else ""))
 	content += make_line("                      <Id>NOTPROVIDED</Id>")
 	content += make_line("                  </Othr>")
 	content += make_line("              </FinInstnId>")
