@@ -180,9 +180,19 @@ def create_eur_bank_and_bank_account(settings):
 		ba.account_name = "Primary Checking"
 		ba.bank = "EUR Bank"
 		ba.is_company_account = 1
+		ba.account = "1202 - Primary EUR Account - CFC"
 		ba.branch_code = "CXF6754"
-		ba.iban_code = "GB82 WEST 1234 5698 7654 32"
+		ba.iban = "GB82 WEST 1234 5698 7654 32"
 		ba.save()
+
+	# New chart of account
+	account = frappe.new_doc("Account")
+	account.account_name = "2130 - EUR Account Payable"
+	account.account_type = "Payable"
+	account.parent_account = "2100 - Accounts Payable - CFC"
+	account.account_currency = "EUR"
+	account.root_type = "Liability"
+	account.save()
 
 
 def setup_accounts():
