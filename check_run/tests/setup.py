@@ -9,7 +9,7 @@ from erpnext.accounts.doctype.account.account import update_account_number
 from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import make_debit_note
 
 
-from check_run.tests.fixtures import employees, suppliers, tax_authority
+from check_run.tests.fixtures import employees, suppliers, tax_authority, sepa_supplier
 
 
 def before_test():
@@ -62,6 +62,7 @@ def create_test_data():
 		}
 	)
 	create_bank_and_bank_account(settings)
+	create_eur_bank_and_bank_account(settings)
 	create_payment_terms_templates(settings)
 	create_suppliers(settings)
 	create_items(settings)
@@ -162,6 +163,26 @@ def create_eur_bank_and_bank_account(settings):
 			"accounts", {"company": settings.company, "default_account": settings.company_account}
 		)
 		mop.save()
+	if not frappe.db.exists("Bank", "EUR Bank"):
+		bank = frappe.new_doc("Bank")
+		bank.bank_name = "EUR Bank"
+		bank.save()
+	if not frappe.db.exists("Account", "1202 - Primary EUR Account - CFC"):
+		acc = frappe.new_doc("Account")
+		acc.account_currency = "EUR"
+		acc.account_name = "1202 - Primary EUR Account"
+		acc.account_type = "Bank"
+		acc.company = "Chelsea Fruit Co"
+		acc.parent_account = "1200 - Bank Accounts - CFC"
+		acc.save()
+	if not frappe.db.exists("Bank Account", "Primary Checking - EUR Bank"):
+		ba = frappe.new_doc("Bank Account")
+		ba.account_name = "Primary Checking"
+		ba.bank = "EUR Bank"
+		ba.is_company_account = 1
+		ba.branch_code = "CXF6754"
+		ba.iban_code = "GB82 WEST 1234 5698 7654 32"
+		ba.save()
 
 
 def setup_accounts():
@@ -301,6 +322,40 @@ def create_suppliers(settings):
 	addr.pincode = "79749"
 	addr.append("links", {"link_doctype": "Supplier", "link_name": "HIJ Telecom, Inc"})
 	addr.save()
+
+	for supplier in sepa_supplier:
+		su = frappe.new_doc("Supplier")
+		su.supplier_name = supplier[0]
+		su.supplier_group = "Services"
+		su.country = "Germany"
+		su.supplier_default_mode_of_payment = supplier[2]
+		if su.supplier_default_mode_of_payment == "SEPA":
+			su.bank = "EUR Bank"
+			su.iban = "DE89370400440532013000"
+		su.currency = "EUR"
+		su.default_price_list = "Standard Buying"
+		su.payment_terms = supplier[4]
+		su.save()
+
+		ba = frappe.new_doc("Bank Account")
+		ba.account_name = "NRW Global Business"
+		ba.bank = "EUR Bank"
+		ba.party_type = "Supplier"
+		ba.party = "NRW Global Business"
+		ba.iban = "DE89370400440532013000"
+		ba.branch_code = "BGYH7876"
+		ba.save()
+
+		addr = frappe.new_doc("Address")
+		addr.address_title = f"{supplier[0]} - {supplier[5]['city']}"
+		addr.address_type = "Billing"
+		addr.address_line1 = supplier[5]["address_line1"]
+		addr.city = supplier[5]["city"]
+		addr.state = supplier[5]["state"]
+		addr.country = supplier[5]["country"]
+		addr.pincode = supplier[5]["pincode"]
+		addr.append("links", {"link_doctype": "Supplier", "link_name": supplier[0]})
+		addr.save()
 
 
 def create_items(settings):
