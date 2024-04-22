@@ -151,6 +151,16 @@ def create_bank_and_bank_account(settings):
 	doc.save()
 	doc.submit()
 
+# def create_eur_bank_and_bank_account(settings):
+# 	if not frappe.db.exists("Mode of Payment", "SEPA"):
+# 		mop.mode_of_payment = ""
+# 		mop.enabled = 1
+# 		mop.type = "Electronic"
+# 		mop.append(
+# 			"accounts", {"company": settings.company, "default_account": settings.company_account}
+# 		)
+# 		mop.save()
+
 
 def setup_accounts():
 	frappe.rename_doc(

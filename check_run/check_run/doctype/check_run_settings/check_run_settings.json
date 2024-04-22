@@ -40,7 +40,10 @@
   "custom_post_processing_hook",
   "sepa_payment_settings_section",
   "initiating_party_org_id",
-  "debtor_org_id"
+  "debtor_org_id",
+  "column_break_lzfmw",
+  "debtors_address",
+  "role"
  ],
  "fields": [
   {
@@ -243,10 +246,27 @@
    "fieldname": "debtor_org_id",
    "fieldtype": "Data",
    "label": "Debtor Org Id"
+  },
+  {
+   "fieldname": "column_break_lzfmw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "debtors_address",
+   "fieldtype": "Link",
+   "label": "Debtor's Address",
+   "options": "Address"
+  },
+  {
+   "description": "Select a Role which has rights to download XML file multiple time",
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "label": "Role",
+   "options": "Role"
   }
  ],
  "links": [],
- "modified": "2024-04-15 07:57:00.135495",
+ "modified": "2024-04-19 02:25:15.078347",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",

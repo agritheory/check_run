@@ -72,7 +72,7 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 	content += make_line("              <Id>")
 	content += make_line("                  <OrgId>")
 	content += make_line("                      <Othr>")
-	debtor_org_id = orgid.get("initiating_party_org_id", None)
+	debtor_org_id = orgid.get("debtor_org_id", None)
 	if not debtor_org_id:
 		frappe.throw(frappe._("Please specify <b>Debtor Org Id</b> in check run settings"))
 	content += make_line(f"                          <Id>{debtor_org_id}</Id>")
