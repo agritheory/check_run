@@ -49,7 +49,9 @@ frappe.ui.form.on('Check Run', {
 		permit_first_user(frm)
 		get_defaults(frm)
 		set_queries(frm)
-		if (frm.doc.docstatus == 1) {
+		if (frm.doc.docstatus == 1 && frm.doc.sepa_file_generated == 0) {
+			gen_sepa_xml(frm)
+		} else if (frappe.user.has_role('Accounts Manager')) {
 			gen_sepa_xml(frm)
 		}
 		frappe.realtime.off('reload')
@@ -438,13 +440,11 @@ function gen_sepa_xml(frm) {
 			method: 'check_run.check_run.doctype.check_run.gen_sepa_xml.gen_sepa_xml_file',
 			args: {
 				doc: frm.doc,
-				// data: frm.doc.transactions,
-				// company: frm.doc.company,
-				// pay_to_account: frm.doc.pay_to_account,
-				// check_run: frm.doc.name,
 			},
 			callback: function (r) {
 				downloadXML('payments.xml', r.message)
+				frappe.db.set_value('Check Run', frm.doc.name, 'sepa_file_generated', 1)
+				frm.refresh()
 			},
 		})
 	})
@@ -454,11 +454,8 @@ function downloadXML(filename, content) {
 	var element = document.createElement('a')
 	element.setAttribute('href', 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(content))
 	element.setAttribute('download', filename)
-
 	element.style.display = 'none'
 	document.body.appendChild(element)
-
 	element.click()
-
 	document.body.removeChild(element)
 }

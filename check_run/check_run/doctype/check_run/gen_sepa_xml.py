@@ -142,8 +142,6 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 			"              <!-- Note: Creditor Agent should not be used at all for IBAN only on Creditor side -->"
 		)
 		content += make_line("              <Cdtr>")
-		if payment_record.party_type == "Employee":
-			name = frappe.get_value("Employee", payment_record.party, "employee_name")
 		if payment_record.party_type == "Supplier":
 			name = frappe.db.get_value("Supplier", payment_record.party, "supplier_name")
 			if "&" in name:
