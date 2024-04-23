@@ -56,9 +56,13 @@
 					<tr
 						v-if="partyIsInFilter(item.party)"
 						:key="i"
+						:id="i"
 						class="checkrun-row-container"
-						:class="{ selectedRow: selectedRow == i }"
 						tabindex="1"
+						@keydown.prevent.down="moveNext"
+						@keydown.prevent.up="movePrev"
+						@keydown.prevent.escape="focusParent"
+						@keydown.prevent.space="updateSelectedRow"
 						@click="selectedRow = i">
 						<td style="text-align: left">{{ item.party_name || item.party }}</td>
 						<td style="text-align: left; white-space: nowrap">
@@ -167,6 +171,7 @@ let datetime = computed(() => {
 
 onMounted(() => {
 	window.check_run.get_entries(window.cur_frm)
+	selectedRow = 0;
 })
 
 function showPreview(attachment) {
@@ -235,6 +240,30 @@ function paymentEntryUrl(transaction) {
 		return ''
 	}
 	return encodeURI(`${frappe.urllib.get_base_url()}/app/payment-entry/${transaction.payment_entry}`)
+}
+
+function moveNext(event) {
+	event.target.nextElementSibling.focus();
+	selectedRow = event.target.nextElementSibling.id;
+}
+
+function movePrev(event) {
+	event.target.previousElementSibling.focus();
+}
+
+function updateSelectedRow(event) {
+	selectedRow = event.target.id;
+	if (event.target.classList.contains("selectedRow")) {
+		event.target.classList.remove("selectedRow");
+	}
+	else {
+		event.target.className  = event.target.className  + " selectedRow";
+		event.target.cells[3].firstChild.focus();
+	}
+}
+
+function focusParent(event) {
+	event.target.parentElement.parentElement.focus();
 }
 </script>
 <style scoped>
