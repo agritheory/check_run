@@ -187,7 +187,8 @@ def create_eur_bank_and_bank_account(settings):
 
 	# New chart of account
 	account = frappe.new_doc("Account")
-	account.account_name = "2130 - EUR Account Payable"
+	account.account_name = "EUR Account Payable"
+	account.account_number = "2130"
 	account.account_type = "Payable"
 	account.parent_account = "2100 - Accounts Payable - CFC"
 	account.account_currency = "EUR"
@@ -534,6 +535,26 @@ def create_invoices(settings):
 	pi.validate_release_date = types.MethodType(
 		validate_release_date, pi
 	)  # allow date to be backdated for testing
+	pi.save()
+	pi.submit()
+
+	# EUR Purchase Invoice
+	pi = frappe.new_doc("Purchase Invoice")
+	pi.company = settings.company
+	pi.set_posting_time = 1
+	pi.posting_date = settings.day
+	pi.supplier = sepa_supplier[0][0]
+	pi.currency = "EUR"
+	pi.credit_to = "2130 - EUR Account Payable - CFC"
+	pi.append(
+		"items",
+		{
+			"item_code": sepa_supplier[0][1],
+			"rate": 25000.00,
+			"qty": 1,
+		},
+	)
+	pi.supplier_address = "NRW Global Business - Dusseldorf-Billing"
 	pi.save()
 	pi.submit()
 
