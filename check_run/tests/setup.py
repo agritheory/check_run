@@ -370,7 +370,7 @@ def create_suppliers(settings):
 
 
 def create_items(settings):
-	for supplier in suppliers + tax_authority:
+	for supplier in suppliers + tax_authority + sepa_supplier:
 		item = frappe.new_doc("Item")
 		item.item_code = item.item_name = supplier[1]
 		item.item_group = "Services"
