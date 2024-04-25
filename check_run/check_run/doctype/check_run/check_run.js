@@ -49,9 +49,9 @@ frappe.ui.form.on('Check Run', {
 		permit_first_user(frm)
 		get_defaults(frm)
 		set_queries(frm)
-		if (frm.doc.docstatus == 1 && frm.doc.sepa_file_generated == 0) {
-			gen_sepa_xml(frm)
-		} else if (frappe.user.has_role('Accounts Manager') && frm.doc.docstatus == 1) {
+		if (frm.doc.docstatus == 1 && frm.doc.sepa_file_generated == 0 && frm.pay_to_account_currency == 'EUR') {
+			downloadsepa(frm)
+		} else if (frm.doc.sepa_file_generated == 1 && frm.doc.docstatus == 1 && frm.pay_to_account_currency == 'EUR') {
 			gen_sepa_xml(frm)
 		}
 		frappe.realtime.off('reload')
@@ -435,17 +435,20 @@ function check_settings(frm) {
 }
 
 function gen_sepa_xml(frm) {
+	frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_authorized_role', { doc: frm.doc }).then(r => {
+		if (frappe.user.has_role(r)) {
+			downloadsepa(frm)
+		}
+	})
+}
+
+function downloadsepa(frm) {
 	frm.add_custom_button('Download SEPA', () => {
-		frappe.call({
-			method: 'check_run.check_run.doctype.check_run.gen_sepa_xml.gen_sepa_xml_file',
-			args: {
-				doc: frm.doc,
-			},
-			callback: function (r) {
-				downloadXML('payments.xml', r.message)
-				frappe.db.set_value('Check Run', frm.doc.name, 'sepa_file_generated', 1)
-				frm.refresh()
-			},
+		frappe.xcall('check_run.check_run.doctype.check_run.gen_sepa_xml.gen_sepa_xml_file', { doc: frm.doc }).then(r => {
+			console.log(r)
+			downloadXML('payments.xml', r)
+			frappe.db.set_value('Check Run', frm.doc.name, 'sepa_file_generated', 1)
+			frm.refresh()
 		})
 	})
 }
