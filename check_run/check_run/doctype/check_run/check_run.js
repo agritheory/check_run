@@ -51,7 +51,7 @@ frappe.ui.form.on('Check Run', {
 		set_queries(frm)
 		if (frm.doc.docstatus == 1 && frm.doc.sepa_file_generated == 0) {
 			gen_sepa_xml(frm)
-		} else if (frappe.user.has_role('Accounts Manager')) {
+		} else if (frappe.user.has_role('Accounts Manager') && frm.doc.docstatus == 1) {
 			gen_sepa_xml(frm)
 		}
 		frappe.realtime.off('reload')
