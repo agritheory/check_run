@@ -162,12 +162,13 @@
    "allow_on_submit": 1,
    "default": "0",
    "fieldname": "ach_file_generated",
-   "fieldtype": "Check"
+   "fieldtype": "Check",
+   "hidden": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-25 07:32:39.543899",
+ "modified": "2024-04-25 08:36:47.244533",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run",
