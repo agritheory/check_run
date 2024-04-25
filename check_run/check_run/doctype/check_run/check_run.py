@@ -912,3 +912,9 @@ def ach_only(docname: str) -> dict:
 def process_check_run(docname: str) -> None:
 	doc = frappe.get_doc("Check Run", docname)
 	doc.process_check_run()
+
+@frappe.whitelist()
+def get_authorized_role_for_ach(doc):
+	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+	role = frappe.db.get_value('Check Run Settings', {"pay_to_account":doc.pay_to_account, 'bank_account':doc.bank_account}, 'ach_authorized_role')
+	return role
