@@ -344,7 +344,6 @@ function ach_only(frm) {
 						})
 				}
 				if (frm.doc.docstatus == 1 && frm.doc.ach_file_generated == 0) {
-					console.log('enter2')
 					add_download_nacha_button(frm)
 				}
 			}
