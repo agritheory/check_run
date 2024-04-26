@@ -1,5 +1,5 @@
 import frappe
-from frappe.utils import getdate, get_link_to_form
+from frappe.utils import getdate, get_link_to_form, get_url
 import time
 
 
@@ -38,7 +38,13 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 
 	initiating_party_org_id = orgid.get("initiating_party_org_id", None)
 	if not initiating_party_org_id:
-		frappe.throw(frappe._("Please specify <b>Initiating Party OrgID</b> in check run settings"))
+		frappe.throw(
+			frappe._(
+				"Please specify <b>'Initiating Party OrgID'</b> in {}".format(
+					f"<a href='{get_check_run_settings_link(doc)}'>Check Run Settings</a>"
+				)
+			)
+		)
 	content += make_line("                  <OrgId>")
 	content += make_line("                      <Othr>")
 	content += make_line(f"                          <Id>{initiating_party_org_id}</Id>")
@@ -87,7 +93,13 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 	content += make_line("                      <Othr>")
 	debtor_org_id = orgid.get("debtor_org_id", None)
 	if not debtor_org_id:
-		frappe.throw(frappe._("Please specify <b>Debtor Org Id</b> in check run settings"))
+		frappe.throw(
+			frappe._(
+				"Please specify <b>'Debtor Org Id'</b> in {}".format(
+					f"<a href='{get_check_run_settings_link(doc)}'>Check Run Settings</a>"
+				)
+			)
+		)
 	content += make_line(f"                          <Id>{debtor_org_id}</Id>")
 	content += make_line("                          <SchmeNm>")
 	content += make_line("                              <Cd>BANK</Cd>")
@@ -251,3 +263,13 @@ def debtors_address(company, bank_account, pay_to_account):
 			)
 		address_doc = frappe.get_doc("Address", address)
 		return address_doc
+
+
+def get_check_run_settings_link(doc):
+	url = get_url()
+	check_run_settings_path = "/app/check-run-settings/"
+	check_run_settings = frappe.db.exists(
+		"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
+	)
+	check_run_settings_url = url + check_run_settings_path + check_run_settings
+	return str(check_run_settings_url)
