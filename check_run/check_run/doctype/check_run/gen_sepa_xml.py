@@ -15,7 +15,6 @@ def gen_sepa_xml_file(doc):
 def genrate_file_for_sepa(payments, doc, posting_date):
 	# Message Root
 	content = make_line("<?xml version='1.0' encoding='UTF-8'?>")
-	content += make_line("<!-- SEB ISO 20022 V03 MIG, 6.1 SEPA CT IBAN ONLY -->")
 	content += make_line(
 		"<Document xmlns='urn:iso:std:iso:20022:tech:xsd:pain.001.001.03' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'>"
 	)
@@ -110,11 +109,13 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 		"          <!-- Note: For IBAN only on Debtor side use Othr/Id: NOTPROVIDED - see below -->"
 	)
 	content += make_line("              <FinInstnId>")
-	content += make_line("                  <Othr>")
 	bank_bic = frappe.db.get_value("Bank Account", doc.bank_account, "branch_code")  # optional
-	content += make_line("                  	<BIC>{}</BIC>".format(bank_bic if bank_bic else ""))
-	content += make_line("                      <Id>NOTPROVIDED</Id>")
-	content += make_line("                  </Othr>")
+	if bank_bic:
+		content += make_line(f"                  	<BIC>{bank_bic}</BIC>")
+	else:
+		content += make_line("                  <Othr>")
+		content += make_line("                      <Id>NOTPROVIDED</Id>")
+		content += make_line("                  </Othr>")
 	content += make_line("              </FinInstnId>")
 	content += make_line("          </DbtrAgt>")
 	content += make_line("          <ChrgBr>SLEV</ChrgBr>")

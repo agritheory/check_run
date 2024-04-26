@@ -920,6 +920,6 @@ def get_authorized_role(doc):
 	role = frappe.db.get_value(
 		"Check Run Settings",
 		{"pay_to_account": doc.pay_to_account, "bank_account": doc.bank_account},
-		"role",
+		"sepa_authorized_role",
 	)
 	return role
