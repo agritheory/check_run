@@ -20,9 +20,9 @@ from frappe.utils.data import flt, get_datetime, getdate, now, nowdate
 from frappe.utils.file_manager import remove_all, save_file
 from frappe.utils.password import get_decrypted_password
 from frappe.utils.print_format import read_multi_pdf
-from PyPDF2 import PdfFileWriter
 
-# from pypdf import PdfWriter
+# from PyPDF2 import PdfFileWriter
+from pypdf import PdfWriter
 from typing_extensions import Self
 
 from check_run.check_run.doctype.check_run_settings.check_run_settings import (
@@ -438,8 +438,8 @@ class CheckRun(Document):
 		initial_check_number = int(self.initial_check_number)
 		if reprint_check_number and reprint_check_number != "undefined":
 			self.initial_check_number = int(reprint_check_number)
-		output = PdfFileWriter()
-		# output = PdfWriter()
+
+		output = PdfWriter()
 		transactions = json.loads(self.transactions)
 		check_increment = 0
 		_transactions = []
