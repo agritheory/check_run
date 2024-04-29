@@ -783,6 +783,8 @@ def download_nacha(docname: str) -> None:
 	comment.flags.ignore_permissions = True
 	comment.save()
 	frappe.db.commit()
+	if doc.ach_file_generated:
+		frappe.db.set_value("Check Run", doc.name, "ach_file_generated", 1)
 
 
 def build_nacha_file_from_payment_entries(

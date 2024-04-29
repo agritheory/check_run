@@ -335,13 +335,26 @@ function ach_only(frm) {
 				}
 			}
 			if (!r.print_checks_only) {
-				if (frm.doc.docstatus == 1) {
-					frm.add_custom_button(__('Download NACHA File'), () => {
-						download_nacha(frm)
-					})
+				if (frm.doc.docstatus == 1 && frm.doc.ach_file_generated == 1) {
+					frappe
+						.xcall('check_run.check_run.doctype.check_run.check_run.get_authorized_role_for_ach', { doc: frm.doc })
+						.then(r => {
+							if (frappe.user.has_role(r)) {
+								add_download_nacha_button(frm)
+							}
+						})
+				}
+				if (frm.doc.docstatus == 1 && frm.doc.ach_file_generated == 0) {
+					add_download_nacha_button(frm)
 				}
 			}
 		})
+}
+
+function add_download_nacha_button(frm) {
+	frm.add_custom_button(__('Download NACHA File'), () => {
+		download_nacha(frm)
+	})
 }
 
 function validate_mode_of_payment_mandatory(frm) {
@@ -400,6 +413,9 @@ function download_nacha(frm) {
 	window.setTimeout(() => {
 		frm.reload_doc()
 	}, 1000)
+	if (!frm.doc.ach_file_generated) {
+		frappe.db.set_value('Check Run', frm.doc.name, 'ach_file_generated', 1)
+	}
 }
 
 function settings_button(frm) {
