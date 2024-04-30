@@ -429,3 +429,33 @@ function check_settings(frm) {
 		})
 	}
 }
+
+function gen_sepa_xml(frm) {
+	frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_authorized_role', { doc: frm.doc }).then(r => {
+		if (frappe.user.has_role(r)) {
+			downloadsepa(frm)
+		}
+	})
+}
+
+function downloadsepa(frm) {
+	frm.add_custom_button('Download SEPA', () => {
+		frappe.xcall('check_run.check_run.doctype.check_run.gen_sepa_xml.gen_sepa_xml_file', { doc: frm.doc }).then(r => {
+			console.log(r)
+			downloadXML('payments.xml', r)
+			if (frm.doc.sepa_file_generated == 0) {
+				frappe.db.set_value('Check Run', frm.doc.name, 'sepa_file_generated', 1)
+			}
+		})
+	})
+}
+
+function downloadXML(filename, content) {
+	var element = document.createElement('a')
+	element.setAttribute('href', 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(content))
+	element.setAttribute('download', filename)
+	element.style.display = 'none'
+	document.body.appendChild(element)
+	element.click()
+	document.body.removeChild(element)
+}
