@@ -24,6 +24,7 @@
   "split_by_address",
   "automatically_release_on_hold_invoices",
   "file_preview_threshold",
+  "allow_stand_alone_debit_notes",
   "default_modes_of_payment_section_section",
   "purchase_invoice",
   "journal_entry",
@@ -225,10 +226,17 @@
    "fieldname": "validate_unique_check_number",
    "fieldtype": "Check",
    "label": "Validate Unique Check Number"
+  },
+  {
+   "default": "No",
+   "fieldname": "allow_stand_alone_debit_notes",
+   "fieldtype": "Select",
+   "label": "Allow stand-alone debit notes?",
+   "options": "Yes\nNo"
   }
  ],
  "links": [],
- "modified": "2024-04-16 02:28:48.282856",
+ "modified": "2024-04-30 04:53:43.492872",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",
