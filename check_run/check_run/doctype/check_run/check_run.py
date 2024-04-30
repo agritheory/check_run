@@ -8,7 +8,6 @@ from io import StringIO
 from typing_extensions import Self
 
 from PyPDF2 import PdfFileWriter
-from pypika import Case
 import frappe
 from frappe.model.document import Document
 from frappe.utils.data import flt
@@ -575,7 +574,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 		(Coalesce(payment_schedule.outstanding, purchase_invoices.outstanding_amount) > 0)
 		if settings.allow_stand_alone_debit_notes == "No"
 		else (Coalesce(payment_schedule.outstanding, purchase_invoices.outstanding_amount) != 0)
-		)
+	)
 	pi_qb = (
 		frappe.qb.from_(purchase_invoices)
 		.left_join(payment_schedule)
