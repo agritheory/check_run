@@ -439,6 +439,7 @@ function gen_sepa_xml(frm) {
 	frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_authorized_role', { doc: frm.doc }).then(r => {
 		if (frappe.user.has_role(r)) {
 			downloadsepa(frm)
+			frm.refresh()
 		}
 	})
 }
