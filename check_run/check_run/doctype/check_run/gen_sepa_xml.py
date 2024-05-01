@@ -10,6 +10,8 @@ def gen_sepa_xml_file(doc):
 	payments = frappe.parse_json(doc.transactions)
 	posting_date = getdate()
 	content = genrate_file_for_sepa(payments, doc, posting_date)
+	if doc.sepa_file_generated == 0:
+		frappe.db.set_value("Check Run", doc.name, "sepa_file_generated", 1)
 	return content
 
 

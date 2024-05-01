@@ -446,11 +446,7 @@ function gen_sepa_xml(frm) {
 function downloadsepa(frm) {
 	frm.add_custom_button('Download SEPA', () => {
 		frappe.xcall('check_run.check_run.doctype.check_run.gen_sepa_xml.gen_sepa_xml_file', { doc: frm.doc }).then(r => {
-			console.log(r)
 			downloadXML('payments.xml', r)
-			if (frm.doc.sepa_file_generated == 0) {
-				frappe.db.set_value('Check Run', frm.doc.name, 'sepa_file_generated', 1)
-			}
 		})
 	})
 }
