@@ -159,6 +159,7 @@
    "label": "Posting Date"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "sepa_file_generated",
    "fieldtype": "Check",
@@ -167,7 +168,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2024-04-30 09:33:32.802158",
+ "modified": "2024-05-01 01:34:24.844404",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run",
