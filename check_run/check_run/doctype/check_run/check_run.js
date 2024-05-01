@@ -49,6 +49,11 @@ frappe.ui.form.on('Check Run', {
 		permit_first_user(frm)
 		get_defaults(frm)
 		set_queries(frm)
+		if (frm.doc.docstatus == 1 && frm.doc.sepa_file_generated == 0 && frm.pay_to_account_currency == 'EUR') {
+			downloadsepa(frm)
+		} else if (frm.doc.sepa_file_generated == 1 && frm.doc.docstatus == 1 && frm.pay_to_account_currency == 'EUR') {
+			gen_sepa_xml(frm)
+		}
 		frappe.realtime.off('reload')
 		frappe.realtime.on('reload', message => {
 			frm.reload_doc()
