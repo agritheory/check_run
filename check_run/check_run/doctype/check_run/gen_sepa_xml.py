@@ -77,18 +77,19 @@ def genrate_file_for_sepa(payments, doc, posting_date):
 	content += make_line(f"              <Nm>{doc.company}</Nm>")
 	# Address
 	addr = debtors_address(doc.company, doc.bank_account, doc.pay_to_account)
-	content += make_line("              <PstlAdr>")
-	content += make_line(
-		"              	<PstCd>{}</PstCd>".format(addr.pincode if addr.pincode else "")
-	)
-	content += make_line(
-		"              	<TwnNm>{}</TwnNm>".format(addr.address_line1 if addr.address_line1 else "")
-	)
-	content += make_line("              	<Ctry>{}</Ctry>".format(addr.city if addr.city else ""))
-	content += make_line(
-		"              	<AdrLine>{}</AdrLine>".format(addr.address_line2 if addr.address_line2 else "")
-	)
-	content += make_line("              </PstlAdr>")
+	if addr:
+		content += make_line("              <PstlAdr>")
+		content += make_line(
+			"              	<PstCd>{}</PstCd>".format(addr.pincode if addr.pincode else "")
+		)
+		content += make_line(
+			"              	<TwnNm>{}</TwnNm>".format(addr.address_line1 if addr.address_line1 else "")
+		)
+		content += make_line("              	<Ctry>{}</Ctry>".format(addr.city if addr.city else ""))
+		content += make_line(
+			"              	<AdrLine>{}</AdrLine>".format(addr.address_line2 if addr.address_line2 else "")
+		)
+		content += make_line("              </PstlAdr>")
 	content += make_line("               <Id>")
 	content += make_line("                  <OrgId>")
 	content += make_line("                      <Othr>")
@@ -255,13 +256,7 @@ def debtors_address(company, bank_account, pay_to_account):
 	):
 		address = frappe.db.get_value("Check Run Settings", crs_name, "debtors_address")
 		if not address:
-			frappe.throw(
-				frappe._(
-					"Please enter a Debtor's Address in check run settings {}".format(
-						get_link_to_form("Check Run Settings", crs_name)
-					)
-				)
-			)
+			return None
 		address_doc = frappe.get_doc("Address", address)
 		return address_doc
 
