@@ -58,10 +58,9 @@
 						:key="i"
 						:id="i"
 						class="checkrun-row-container"
-						tabindex="1"
+						tabindex="-1"
 						@keydown.prevent.down="moveNext"
 						@keydown.prevent.up="movePrev"
-						@keydown.prevent.escape="focusParent"
 						@keydown.prevent.space="updateSelectedRow"
 						@click="selectedRow = i">
 						<td style="text-align: left">{{ item.party_name || item.party }}</td>
@@ -171,7 +170,6 @@ let datetime = computed(() => {
 
 onMounted(() => {
 	window.check_run.get_entries(window.cur_frm)
-	selectedRow = 0;
 })
 
 function showPreview(attachment) {
@@ -260,10 +258,6 @@ function updateSelectedRow(event) {
 		event.target.className  = event.target.className  + " selectedRow";
 		event.target.cells[3].firstChild.focus();
 	}
-}
-
-function focusParent(event) {
-	event.target.parentElement.parentElement.focus();
 }
 </script>
 <style scoped>
