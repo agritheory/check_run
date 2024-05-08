@@ -304,8 +304,7 @@ class CheckRun(Document):
 			if frappe.db.get_value("Mode of Payment", _group[0].mode_of_payment, "type") == "Bank":
 				groups = list(zip_longest(*[iter(_group)] * split))
 			else:
-				groups = [_group]
-
+				groups = [_group]  # type: ignore
 			if not groups:
 				continue
 
