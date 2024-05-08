@@ -99,7 +99,7 @@
 			"mandatory_depends_on": null,
 			"modified": "2022-06-30 11:20:02.666689",
 			"modified_by": "Administrator",
-			"module":"Check Run",
+			"module": "Check Run",
 			"name": "Supplier-bank",
 			"no_copy": 0,
 			"non_negative": 0,
