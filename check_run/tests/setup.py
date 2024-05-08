@@ -2,19 +2,19 @@ import datetime
 import types
 
 import frappe
-from frappe.utils.data import add_days, flt
-from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
-from erpnext.setup.utils import enable_all_roles_and_domains, set_defaults_for_tests
 from erpnext.accounts.doctype.account.account import update_account_number
 from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import make_debit_note
-
+from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_sales_return
+from erpnext.setup.utils import enable_all_roles_and_domains, set_defaults_for_tests
+from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
+from frappe.utils.data import add_days, flt
 
 from check_run.tests.fixtures import (
+	customers,
 	employees,
+	sales_tax_templates,
 	suppliers,
 	tax_authority,
-	customers,
-	sales_tax_templates,
 )
 
 
@@ -865,13 +865,16 @@ def create_sales_invoices(settings):
 	se.save()
 	se.submit()
 
-	for customer in customers:
+	for i, customer in enumerate(customers):
 		si = frappe.new_doc("Sales Invoice")
 		si.customer = customer[0]
 		si.set_posting_time = 1
 		si.company = settings.company
 		si.posting_date = settings.day
-		si.append("items", {"item_code": "Cloudberry", "qty": 100, "rate": 1.30})
+		if i == len(customers) - 1:
+			si.append("items", {"item_code": "Cloudberry", "qty": 100, "rate": 2})
+		else:
+			si.append("items", {"item_code": "Cloudberry", "qty": 100, "rate": 1.3})
 		si.taxes_and_charges = "MA Sales Tax - CFC"
 		# this API is typically only called from the browser
 		taxes = frappe.call(
@@ -885,3 +888,8 @@ def create_sales_invoices(settings):
 			si.append("taxes", tax)
 		si.save()
 		si.submit()
+	doc_cn = make_sales_return(si.name)
+	doc_cn.update_outstanding_for_self = 0
+	doc_cn.update_billed_amount_in_delivery_note = 0
+	doc_cn.save()
+	doc_cn.submit()

@@ -438,7 +438,7 @@ class CheckRun(Document):
 		initial_check_number = int(self.initial_check_number)
 		if reprint_check_number and reprint_check_number != "undefined":
 			self.initial_check_number = int(reprint_check_number)
-		# output = PdfFileWriter()
+
 		output = PdfWriter()
 		transactions = json.loads(self.transactions)
 		check_increment = 0
@@ -709,7 +709,6 @@ def get_entries(doc: CheckRun | str) -> dict:
 		.where(sales_invoice.docstatus == 1)
 		.where(sales_taxes.account_head == pay_to_account)
 		.where(sales_invoice.posting_date <= end_date)
-		.where(sales_taxes.outstanding_amount > 0.0)
 		# .where((sales_taxes.name).notin(sub_q)) # TODO: reference not in payment entry references - not strictly required
 	)
 
