@@ -31,6 +31,9 @@ class CheckRunSalesInvoice(SalesInvoice):
 			amount, base_amount = self.get_tax_amounts(tax, enable_discount_accounting)
 			if flt(tax.base_tax_amount_after_discount_amount):
 				account_currency = get_account_currency(tax.account_head)
+				is_payable_account = bool(
+					frappe.get_value("Account", tax.account_head, "account_type") == "Payable"
+				)
 				gl_entries.append(
 					self.get_gl_dict(
 						{
@@ -43,8 +46,8 @@ class CheckRunSalesInvoice(SalesInvoice):
 								else flt(amount, tax.precision("tax_amount_after_discount_amount"))
 							),
 							"cost_center": tax.cost_center,
-							"party_type": tax.party_type,
-							"party": tax.party,
+							"party_type": tax.party_type if is_payable_account else None,
+							"party": tax.party if is_payable_account else None,
 						},
 						account_currency,
 						item=tax,
