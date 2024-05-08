@@ -88,13 +88,29 @@ def test_process_check_run_on_hold_invoice_auto_release(cr):
 		pytest.fail("Error raised on Check Run process when should have passed.")
 
 
-def test_return_included_in_check_run_error(cr):
+def test_return_excluded_in_check_run(cr):
 	# Test for ValidationError when Check Run only includes a return transaction
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
 	for row in cr.transactions:
 		if row.get("party") == "Cooperative Ag Finance" and row.get("amount") < 0:
+			raise ValueError("Default Settings should exclude this invoice from appearing")
+
+
+def test_return_included_in_check_run_error(cr):
+	# Test for ValidationError when Check Run includes only a return transaction
+	_transactions = get_entries(cr).get("transactions")
+	settings = get_check_run_settings(cr)
+	assert settings.allow_stand_alone_debit_notes == "No"
+	settings.allow_stand_alone_debit_notes = "Yes"
+	settings.save()
+	cr.posting_date = cr.end_date = datetime.date(year, 12, 30)
+	cr.transactions = ""
+	transactions = get_entries(cr).get("transactions")
+	assert transactions != _transactions
+	for row in transactions:
+		if row.get("party") == "Cooperative Ag Finance" and row.get("amount") < 0:
 			row["pay"] = True
-	cr.transactions = frappe.as_json(cr.transactions)
+	cr.transactions = frappe.as_json(transactions)
 	cr.flags.in_test = True
 	cr.save()
 
@@ -103,9 +119,9 @@ def test_return_included_in_check_run_error(cr):
 
 
 def test_return_offset_other_amounts(cr):
+	# Test for offset when return applied to other invoices and net amount to pay is > 0
 	party = "Cooperative Ag Finance"
 
-	# Test for offset when return applied to other invoices and net amount to pay is > 0
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
 	total = 0.0
 	for row in cr.transactions:
@@ -118,4 +134,4 @@ def test_return_offset_other_amounts(cr):
 	cr.process_check_run()
 
 	pe = frappe.get_doc("Payment Entry", {"party": party, "check_run": cr.name})
-	assert total == pe.paid_amount
+	assert total == pe.paid_amount == 9000.00
