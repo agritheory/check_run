@@ -150,9 +150,10 @@ doc_events = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "check_run.event.get_events"
-# }
+override_whitelisted_methods = {
+	"frappe.www.printview.get_html_and_style": "check_run.print.get_html_and_style",
+	"frappe.printing.page.print.print.get_print_settings_to_show": "check_run.print.get_print_settings_to_show",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
