@@ -593,7 +593,11 @@ def get_entries(doc: CheckRun | str) -> dict:
 		.as_("supplier_default_mode_of_payment")
 		.where(purchase_invoices.supplier == suppliers.name)
 	)
-
+	stand_alone_debit_note_filter = (
+		(Coalesce(payment_schedule.outstanding, purchase_invoices.outstanding_amount) > 0)
+		if settings.allow_stand_alone_debit_notes == "No"
+		else (Coalesce(payment_schedule.outstanding, purchase_invoices.outstanding_amount) != 0)
+	)
 	pi_qb = (
 		frappe.qb.from_(purchase_invoices)
 		.left_join(payment_schedule)
@@ -616,7 +620,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			(payment_schedule.payment_term).as_("payment_term"),
 		)
 		.where(Coalesce(payment_schedule.due_date, purchase_invoices.due_date) <= end_date)
-		.where(Coalesce(payment_schedule.outstanding, purchase_invoices.outstanding_amount) != 0)
+		.where(stand_alone_debit_note_filter)
 		.where(purchase_invoices.company == company)
 		.where(purchase_invoices.docstatus == 1)
 		.where(purchase_invoices.credit_to == pay_to_account)
@@ -894,7 +898,8 @@ def build_nacha_file_from_payment_entries(
 	)
 	return nacha_file
 
-#Comment
+
+# Comment
 @frappe.whitelist()
 def get_check_run_settings(doc: CheckRun | str) -> CheckRunSettings:
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
