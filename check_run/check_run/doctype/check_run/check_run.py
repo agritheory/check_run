@@ -783,6 +783,8 @@ def download_nacha(docname: str) -> None:
 	comment.flags.ignore_permissions = True
 	comment.save()
 	frappe.db.commit()
+	if doc.ach_file_generated:
+		frappe.db.set_value("Check Run", doc.name, "ach_file_generated", 1)
 
 
 def build_nacha_file_from_payment_entries(
@@ -908,6 +910,17 @@ def ach_only(docname: str) -> dict:
 def process_check_run(docname: str) -> None:
 	doc = frappe.get_doc("Check Run", docname)
 	doc.process_check_run()
+
+
+@frappe.whitelist()
+def get_authorized_role_for_ach(doc):
+	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+	role = frappe.db.get_value(
+		"Check Run Settings",
+		{"pay_to_account": doc.pay_to_account, "bank_account": doc.bank_account},
+		"role_allowed_to_download_ach_file_multiple_times",
+	)
+	return role
 
 
 @frappe.whitelist()
