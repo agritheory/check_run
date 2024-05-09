@@ -922,7 +922,6 @@ def get_authorized_role_for_ach(doc):
 	)
 	return role
 
-
 @frappe.whitelist()
 def get_authorized_role(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
@@ -932,3 +931,4 @@ def get_authorized_role(doc):
 		"sepa_authorized_role",
 	)
 	return role
+
