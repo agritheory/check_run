@@ -455,7 +455,6 @@ function gen_sepa_xml(frm) {
 	frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_authorized_role', { doc: frm.doc }).then(r => {
 		if (frappe.user.has_role(r)) {
 			downloadsepa(frm)
-			frm.refresh()
 		}
 	})
 }
@@ -464,6 +463,7 @@ function downloadsepa(frm) {
 	frm.add_custom_button('Download SEPA', () => {
 		frappe.xcall('check_run.check_run.doctype.check_run.gen_sepa_xml.gen_sepa_xml_file', { doc: frm.doc }).then(r => {
 			downloadXML('payments.xml', r)
+			cur_frm.refresh()
 		})
 	})
 }
