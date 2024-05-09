@@ -229,12 +229,14 @@
 			"label": "Validate Unique Check Number"
 		},
 		{
+
 			"fieldname": "secondary_print_format",
 			"fieldtype": "Link",
 			"label": "Secondary Print Format",
 			"options": "Print Format"
 		},
 		{
+
 			"default": "No",
 			"fieldname": "allow_stand_alone_debit_notes",
 			"fieldtype": "Select",

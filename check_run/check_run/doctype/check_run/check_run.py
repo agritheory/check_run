@@ -8,7 +8,6 @@ from io import StringIO
 from typing_extensions import Self
 
 from PyPDF2 import PdfFileWriter
-
 import frappe
 from frappe.model.document import Document
 from frappe.utils.data import flt
@@ -309,8 +308,7 @@ class CheckRun(Document):
 			):
 				groups = list(zip_longest(*[iter(_group)] * split))
 			else:
-				groups = [_group]
-
+				groups = [_group]  # type: ignore
 			if not groups:
 				continue
 
