@@ -25,9 +25,7 @@
   "check_run_table",
   "transactions",
   "print_count",
-  "status",
-  "payment_entry_format",
-  "secondary_print_format"
+  "status"
  ],
  "fields": [
   {
@@ -158,23 +156,11 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Posting Date"
-  },
-  {
-   "fieldname": "payment_entry_format",
-   "fieldtype": "Link",
-   "label": "Payment Entry Format",
-   "options": "Print Format"
-  },
-  {
-   "fieldname": "secondary_print_format",
-   "fieldtype": "Link",
-   "label": "Secondary Print Format",
-   "options": "Print Format"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2024-05-08 20:06:22.394409",
+ "modified": "2024-05-08 21:00:27.388330",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run",
