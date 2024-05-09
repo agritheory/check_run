@@ -38,6 +38,7 @@
   "immediate_origin",
   "company_discretionary_data",
   "custom_post_processing_hook",
+  "role_allowed_to_download_ach_file_multiple_times",
   "sepa_payment_settings_section",
   "initiating_party_org_id",
   "debtor_org_id",
@@ -231,6 +232,13 @@
    "fieldname": "validate_unique_check_number",
    "fieldtype": "Check",
    "label": "Validate Unique Check Number"
+  },
+  {
+   "description": "Users with this role are allowed to download ACH file multiple times. Users without this role are allowed to download it only once.",
+   "fieldname": "role_allowed_to_download_ach_file_multiple_times",
+   "fieldtype": "Link",
+   "label": "Role Allowed to Download ACH File Multiple Times",
+   "options": "Role"
   },
   {
    "fieldname": "sepa_payment_settings_section",
