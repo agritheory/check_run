@@ -50,21 +50,23 @@ check_run.mount = frm => {
 	frm.$check_run.provide('$check_run', check_run)
 }
 
-check_run.total = frm => {
+check_run.total = async frm => {
 	let _frm = unref(frm)
+	console.log(_frm)
 	let r = Object.values(check_run.transactions).reduce((partialSum, t) => {
 		return t.pay ? partialSum + t.amount : partialSum
 	}, 0)
+
 	var company_currency = frappe.get_doc(':Company', _frm.doc.company).default_currency
-	frappe.call({
-		method: 'erpnext.setup.utils.get_exchange_rate',
-		args: {
-			from_currency: _frm.pay_to_account_currency,
-			to_currency: company_currency,
-		},
-		callback: frm => {},
+
+	var amount_check_run = await frappe.xcall('erpnext.setup.utils.get_exchange_rate', {
+		from_currency: _frm.pay_to_account_currency,
+		to_currency: company_currency,
 	})
-	console.log(amount_check_run)
-	_frm.set_value('amount_check_run', r)
+	if (r > 0) {
+		_frm.set_value('amount_check_run', r * amount_check_run)
+	} else {
+		_frm.set_value('amount_check_run', r)
+	}
 	return r
 }
