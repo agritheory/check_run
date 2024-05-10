@@ -55,6 +55,16 @@ check_run.total = frm => {
 	let r = Object.values(check_run.transactions).reduce((partialSum, t) => {
 		return t.pay ? partialSum + t.amount : partialSum
 	}, 0)
+	var company_currency = frappe.get_doc(':Company', _frm.doc.company).default_currency
+	frappe.call({
+		method: 'erpnext.setup.utils.get_exchange_rate',
+		args: {
+			from_currency: _frm.pay_to_account_currency,
+			to_currency: company_currency,
+		},
+		callback: frm => {},
+	})
+	console.log(amount_check_run)
 	_frm.set_value('amount_check_run', r)
 	return r
 }
