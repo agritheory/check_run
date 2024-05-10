@@ -52,7 +52,6 @@ check_run.mount = frm => {
 
 check_run.total = async frm => {
 	let _frm = unref(frm)
-	console.log(_frm)
 	let r = Object.values(check_run.transactions).reduce((partialSum, t) => {
 		return t.pay ? partialSum + t.amount : partialSum
 	}, 0)
