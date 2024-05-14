@@ -9,7 +9,7 @@ frappe.ui.form.on('Check Run', {
 			show_progress_bar(frm, data, 'Processing')
 		})
 		frappe.realtime.on('render_check_progress', data => {
-			show_progress_bar(frm, data, 'Printing')
+			show_progress_bar(frm, data, 'Rendering')
 		})
 	},
 	validate: frm => {
@@ -64,6 +64,17 @@ frappe.ui.form.on('Check Run', {
 			frm.set_df_property('final_check_number', 'read_only', 1)
 		}
 		check_settings(frm)
+		$('[data-original-title="Print"]').hide()
+		if (frappe.model.can_print(null, frm)) {
+			frm.page.add_action_icon(
+				'printer',
+				() => {
+					frappe.set_route('print-check-run', frm.doc.name)
+				},
+				'',
+				__('Print')
+			)
+		}
 	},
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
@@ -326,7 +337,10 @@ function ach_only(frm) {
 						frm.add_custom_button(__('Re-Print Checks'), () => {
 							reprint_checks(frm)
 						})
-					} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
+					} else if (
+						frm.doc.print_count == 0 && 
+						frm.doc.status == 'Submitted' &&
+						frm.doc.__onload.print_preview == 'Automatically Render PDF after Submit') {
 						render_checks(frm)
 					}
 				}
