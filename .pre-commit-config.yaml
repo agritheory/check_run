@@ -76,6 +76,13 @@ repos:
         entry: npx prettier . --write --ignore-path .prettierignore
         language: node
 
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: npx prettier -w . --config .prettierrc.cjs --ignore-path .prettierignore
+        language: system
+
 ci:
   autoupdate_schedule: weekly
   skip: []

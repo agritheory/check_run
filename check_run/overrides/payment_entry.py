@@ -1,25 +1,21 @@
 # Copyright (c) 2023, AgriTheory and contributors
 # For license information, please see license.txt
 
-import json
-import base64
-
 import frappe
 from frappe.utils import get_link_to_form, flt
 from erpnext.accounts.general_ledger import make_gl_entries, process_gl_map
 from frappe.utils.data import getdate
-from frappe.core.doctype.file.utils import get_local_image
 from erpnext.accounts.doctype.payment_entry.payment_entry import (
 	PaymentEntry,
 	get_outstanding_reference_documents,
 )
-from frappe import _, safe_decode
+from frappe import _
 
 
 class CheckRunPaymentEntry(PaymentEntry):
 	def make_gl_entries(self, cancel=0, adv_adj=0):
 		"""
-		HASH: 7e847f27ddf6b2c198b535a81cb51ad909ddcd5a
+		HASH: f6b91969b2d1f86b69ed86f611885f92ba36c077
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: make_gl_entries
@@ -45,7 +41,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def set_status(self):
 		"""
-		HASH: 7e847f27ddf6b2c198b535a81cb51ad909ddcd5a
+		HASH: f6b91969b2d1f86b69ed86f611885f92ba36c077
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: set_status
@@ -64,7 +60,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 	# Bug Fix
 	def get_valid_reference_doctypes(self):
 		"""
-		HASH: 7e847f27ddf6b2c198b535a81cb51ad909ddcd5a
+		HASH: f6b91969b2d1f86b69ed86f611885f92ba36c077
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: get_valid_reference_doctypes
@@ -90,7 +86,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def validate_allocated_amount(self):
 		"""
-		HASH: 7e847f27ddf6b2c198b535a81cb51ad909ddcd5a
+		HASH: f6b91969b2d1f86b69ed86f611885f92ba36c077
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: validate_allocated_amount
@@ -130,7 +126,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def validate_allocated_amount_with_latest_data(self):
 		"""
-		HASH: 7e847f27ddf6b2c198b535a81cb51ad909ddcd5a
+		HASH: f6b91969b2d1f86b69ed86f611885f92ba36c077
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: validate_allocated_amount_with_latest_data
@@ -331,27 +327,3 @@ def update_outstanding_amount(doc: PaymentEntry, method: str | None = None):
 					frappe.db.set_value("Payment Schedule", term.name, "outstanding", reverse)
 					if paid_amount >= doc.paid_amount:
 						break
-
-
-@frappe.whitelist()
-def remove_from_check_run(check_run, payment_entry):
-	cr = frappe.get_doc("Check Run", check_run)
-	transactions = json.loads(cr.transactions) if cr.transactions else []
-	new_transactions = []
-	for transaction in transactions:
-		if transaction.get("payment_entry") != payment_entry:
-			new_transactions.append(transaction)
-	cr.db_set("transactions", json.dumps(new_transactions))
-	frappe.db.set_value("Payment Entry", payment_entry, "check_run", "")
-	frappe.msgprint(_("Removed from Check Run"), alert=True)
-	return "removed"
-
-
-@frappe.whitelist()
-def get_image_base64_data(file_url):
-	file_doc = frappe.get_doc("File", {"file_url": file_url})
-	if not file_doc.has_permission(ptype="read"):
-		return ""
-	image, unused_filename, extn = get_local_image(file_url)
-	file_content = file_doc.get_content()
-	return f"data:image/{extn};base64,{safe_decode(base64.b64encode(file_content).decode('utf-8'))}"

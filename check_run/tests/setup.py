@@ -1,6 +1,3 @@
-# Copyright (c) 2025, AgriTheory and contributors
-# For license information, please see license.txt
-
 import datetime
 import types
 
@@ -73,8 +70,8 @@ def create_test_data():
 	create_employees(settings)
 	create_expense_claim(settings)
 	for month in range(1, 13):
-		create_payroll_journal_entry(settings)
 		settings.day = settings.day.replace(month=month)
+		create_payroll_journal_entry(settings)
 	create_manual_payment_entry(settings)
 
 
@@ -156,7 +153,6 @@ def create_bank_and_bank_account(settings):
 
 
 def setup_accounts():
-	frappe.flags.in_test = True
 	frappe.rename_doc(
 		"Account", "1000 - Application of Funds (Assets) - CFC", "1000 - Assets - CFC", force=True
 	)
@@ -265,7 +261,6 @@ def create_suppliers(settings):
 		if biz.supplier_default_mode_of_payment == "ACH/EFT":
 			biz.bank = "Local Bank"
 			biz.bank_account = "123456789"
-			biz.ach_account_type = "Checking"
 		biz.currency = "USD"
 		biz.default_price_list = "Standard Buying"
 		biz.payment_terms = supplier[4]
@@ -318,7 +313,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = settings.day
+	pi.bill_date = pi.posting_date = settings.day
 	pi.supplier = "Tireless Equipment Rental, Inc"
 	pi.append(
 		"items",
@@ -339,7 +334,7 @@ def create_invoices(settings):
 		pi = frappe.new_doc("Purchase Invoice")
 		pi.company = settings.company
 		pi.set_posting_time = 1
-		pi.posting_date = settings.day
+		pi.bill_date = pi.posting_date = settings.day
 		pi.supplier = supplier[0]
 		pi.append(
 			"items",
@@ -355,7 +350,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = settings.day
+	pi.bill_date = pi.posting_date = settings.day
 	pi.supplier = suppliers[0][0]
 	pi.append(
 		"items",
@@ -372,7 +367,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = settings.day
+	pi.bill_date = pi.posting_date = settings.day
 	pi.supplier = suppliers[4][0]
 	pi.append(
 		"items",
@@ -395,7 +390,7 @@ def create_invoices(settings):
 		pi = frappe.new_doc("Purchase Invoice")
 		pi.company = settings.company
 		pi.set_posting_time = 1
-		pi.posting_date = next_day
+		pi.bill_date = pi.posting_date = next_day
 		pi.supplier = supplier[0]
 		pi.append(
 			"items",
@@ -413,7 +408,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = next_day
+	pi.bill_date = pi.posting_date = next_day
 	pi.supplier = suppliers[0][0]
 	pi.append(
 		"items",
@@ -430,7 +425,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = settings.day
+	pi.bill_date = pi.posting_date = settings.day
 	pi.supplier = suppliers[4][0]
 	pi.append(
 		"items",
@@ -448,7 +443,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = settings.day
+	pi.bill_date = pi.posting_date = settings.day
 	pi.supplier = suppliers[1][0]
 	pi.append(
 		"items",
@@ -541,7 +536,6 @@ def create_employees(settings):
 		if emp.mode_of_payment == "ACH/EFT":
 			emp.bank = "Local Bank"
 			emp.bank_account = f"{employee_number}12345"
-			emp.ach_account_type = "Checking"
 		emp.save()
 
 
@@ -725,7 +719,7 @@ def create_extra_invoices(settings):
 			pi = frappe.new_doc("Purchase Invoice")
 			pi.company = settings.company
 			pi.set_posting_time = 1
-			pi.posting_date = _day
+			pi.bill_date = pi.posting_date = _day
 			pi.supplier = supplier[0]
 			pi.append(
 				"items",
