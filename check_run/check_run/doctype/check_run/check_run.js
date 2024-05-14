@@ -64,6 +64,17 @@ frappe.ui.form.on('Check Run', {
 			frm.set_df_property('final_check_number', 'read_only', 1)
 		}
 		check_settings(frm)
+		$('[data-original-title="Print"]').hide()
+		if (frappe.model.can_print(null, frm)) {
+			frm.page.add_action_icon(
+				'printer',
+				() => {
+					frappe.set_route('print-check-run', frm.doc.name)
+				},
+				'',
+				__('Print')
+			)
+		}
 	},
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
