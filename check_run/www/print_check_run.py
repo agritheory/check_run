@@ -6,7 +6,7 @@ from frappe.www.printview import (
 	get_print_style,
 	escape_html,
 )
-
+from frappe.www.printview import set_link_titles, get_rendered_template, get_print_format_doc
 
 from check_run.check_run.doctype.check_run.check_run import get_check_run_settings
 
@@ -84,12 +84,34 @@ def get_check_run_format(
 	settings=None,
 	templates=None,
 ):
+	transaction = json.loads(doc.transactions) if isinstance(doc.transactions, str) else None
+
+	pe_doc = frappe.get_doc("Payment Entry", transaction[0].get("payment_entry"))
+
 	settings = json.loads(settings) if isinstance(doc, str) else settings
+
 	check_run_settings = get_check_run_settings(doc)
 	if not settings:
 		settings = {}
 		settings["payment_entry_format"] = check_run_settings.print_format
 		settings["secondary_print_format"] = check_run_settings.secondary_print_format
+	print_format = check_run_settings.print_format or check_run_settings.secondary_print_format or ""
+	print_format = get_print_format_doc(print_format, meta=meta or frappe.get_meta("Payment Entry"))
 
-	html = doc.render_check_run(pdf=False)
-	return {"html": html, "style": get_print_style(style=style)}
+	set_link_titles(pe_doc)
+
+	try:
+		html = get_rendered_template(
+			pe_doc,
+			name=name,
+			print_format=print_format,
+			meta=meta,
+			no_letterhead=no_letterhead,
+			letterhead=letterhead,
+			trigger_print=trigger_print,
+			settings=frappe.parse_json(settings),
+		)
+	except frappe.TemplateNotFoundError:
+		frappe.clear_last_message()
+		html = None
+	return {"html": html, "style": get_print_style(style=style, print_format=print_format)}
