@@ -466,7 +466,6 @@ frappe.ui.form.PrintView = class {
 			if (!this.doctype_to_print == 'Check Run') {
 				out.html.forEach(function (htmlContent) {
 					w.document.write(`${htmlContent}`)
-					w.document.write(`<div class="page-break"></div>`)
 				})
 			} else {
 				w.document.write(`${out.html}`)
