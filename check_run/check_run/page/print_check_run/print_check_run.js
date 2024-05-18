@@ -79,6 +79,10 @@ frappe.ui.form.PrintView = class {
 		)
 	}
 
+	get_language_options() {
+		return frappe.get_languages()
+	}
+
 	setup_sidebar() {
 		this.sidebar = this.page.sidebar.addClass('print-preview-sidebar')
 
@@ -110,7 +114,17 @@ frappe.ui.form.PrintView = class {
 			default: 5,
 			read_only: 1,
 		}).$input
-
+		this.language_sel = this.add_sidebar_item({
+			fieldtype: 'Select',
+			fieldname: 'language',
+			placeholder: 'Language',
+			options: [this.get_default_option_for_select(__('Select Language')), ...this.get_language_options()],
+			default: __('Select Language'),
+			change: () => {
+				this.set_user_lang()
+				this.preview()
+			},
+		}).$input
 		// this.secondary_print_format = this.add_sidebar_item({
 		// 	fieldtype: 'Autocomplete',
 		// 	fieldname: 'secondary_print_format',
@@ -119,6 +133,17 @@ frappe.ui.form.PrintView = class {
 		// 	change: () => this.refresh_print_format(),
 		// 	default: '',
 		// }).$input
+		this.letterhead_selector_df = this.add_sidebar_item({
+			fieldtype: 'Autocomplete',
+			fieldname: 'letterhead',
+			label: __('Select Letterhead'),
+			placeholder: __('Select Letterhead'),
+			options: [__('No Letterhead')],
+			change: () => this.preview(),
+			default: this.print_settings.with_letterhead ? __('No Letterhead') : __('Select Letterhead'),
+		})
+		this.letterhead_selector = this.letterhead_selector_df.$input
+		this.sidebar_dynamic_section = $(`<div class="dynamic-settings"></div>`).appendTo(this.sidebar)
 	}
 
 	add_sidebar_item(df, is_dynamic) {
@@ -216,6 +241,10 @@ frappe.ui.form.PrintView = class {
 				$message.text('')
 			}
 		})
+	}
+
+	get_letterhead() {
+		return this.letterhead_selector.val()
 	}
 
 	preview_beta() {
@@ -421,23 +450,33 @@ frappe.ui.form.PrintView = class {
 		}
 	}
 
+	set_user_lang() {
+		this.lang_code = this.language_sel.val()
+	}
+
 	render_page(method, printit = false) {
-		let w = window.open(
-			frappe.urllib.get_full_url(
-				method +
-					'doctype=' +
-					encodeURIComponent(this.frm.doc.doctype) +
-					'&name=' +
-					encodeURIComponent(this.frm.doc.name) +
-					(printit ? '&trigger_print=1' : '') +
-					'&format=' +
-					encodeURIComponent(this.selected_format()) +
-					'&no_letterhead=0' +
-					'&settings=' +
-					encodeURIComponent(JSON.stringify(this.additional_settings)) +
-					(this.lang_code ? '&_lang=' + this.lang_code : '')
-			)
-		)
+		let w = window.open('', '_blank')
+		w.document.open()
+		this.get_print_html(out => {
+			let base_url = frappe.urllib.get_base_url()
+			let print_css = frappe.assets.bundled_asset('print.bundle.css', frappe.utils.is_rtl(this.lang_code))
+			w.document.write(`<style type="text/css">.page-break { page-break-after: always; }${out.style}</style>
+				<link href="${base_url}${print_css}" rel="stylesheet">`)
+			w.document.write(`<div class="print-format print-format-preview">`)
+			if (!this.doctype_to_print == 'Check Run') {
+				out.html.forEach(function (htmlContent) {
+					w.document.write(`${htmlContent}`)
+					w.document.write(`<div class="page-break"></div>`)
+				})
+			} else {
+				w.document.write(`${out.html}`)
+			}
+			w.document.write(`</div>`)
+			w.document.close()
+			if (printit) {
+				w.print()
+			}
+		})
 		if (!w) {
 			frappe.msgprint(__('Please enable pop-ups'))
 			return
@@ -530,6 +569,10 @@ frappe.ui.form.PrintView = class {
 		}
 
 		return print_format
+	}
+
+	with_letterhead() {
+		return cint(this.get_letterhead() !== __('No Letterhead'))
 	}
 
 	set_style(style) {
