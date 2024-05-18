@@ -36,13 +36,11 @@ frappe.ui.form.PrintView = class {
 	make() {
 		this.print_wrapper = this.page.main.empty().html(
 			`<div class="print-preview-wrapper"><div class="print-preview">
+			${frappe.render_template('print_skeleton_loading')}
 				<iframe class="print-format-container" width="100%" height="0" frameBorder="0" scrolling="no">
 				</iframe>
 			</div>
 			<div class="page-break-message text-muted text-center text-medium margin-top"></div>
-		</div>
-		<div class="preview-beta-wrapper">
-			<iframe width="100%" height="0" frameBorder="0"></iframe>
 		</div>
 		`
 		)
@@ -110,16 +108,17 @@ frappe.ui.form.PrintView = class {
 			label: 'Invoices Per Voucher',
 			change: () => this.refresh_print_format(),
 			default: 5,
+			read_only: 1,
 		}).$input
 
-		this.secondary_print_format = this.add_sidebar_item({
-			fieldtype: 'Autocomplete',
-			fieldname: 'secondary_print_format',
-			label: 'Secondary Print Format',
-			options: 'Print Format',
-			change: () => this.refresh_print_format(),
-			default: '',
-		}).$input
+		// this.secondary_print_format = this.add_sidebar_item({
+		// 	fieldtype: 'Autocomplete',
+		// 	fieldname: 'secondary_print_format',
+		// 	label: 'Secondary Print Format',
+		// 	options: 'Print Format',
+		// 	change: () => this.refresh_print_format(),
+		// 	default: '',
+		// }).$input
 	}
 
 	add_sidebar_item(df, is_dynamic) {
@@ -240,8 +239,19 @@ frappe.ui.form.PrintView = class {
 			`<style type="text/css">${out.style}</style>
 			<link href="${base_url}${print_css}" rel="stylesheet">`
 		)
+		if (this.doctype_to_print.val() == 'Check Run') {
+			this.$print_format_body.find('body').html(`<div class="print-format print-format-preview">${out.html}</div>`)
+		} else {
+			this.$print_format_body.find('body').html(`<div class="print-format print-format-preview"></div>`)
 
-		this.$print_format_body.find('body').html(`<div class="print-format print-format-preview">${out.html}</div>`)
+			let $parentDiv = this.$print_format_body.find('.print-format-preview')
+
+			// Use forEach to append each HTML string to the parent div
+			out.html.forEach(function (htmlContent) {
+				$parentDiv.append(htmlContent)
+				$parentDiv.append(`<div class="page-break"></div>`)
+			})
+		}
 
 		this.show_footer()
 

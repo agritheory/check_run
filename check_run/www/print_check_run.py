@@ -12,6 +12,7 @@ from check_run.check_run.doctype.check_run.check_run import get_check_run_settin
 
 
 def get_context(context):
+	frappe.msgprint("hello")
 	"""Build context for print"""
 	if not ((frappe.form_dict.doctype and frappe.form_dict.name) or frappe.form_dict.doc):
 		return {
@@ -31,6 +32,7 @@ def get_context(context):
 def get_html_and_style(
 	doc,
 	name=None,
+	doctype_to_print=None,
 	print_format=None,
 	meta=None,
 	no_letterhead=None,
@@ -49,6 +51,7 @@ def get_html_and_style(
 		return get_check_run_format(
 			doc,
 			name,
+			doctype_to_print,
 			print_format,
 			meta,
 			no_letterhead,
@@ -58,6 +61,7 @@ def get_html_and_style(
 			settings,
 			templates,
 		)
+
 	return frappe_get_html_and_style(
 		doc,
 		name,
@@ -75,6 +79,7 @@ def get_html_and_style(
 def get_check_run_format(
 	doc,
 	name=None,
+	doctype_to_print=None,
 	print_format=None,
 	meta=None,
 	no_letterhead=None,
@@ -84,34 +89,74 @@ def get_check_run_format(
 	settings=None,
 	templates=None,
 ):
-	transaction = json.loads(doc.transactions) if isinstance(doc.transactions, str) else None
-
-	pe_doc = frappe.get_doc("Payment Entry", transaction[0].get("payment_entry"))
-
-	settings = json.loads(settings) if isinstance(doc, str) else settings
-
 	check_run_settings = get_check_run_settings(doc)
 	if not settings:
 		settings = {}
 		settings["payment_entry_format"] = check_run_settings.print_format
 		settings["secondary_print_format"] = check_run_settings.secondary_print_format
-	print_format = check_run_settings.print_format or check_run_settings.secondary_print_format or ""
-	print_format = get_print_format_doc(print_format, meta=meta or frappe.get_meta("Payment Entry"))
 
-	set_link_titles(pe_doc)
+	if doctype_to_print == "Check Run":
+		print_format = get_print_format_doc(print_format, meta=meta or frappe.get_meta("Check Run"))
+		set_link_titles(doc)
+		try:
+			html = get_rendered_template(
+				doc,
+				name=name,
+				print_format=print_format,
+				meta=meta,
+				no_letterhead=no_letterhead,
+				letterhead=letterhead,
+				trigger_print=trigger_print,
+				settings=frappe.parse_json(settings),
+			)
+		except frappe.TemplateNotFoundError:
+			frappe.clear_last_message()
+			html = None
 
-	try:
-		html = get_rendered_template(
-			pe_doc,
-			name=name,
-			print_format=print_format,
-			meta=meta,
-			no_letterhead=no_letterhead,
-			letterhead=letterhead,
-			trigger_print=trigger_print,
-			settings=frappe.parse_json(settings),
-		)
-	except frappe.TemplateNotFoundError:
-		frappe.clear_last_message()
-		html = None
+		return {"html": html, "style": get_print_style(style=style, print_format=print_format)}
+
+	transaction = json.loads(doc.transactions) if isinstance(doc.transactions, str) else None
+	html = []
+	pe = []
+	for row in transaction:
+		pe.append(row.get("payment_entry"))
+
+	payment_entry = list(set(pe))
+	for row in payment_entry:
+		pe_doc = frappe.get_doc("Payment Entry", row)
+
+		settings = json.loads(settings) if isinstance(doc, str) else settings
+
+		if doctype_to_print == "Payment Entry":
+			print_format = (
+				check_run_settings.print_format or check_run_settings.secondary_print_format or ""
+			)
+		if doctype_to_print == "Payment Entry Secondary Format":
+			print_format = (
+				check_run_settings.secondary_print_format or check_run_settings.print_format or ""
+			)
+
+		print_format = get_print_format_doc(print_format, meta=meta or frappe.get_meta("Payment Entry"))
+
+		set_link_titles(pe_doc)
+
+		try:
+			html_ = []
+			html_.append(
+				get_rendered_template(
+					pe_doc,
+					name=name,
+					print_format=print_format,
+					meta=meta,
+					no_letterhead=no_letterhead,
+					letterhead=letterhead,
+					trigger_print=trigger_print,
+					settings=frappe.parse_json(settings),
+				)
+			)
+			html.append(html_)
+		except frappe.TemplateNotFoundError:
+			frappe.clear_last_message()
+			html = None
+
 	return {"html": html, "style": get_print_style(style=style, print_format=print_format)}
