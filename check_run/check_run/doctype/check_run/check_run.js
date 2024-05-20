@@ -45,6 +45,7 @@ frappe.ui.form.on('Check Run', {
 					e.stopPropagation()
 				})
 		}
+		change_amount_label(frm)
 		settings_button(frm)
 		permit_first_user(frm)
 		get_defaults(frm)
@@ -444,4 +445,14 @@ function check_settings(frm) {
 			}
 		})
 	}
+}
+
+function change_amount_label(frm){
+	frappe.xcall("check_run.check_run.doctype.check_run.check_run.get_default_currency", { company: frm.doc.company }).then(r=>{
+		if(r){
+			if(r != frm.pay_to_account_currency){
+				cur_frm.fields_dict.amount_check_run.set_label("Estimated Amount in Check Run");
+			}
+		}
+	})
 }
