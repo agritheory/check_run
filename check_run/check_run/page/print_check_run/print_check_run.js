@@ -127,6 +127,7 @@ frappe.ui.form.PrintView = class {
 				this.preview()
 			},
 		}).$input
+
 		// this.secondary_print_format = this.add_sidebar_item({
 		// 	fieldtype: 'Autocomplete',
 		// 	fieldname: 'secondary_print_format',
@@ -135,6 +136,7 @@ frappe.ui.form.PrintView = class {
 		// 	change: () => this.refresh_print_format(),
 		// 	default: '',
 		// }).$input
+
 		this.letterhead_selector_df = this.add_sidebar_item({
 			fieldtype: 'Autocomplete',
 			fieldname: 'letterhead',
@@ -458,7 +460,7 @@ frappe.ui.form.PrintView = class {
 
 	render_page(method, printit = false) {
 		let w = window.open(
-			frappe.urllib.get_full_url(`${method}?
+			frappe.urllib.get_full_url(`${method}
 					doctype=${encodeURIComponent(this.frm.doc.doctype)}
 					&name=${encodeURIComponent(this.frm.doc.name)}
 					&formattype=${encodeURIComponent(this.doctype_to_print)}
