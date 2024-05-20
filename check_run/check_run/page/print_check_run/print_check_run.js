@@ -114,12 +114,14 @@ frappe.ui.form.PrintView = class {
 			default: 5,
 			read_only: 1,
 		}).$input
+
 		this.language_sel = this.add_sidebar_item({
 			fieldtype: 'Select',
 			fieldname: 'language',
 			placeholder: 'Language',
 			options: [this.get_default_option_for_select(__('Select Language')), ...this.get_language_options()],
-			default: __('Select Language'),
+			default: __('English (United States)'),
+			read_only: 1,
 			change: () => {
 				this.set_user_lang()
 				this.preview()
@@ -455,8 +457,14 @@ frappe.ui.form.PrintView = class {
 	}
 
 	render_page(method, printit = false) {
-		let w = window.open('', '_blank')
-		w.document.open()
+		let w = window.open(
+			frappe.urllib.get_full_url(`${method}?
+					doctype=${encodeURIComponent(this.frm.doc.doctype)}
+					&name=${encodeURIComponent(this.frm.doc.name)}
+					&formattype=${encodeURIComponent(this.doctype_to_print)}
+					&lang=${encodeURIComponent('en')}`)
+		)
+
 		this.get_print_html(out => {
 			let base_url = frappe.urllib.get_base_url()
 			let print_css = frappe.assets.bundled_asset('print.bundle.css', frappe.utils.is_rtl(this.lang_code))
