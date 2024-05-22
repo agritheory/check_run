@@ -922,6 +922,7 @@ def get_authorized_role_for_ach(doc):
 	)
 	return role
 
+
 @frappe.whitelist()
 def get_authorized_role(doc):
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
@@ -932,3 +933,7 @@ def get_authorized_role(doc):
 	)
 	return role
 
+
+@frappe.whitelist()
+def get_default_currency(company):
+	return frappe.db.get_value("Company", company, "default_currency")
