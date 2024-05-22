@@ -117,45 +117,47 @@ def get_check_run_format(
 	transaction = json.loads(doc.transactions) if isinstance(doc.transactions, str) else None
 	html = []
 	pe = []
-	for row in transaction:
-		pe.append(row.get("payment_entry"))
+	if transaction:
+		for row in transaction:
+			pe.append(row.get("payment_entry"))
 
-	payment_entry = list(set(pe))
-	for row in payment_entry:
-		pe_doc = frappe.get_doc("Payment Entry", row)
+		payment_entry = list(set(pe))
+		for row in payment_entry:
+			pe_doc = frappe.get_doc("Payment Entry", row)
 
-		settings = json.loads(settings) if isinstance(doc, str) else settings
+			settings = json.loads(settings) if isinstance(doc, str) else settings
 
-		if doctype_to_print == "Payment Entry":
-			print_format = (
-				check_run_settings.print_format or check_run_settings.secondary_print_format or ""
-			)
-		if doctype_to_print == "Payment Entry Secondary Format":
-			print_format = (
-				check_run_settings.secondary_print_format or check_run_settings.print_format or ""
-			)
-
-		print_format = get_print_format_doc(print_format, meta=meta or frappe.get_meta("Payment Entry"))
-
-		set_link_titles(pe_doc)
-
-		try:
-			html_ = []
-			html_.append(
-				get_rendered_template(
-					pe_doc,
-					name=name,
-					print_format=print_format,
-					meta=meta,
-					no_letterhead=no_letterhead,
-					letterhead=letterhead,
-					trigger_print=trigger_print,
-					settings=frappe.parse_json(settings),
+			if doctype_to_print == "Payment Entry":
+				print_format = (
+					check_run_settings.print_format or check_run_settings.secondary_print_format or ""
 				)
-			)
-			html.append(html_)
-		except frappe.TemplateNotFoundError:
-			frappe.clear_last_message()
-			html = None
+			if doctype_to_print == "Payment Entry Secondary Format":
+				print_format = (
+					check_run_settings.secondary_print_format or check_run_settings.print_format or ""
+				)
 
-	return {"html": html, "style": get_print_style(style=style, print_format=print_format)}
+			print_format = get_print_format_doc(print_format, meta=meta or frappe.get_meta("Payment Entry"))
+
+			set_link_titles(pe_doc)
+
+			try:
+				html_ = []
+				html_.append(
+					get_rendered_template(
+						pe_doc,
+						name=name,
+						print_format=print_format,
+						meta=meta,
+						no_letterhead=no_letterhead,
+						letterhead=letterhead,
+						trigger_print=trigger_print,
+						settings=frappe.parse_json(settings),
+					)
+				)
+				html.append(html_)
+			except frappe.TemplateNotFoundError:
+				frappe.clear_last_message()
+				html = None
+
+		return {"html": html, "style": get_print_style(style=style, print_format=print_format)}
+	return {"html": None, "style": None}
