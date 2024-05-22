@@ -90,7 +90,7 @@ frappe.ui.form.PrintView = class {
 			fieldtype: 'Select',
 			fieldname: 'doctype',
 			placeholder: 'Payment Entry',
-			options: ['Check Run','Payment Entry', 'Payment Entry Secondary Format'],
+			options: ['Check Run', 'Payment Entry', 'Payment Entry Secondary Format'],
 			default: 'Payment Entry',
 			change: () => {
 				this.preview()
