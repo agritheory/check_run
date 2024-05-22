@@ -128,15 +128,6 @@ frappe.ui.form.PrintView = class {
 			},
 		}).$input
 
-		// this.secondary_print_format = this.add_sidebar_item({
-		// 	fieldtype: 'Autocomplete',
-		// 	fieldname: 'secondary_print_format',
-		// 	label: 'Secondary Print Format',
-		// 	options: 'Print Format',
-		// 	change: () => this.refresh_print_format(),
-		// 	default: '',
-		// }).$input
-
 		this.letterhead_selector_df = this.add_sidebar_item({
 			fieldtype: 'Autocomplete',
 			fieldname: 'letterhead',
@@ -450,12 +441,27 @@ frappe.ui.form.PrintView = class {
 				return
 			}
 		} else {
-			this.render_page('/api/method/frappe.utils.print_format.download_pdf?')
+			this.render_check_run_pdf('/api/method/check_run.check_run.doctype.check_run.check_run.download_pdf?')
 		}
 	}
 
 	set_user_lang() {
 		this.lang_code = this.language_sel.val()
+	}
+
+	render_check_run_pdf(method) {
+		let base_url = frappe.urllib.get_base_url()
+		let print_css = frappe.assets.bundled_asset('print.bundle.css', frappe.utils.is_rtl(this.lang_code))
+		console.log(this.doctype_to_print)
+		let w = window.open(
+			frappe.urllib.get_full_url(`${method}
+				doctype=${encodeURIComponent(this.frm.doc.doctype)}
+				&name=${encodeURIComponent(this.frm.doc.name)}
+				&formattype=${encodeURIComponent(this.doctype_to_print.val())}
+				&baseurl=${encodeURIComponent(base_url)}
+				&printcss=${encodeURIComponent(print_css)}
+				&lang=${encodeURIComponent('en')}`)
+		)
 	}
 
 	render_page(method, printit = false) {

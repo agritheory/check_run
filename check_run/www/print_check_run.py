@@ -12,7 +12,6 @@ from check_run.check_run.doctype.check_run.check_run import get_check_run_settin
 
 
 def get_context(context):
-	frappe.msgprint("hello")
 	"""Build context for print"""
 	if not ((frappe.form_dict.doctype and frappe.form_dict.name) or frappe.form_dict.doc):
 		return {

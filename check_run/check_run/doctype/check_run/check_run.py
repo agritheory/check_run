@@ -6,7 +6,8 @@ import timeit
 from itertools import groupby, zip_longest
 from io import StringIO
 from typing_extensions import Self
-
+from frappe.www.printview import validate_print_permission
+from frappe.translate import print_language
 from PyPDF2 import PdfFileWriter
 import frappe
 from frappe.model.document import Document
@@ -950,3 +951,45 @@ def ach_only(docname: str) -> dict:
 def process_check_run(docname: str) -> None:
 	doc = frappe.get_doc("Check Run", docname)
 	doc.process_check_run()
+
+
+@frappe.whitelist(allow_guest=True)
+def download_pdf(
+	doctype,
+	name,
+	formattype=None,
+	doc=None,
+	no_letterhead=0,
+	language=None,
+	letterhead=None,
+	baseurl=None,
+	printcss=None,
+):
+	doc = doc or frappe.get_doc(doctype, name)
+	validate_print_permission(doc)
+	from check_run.www.print_check_run import get_check_run_format
+
+	out = get_check_run_format(doc, name=doc.name, doctype_to_print=formattype)
+	data = ""
+	for d in out.get("html"):
+		data += d[0]
+	html = """<style type='text/css'>{}</style><link href={}{} rel='stylesheet'>""".format(
+		out.get("style"), baseurl, printcss
+	)
+	html += f"<div class='print-format print-format-preview'>{data}</div>"
+	with print_language(language):
+		pdf_file = frappe.get_print(
+			doctype,
+			name,
+			html=html,
+			doc=doc,
+			as_pdf=True,
+			letterhead=letterhead,
+			no_letterhead=no_letterhead,
+		)
+
+	frappe.local.response.filename = "{name}.pdf".format(
+		name=name.replace(" ", "-").replace("/", "-")
+	)
+	frappe.local.response.filecontent = pdf_file
+	frappe.local.response.type = "pdf"
