@@ -504,7 +504,7 @@ class CheckRun(Document):
 			f"{self.name}.pdf", read_multi_pdf(output), "Check Run", self.name, "Home/Check Run", False, 0
 		)
 		save_file(
-			f"{self.name}.pdf",
+			f"Chaque {self.name}.pdf",
 			read_multi_pdf(se_print_output),
 			"Check Run",
 			self.name,
