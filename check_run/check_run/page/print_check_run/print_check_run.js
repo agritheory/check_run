@@ -180,10 +180,6 @@ frappe.ui.form.PrintView = class {
 			})
 		}
 
-		if (frappe.model.can_create('Print Format')) {
-			this.page.add_menu_item(__('Customize'), () => this.edit_print_format())
-		}
-
 		if (cint(this.print_settings.enable_print_server)) {
 			this.page.add_menu_item(__('Select Network Printer'), () => this.network_printer_setting_dialog())
 		}
@@ -254,6 +250,7 @@ frappe.ui.form.PrintView = class {
 	}
 
 	setup_print_format_dom(out, $print_format) {
+		console.log(out)
 		this.print_wrapper.find('.print-format-skeleton').remove()
 		let base_url = frappe.urllib.get_base_url()
 		let print_css = frappe.assets.bundled_asset('print.bundle.css', frappe.utils.is_rtl(this.lang_code))

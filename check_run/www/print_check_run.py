@@ -117,7 +117,7 @@ def get_check_run_format(
 	transaction = json.loads(doc.transactions) if isinstance(doc.transactions, str) else None
 	html = []
 	pe = []
-	if transaction:
+	if transaction and doc.docstatus == 1:
 		for row in transaction:
 			pe.append(row.get("payment_entry"))
 
@@ -160,4 +160,9 @@ def get_check_run_format(
 				html = None
 
 		return {"html": html, "style": get_print_style(style=style, print_format=print_format)}
-	return {"html": None, "style": None}
+	return {
+		"html": [
+			"<h1 style='text-align: center;'>Please Process Check Run First And Create Payment Entry</h1>"
+		],
+		"style": None,
+	}
