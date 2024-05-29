@@ -2,11 +2,11 @@
 # For license information, please see license.txt
 
 import frappe
-from erpnext.accounts.doctype.bank_account.bank_account import BankAccount
+from erpnext.accounts.doctype.bank.bank import Bank
 
 
 @frappe.whitelist()
-def validate(doc: BankAccount, method: str | None = None):
+def validate(doc: Bank, method: str | None = None):
 	# Canadian banking institutions limit DFI Routing Numbers to 8 characters
 	addresses = frappe.qb.DocType("Address")
 	dls = frappe.qb.DocType("Dynamic Link")
