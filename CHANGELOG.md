@@ -2,6 +2,43 @@
 
 
 
+## v15.1.1 (2024-05-29)
+
+### Ci
+
+* ci: add conftest file updated for json (#228) ([`dc306c3`](https://github.com/agritheory/check_run/commit/dc306c3364ac9ecb2d02003137284a138340ef42))
+
+* ci: remove cypress, fix hrms install, conform (#221)
+
+* ci: remove cypress, fix hrms install, conform
+
+* ci: fix mypy error ([`f6b629b`](https://github.com/agritheory/check_run/commit/f6b629b7876a14795f39dc6d853ea5b7f8722098))
+
+### Fix
+
+* fix: bankaccount =&gt; bank typing (#247) ([`da77cc3`](https://github.com/agritheory/check_run/commit/da77cc329e28d95f84783d98dbd204addb39d0e8))
+
+### Test
+
+* test: add tests, remove cypress (#238) ([`c20ed6e`](https://github.com/agritheory/check_run/commit/c20ed6e23fc744f0718dd85665f407c134bb7a56))
+
+### Unknown
+
+* Grant file download access for multiple downloads only to specific roles (#237)
+
+* ach file download access
+
+* replace super class validate
+
+* chore: prettier
+
+* ci: remove old linters
+
+---------
+
+Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt; ([`160f609`](https://github.com/agritheory/check_run/commit/160f6090b3e3061f12c8f9649c4755bb358a8f70))
+
+
 ## v15.1.0 (2024-03-18)
 
 ### Feature
