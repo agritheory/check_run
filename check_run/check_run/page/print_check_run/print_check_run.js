@@ -94,16 +94,18 @@ frappe.ui.form.PrintView = class {
 			default: 'Payment Entry',
 			change: () => {
 				this.preview()
+				this.refresh_print_options()
+				this.preview()
 			},
 		}).$input
 
 		this.print_sel = this.add_sidebar_item({
-			fieldtype: 'Autocomplete',
+			fieldtype: 'Select',
 			fieldname: 'print_format',
 			label: 'Print Format',
-			options: 'Print Format',
+			options: [this.get_default_option_for_select(__('Select Print Format'))],
 			change: () => this.refresh_print_format(),
-			default: '',
+			default: __('Select Print Format'),
 		}).$input
 
 		this.invoices_per_voucher = this.add_sidebar_item({
@@ -114,31 +116,6 @@ frappe.ui.form.PrintView = class {
 			default: 5,
 			read_only: 1,
 		}).$input
-
-		// this.language_sel = this.add_sidebar_item({
-		// 	fieldtype: 'Select',
-		// 	fieldname: 'language',
-		// 	placeholder: 'Language',
-		// 	options: [this.get_default_option_for_select(__('Select Language')), ...this.get_language_options()],
-		// 	default: __('English (United States)'),
-		// 	read_only: 1,
-		// 	change: () => {
-		// 		this.set_user_lang()
-		// 		this.preview()
-		// 	},
-		// }).$input
-
-		// this.letterhead_selector_df = this.add_sidebar_item({
-		// 	fieldtype: 'Autocomplete',
-		// 	fieldname: 'letterhead',
-		// 	label: __('Select Letterhead'),
-		// 	placeholder: __('Select Letterhead'),
-		// 	options: [__('No Letterhead')],
-		// 	change: () => this.preview(),
-		// 	default: this.print_settings.with_letterhead ? __('No Letterhead') : __('Select Letterhead'),
-		// })
-		// this.letterhead_selector = this.letterhead_selector_df.$input
-		// this.sidebar_dynamic_section = $(`<div class="dynamic-settings"></div>`).appendTo(this.sidebar)
 	}
 
 	add_sidebar_item(df, is_dynamic) {
@@ -552,8 +529,16 @@ frappe.ui.form.PrintView = class {
 		}
 	}
 
-	refresh_print_options() {
+	async refresh_print_options() {
 		this.print_formats = frappe.meta.get_print_formats(this.frm.doctype)
+		if (this.doctype_to_print.val() == 'Payment Entry') {
+			this.print_formats = await frappe.xcall('check_run.www.print_check_run.get_formats', { doctype: 'Payment Entry' })
+		}
+		if (this.doctype_to_print.val() == 'Payment Entry Secondary Format') {
+			this.print_formats = await frappe.xcall('check_run.www.print_check_run.get_formats', {
+				doctype: this.frm.docname,
+			})
+		}
 		const print_format_select_val = this.print_sel.val()
 		this.print_sel
 			.empty()

@@ -166,3 +166,20 @@ def get_check_run_format(
 		],
 		"style": None,
 	}
+
+
+@frappe.whitelist()
+def get_formats(doctype):
+	if doctype == "Check Run":
+		print_format = frappe.db.get_list("Print Format", filters={"doc_type": doctype}, pluck="name")
+
+		return print_format
+	elif doctype == "Payment Entry":
+		print_format = frappe.db.get_list(
+			"Print Format", filters={"doc_type": "Payment Entry"}, pluck="name"
+		)
+		return print_format
+	else:
+		doc = frappe.get_doc("Check Run", doctype)
+		check_run_settings = get_check_run_settings(doc)
+		return [check_run_settings.secondary_print_format]
