@@ -958,6 +958,7 @@ def download_pdf(
 	doctype,
 	name,
 	formattype=None,
+	print_format=None,
 	doc=None,
 	no_letterhead=0,
 	language=None,
@@ -969,7 +970,9 @@ def download_pdf(
 	validate_print_permission(doc)
 	from check_run.www.print_check_run import get_check_run_format
 
-	out = get_check_run_format(doc, name=doc.name, doctype_to_print=formattype)
+	out = get_check_run_format(
+		doc, name=doc.name, doctype_to_print=formattype, print_format=print_format
+	)
 	data = ""
 	for d in out.get("html"):
 		data += d[0]

@@ -431,6 +431,7 @@ frappe.ui.form.PrintView = class {
 				doctype=${encodeURIComponent(this.frm.doc.doctype)}
 				&name=${encodeURIComponent(this.frm.doc.name)}
 				&formattype=${encodeURIComponent(this.doctype_to_print.val())}
+				&print_format=${encodeURIComponent(this.print_sel.val())}
 				&baseurl=${encodeURIComponent(base_url)}
 				&printcss=${encodeURIComponent(print_css)}
 				&lang=${encodeURIComponent('en')}`)
