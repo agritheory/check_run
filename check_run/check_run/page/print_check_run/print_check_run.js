@@ -452,7 +452,7 @@ frappe.ui.form.PrintView = class {
 			w.document.write(`<style type="text/css">.page-break { page-break-after: always; }${out.style}</style>
 				<link href="${base_url}${print_css}" rel="stylesheet">`)
 			w.document.write(`<div class="print-format print-format-preview">`)
-			if (!this.doctype_to_print == 'Check Run') {
+			if (this.doctype_to_print != 'Check Run') {
 				out.html.forEach(function (htmlContent) {
 					w.document.write(`${htmlContent}`)
 				})

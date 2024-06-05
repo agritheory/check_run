@@ -128,38 +128,35 @@ def get_check_run_format(
 			settings = json.loads(settings) if isinstance(doc, str) else settings
 
 			if doctype_to_print == "Payment Entry":
-				print_format = (
-					check_run_settings.print_format or check_run_settings.secondary_print_format or ""
-				)
+				print_formats = print_format
 			if doctype_to_print == "Payment Entry Secondary Format":
-				print_format = (
-					check_run_settings.secondary_print_format or check_run_settings.print_format or ""
-				)
+				print_formats = print_format
 
-			print_format = get_print_format_doc(print_format, meta=meta or frappe.get_meta("Payment Entry"))
-
+			print_formats = get_print_format_doc(
+				print_formats, meta=meta or frappe.get_meta("Payment Entry")
+			)
 			set_link_titles(pe_doc)
 
 			try:
 				html_ = []
-				html_.append(
-					get_rendered_template(
-						pe_doc,
-						name=name,
-						print_format=print_format,
-						meta=meta,
-						no_letterhead=no_letterhead,
-						letterhead=letterhead,
-						trigger_print=trigger_print,
-						settings=frappe.parse_json(settings),
-					)
+				html_code = get_rendered_template(
+					pe_doc,
+					name=name,
+					print_format=print_formats,
+					meta=meta,
+					no_letterhead=no_letterhead,
+					letterhead=letterhead,
+					trigger_print=trigger_print,
+					settings=frappe.parse_json(settings),
 				)
+				html_code += "<div class='page-break'></div>"
+				html_.append(html_code)
 				html.append(html_)
 			except frappe.TemplateNotFoundError:
 				frappe.clear_last_message()
 				html = None
 
-		return {"html": html, "style": get_print_style(style=style, print_format=print_format)}
+		return {"html": html, "style": get_print_style(style=style, print_format=print_formats)}
 	return {
 		"html": [
 			"<h1 style='text-align: center;'>Please Process Check Run First And Create Payment Entry</h1>"
