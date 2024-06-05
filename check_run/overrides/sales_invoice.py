@@ -1,4 +1,7 @@
 import frappe
+from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
+	get_accounting_dimensions,
+)
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 from erpnext.accounts.party import get_due_date
 from erpnext.accounts.utils import get_account_currency
@@ -27,6 +30,7 @@ class CheckRunSalesInvoice(SalesInvoice):
 			frappe.db.get_single_value("Selling Settings", "enable_discount_accounting")
 		)
 
+		accounting_dimensions = get_accounting_dimensions()
 		for tax in self.get("taxes"):
 			amount, base_amount = self.get_tax_amounts(tax, enable_discount_accounting)
 			if flt(tax.base_tax_amount_after_discount_amount):
@@ -34,6 +38,7 @@ class CheckRunSalesInvoice(SalesInvoice):
 				is_payable_account = bool(
 					frappe.get_value("Account", tax.account_head, "account_type") == "Payable"
 				)
+				dimensions = {d: tax.get(d) for d in accounting_dimensions}
 				gl_entries.append(
 					self.get_gl_dict(
 						{
@@ -48,6 +53,7 @@ class CheckRunSalesInvoice(SalesInvoice):
 							"cost_center": tax.cost_center,
 							"party_type": tax.party_type if is_payable_account else None,
 							"party": tax.party if is_payable_account else None,
+							**dimensions,
 						},
 						account_currency,
 						item=tax,
