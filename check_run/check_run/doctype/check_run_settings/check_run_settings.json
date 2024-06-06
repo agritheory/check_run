@@ -19,6 +19,8 @@
   "allow_cancellation",
   "cascade_cancellation",
   "validate_unique_check_number",
+  "check_formats_with_background_image",
+  "background_image",
   "column_break_9",
   "number_of_invoices_per_voucher",
   "secondary_print_format",
@@ -240,10 +242,22 @@
    "fieldtype": "Link",
    "label": "Secondary Print Format",
    "options": "Print Format"
+  },
+  {
+   "default": "0",
+   "fieldname": "check_formats_with_background_image",
+   "fieldtype": "Check",
+   "label": "Check formats with background image"
+  },
+  {
+   "depends_on": "eval:doc.check_formats_with_background_image",
+   "fieldname": "background_image",
+   "fieldtype": "Attach",
+   "label": "Background Image"
   }
  ],
  "links": [],
- "modified": "2024-05-18 00:04:12.392405",
+ "modified": "2024-06-06 06:57:27.879988",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",
