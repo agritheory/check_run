@@ -548,7 +548,7 @@ frappe.ui.form.PrintView = class {
 	}
 
 	selected_format() {
-		return this.print_sel.val() || 'Standard'
+		return this.print_sel.val()
 	}
 
 	is_raw_printing(format) {
