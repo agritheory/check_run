@@ -116,6 +116,15 @@ frappe.ui.form.PrintView = class {
 			default: 5,
 			read_only: 1,
 		}).$input
+
+		this.update_check_ref = this.add_sidebar_item({
+			fieldtype: 'Select',
+			fieldname: 'update_check_ref',
+			label: 'Update Check Reference',
+			options: ['No', 'Yes'],
+			change: () => this.refresh_print_format(),
+			default: __('No'),
+		}).$input
 	}
 
 	add_sidebar_item(df, is_dynamic) {
@@ -349,6 +358,7 @@ frappe.ui.form.PrintView = class {
 		} else {
 			me.render_page('/print_check_run?', true)
 		}
+		this.confirm_print(me)
 	}
 
 	print_by_server() {
@@ -574,6 +584,66 @@ frappe.ui.form.PrintView = class {
 
 	set_style(style) {
 		frappe.dom.set_style(style || frappe.boot.print_css, 'print-style')
+	}
+
+	confirm_print(me) {
+		if (this.update_check_ref.val() == 'No') {
+			return
+		}
+
+		let frm = me.frm
+		let d = new frappe.ui.Dialog({
+			title: __('Confirm Print'),
+			fields: [
+				{
+					fieldname: 'ht',
+					fieldtype: 'HTML',
+					options: `<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">${__(
+						'Confirm Print'
+					)}</button>
+				<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">${__('Re-Print Checks')}</button>
+				<br><br>`,
+				},
+				{
+					fieldname: 'reprint_check_number',
+					fieldtype: 'Data',
+					label: __('New Initial Check Number'),
+				},
+			],
+			minimizable: false,
+			static: true,
+		})
+		d.wrapper.find('#confirm-print').on('click', () => {
+			frappe
+				.xcall('check_run.check_run.doctype.check_run.check_run.confirm_print', {
+					docname: frm.doc.name,
+				})
+				.then(() => {
+					d.hide()
+				})
+		})
+		d.wrapper.find('#reprint').on('click', () => {
+			d.fields_dict.reprint_check_number.df.reqd = 1
+			let values = cur_dialog.get_values()
+			this.render_checks(me, frm, values.reprint_check_number || undefined)
+			frm.doc.status = 'Submitted'
+			me.page.set_indicator(__('Submitted'), 'blue')
+			d.hide()
+		})
+		d.show()
+	}
+
+	render_checks(me, frm, reprint_check_number = undefined) {
+		frappe
+			.call({
+				method: 'increment_print_count',
+				doc: frm.doc,
+				args: { reprint_check_number: reprint_check_number },
+			})
+			.done(() => {
+				frappe.msgprint('Check Reference No updated successfully')
+			})
+			.fail(r => {})
 	}
 
 	printer_setting_dialog() {
