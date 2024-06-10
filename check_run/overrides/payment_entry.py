@@ -15,6 +15,12 @@ import json
 
 class CheckRunPaymentEntry(PaymentEntry):
 	def make_gl_entries(self, cancel=0, adv_adj=0):
+		"""
+		HASH: 38cc28a4c34597e09dc8fe70884fefc30eaa24db
+		REPO: https://github.com/frappe/erpnext/
+		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
+		METHOD: make_gl_entries
+		"""
 		if self.payment_type in ("Receive", "Pay") and not self.get("party_account_field"):
 			self.setup_party_account_field()
 
@@ -35,6 +41,12 @@ class CheckRunPaymentEntry(PaymentEntry):
 			self.posting_date = original_posting_date
 
 	def set_status(self):
+		"""
+		HASH: 38cc28a4c34597e09dc8fe70884fefc30eaa24db
+		REPO: https://github.com/frappe/erpnext/
+		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
+		METHOD: set_status
+		"""
 		if self.status == "Voided":
 			pass
 		elif self.docstatus == 2:
@@ -48,6 +60,12 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	# Bug Fix
 	def get_valid_reference_doctypes(self):
+		"""
+		HASH: 38cc28a4c34597e09dc8fe70884fefc30eaa24db
+		REPO: https://github.com/frappe/erpnext/
+		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
+		METHOD: get_valid_reference_doctypes
+		"""
 		if self.party_type == "Customer":
 			return ("Sales Order", "Sales Invoice", "Journal Entry", "Dunning")
 		elif self.party_type == "Supplier":
@@ -68,6 +86,12 @@ class CheckRunPaymentEntry(PaymentEntry):
 	"""
 
 	def validate_allocated_amount(self):
+		"""
+		HASH: 38cc28a4c34597e09dc8fe70884fefc30eaa24db
+		REPO: https://github.com/frappe/erpnext/
+		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
+		METHOD: validate_allocated_amount
+		"""
 		if self.payment_type == "Internal Transfer":
 			return
 
@@ -102,6 +126,12 @@ class CheckRunPaymentEntry(PaymentEntry):
 					)
 
 	def validate_allocated_amount_with_latest_data(self):
+		"""
+		HASH: 38cc28a4c34597e09dc8fe70884fefc30eaa24db
+		REPO: https://github.com/frappe/erpnext/
+		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
+		METHOD: validate_allocated_amount_with_latest_data
+		"""
 		if self.references:
 			unique_vouchers = {(x.reference_doctype, x.reference_name) for x in self.references}
 			vouchers = [frappe._dict({"voucher_type": x[0], "voucher_no": x[1]}) for x in unique_vouchers]
