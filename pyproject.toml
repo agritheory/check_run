@@ -9,7 +9,7 @@ readme = "README.md"
 dynamic = ["version"]
 dependencies = [
     "atnacha @ git+https://github.com/AgriTheory/atnacha.git@main#egg=atnacha",
-    "mypy", 
+    "mypy",
     "pytest"
 ]
 

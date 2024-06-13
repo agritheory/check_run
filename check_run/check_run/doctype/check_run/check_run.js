@@ -38,12 +38,12 @@ frappe.ui.form.on('Check Run', {
 				'red'
 			)
 			$('#check-run-error')
-			.off()
-			.on('click', e => {
-				frappe.route_options = { method: ['like', `%${frm.doc.name}%`] }
-				frappe.set_route('list', 'Error Log')
-				e.stopPropagation()
-			})
+				.off()
+				.on('click', e => {
+					frappe.route_options = { method: ['like', `%${frm.doc.name}%`] }
+					frappe.set_route('list', 'Error Log')
+					e.stopPropagation()
+				})
 		}
 		settings_button(frm)
 		permit_first_user(frm)
@@ -129,18 +129,18 @@ frappe.ui.form.on('Check Run', {
 })
 
 let focus_first_row = () => {
-	if (document.activeElement.tagName != "TR") {
-		let el = document.getElementsByTagName("tbody")[0].firstElementChild;
-		el.focus();
+	if (document.activeElement.tagName != 'TR') {
+		let el = document.getElementsByTagName('tbody')[0].firstElementChild
+		el.focus()
 	}
-};
+}
 
 frappe.ui.keys.add_shortcut({
-	shortcut: "down",
-	action: () => focus_first_row("down"),
-	description: "Navigate check-run list down",
+	shortcut: 'down',
+	action: () => focus_first_row('down'),
+	description: 'Navigate check-run list down',
 	page: this.page,
-});
+})
 
 function show_progress_bar(frm, data, action) {
 	if (data.check_run !== frm.doc.name) {
