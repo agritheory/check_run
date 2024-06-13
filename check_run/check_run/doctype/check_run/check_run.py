@@ -305,8 +305,7 @@ class CheckRun(Document):
 			if frappe.db.get_value("Mode of Payment", _group[0].mode_of_payment, "type") == "Bank":
 				groups = list(zip_longest(*[iter(_group)] * split))
 			else:
-				groups = [_group]
-
+				groups = [_group]  # type: ignore
 			if not groups:
 				continue
 
@@ -571,7 +570,11 @@ def get_entries(doc: CheckRun | str) -> dict:
 		.as_("supplier_default_mode_of_payment")
 		.where(purchase_invoices.supplier == suppliers.name)
 	)
-
+	stand_alone_debit_note_filter = (
+		(Coalesce(payment_schedule.outstanding, purchase_invoices.outstanding_amount) > 0)
+		if settings.allow_stand_alone_debit_notes == "No"
+		else (Coalesce(payment_schedule.outstanding, purchase_invoices.outstanding_amount) != 0)
+	)
 	pi_qb = (
 		frappe.qb.from_(purchase_invoices)
 		.left_join(payment_schedule)
@@ -594,7 +597,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			(payment_schedule.payment_term).as_("payment_term"),
 		)
 		.where(Coalesce(payment_schedule.due_date, purchase_invoices.due_date) <= end_date)
-		.where(Coalesce(payment_schedule.outstanding, purchase_invoices.outstanding_amount) != 0)
+		.where(stand_alone_debit_note_filter)
 		.where(purchase_invoices.company == company)
 		.where(purchase_invoices.docstatus == 1)
 		.where(purchase_invoices.credit_to == pay_to_account)

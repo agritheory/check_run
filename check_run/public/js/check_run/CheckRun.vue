@@ -105,8 +105,7 @@
 							<select
 								v-if="frm.doc.status == 'Draft'"
 								class="form-control form-select form-select-lg mb-3"
-								@change="onMOPChange(frm, $event, item.name)"
-							>
+								@change="onMOPChange(frm, $event, item.name)">
 								<option v-for="mop in modes_of_payment" :selected="transactions[item.name].mode_of_payment == mop">
 									{{ mop }}
 								</option>
