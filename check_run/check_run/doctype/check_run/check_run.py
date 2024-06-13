@@ -7,7 +7,7 @@ from itertools import groupby, zip_longest
 from io import StringIO
 from typing_extensions import Self
 
-from pypdf import PdfWriter
+from PyPDF2 import PdfFileWriter
 
 import frappe
 from frappe.model.document import Document
@@ -433,7 +433,7 @@ class CheckRun(Document):
 		initial_check_number = int(self.initial_check_number)
 		if reprint_check_number and reprint_check_number != "undefined":
 			self.initial_check_number = int(reprint_check_number)
-		output = PdfWriter()
+		output = PdfFileWriter()
 		transactions = json.loads(self.transactions)
 		check_increment = 0
 		_transactions = []
