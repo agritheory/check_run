@@ -4,23 +4,24 @@ import json
 import frappe
 import pytest
 
-from check_run.check_run.doctype.check_run.check_run import get_check_run_settings, get_entries
+from check_run.check_run.doctype.check_run.check_run import (
+	get_check_run_settings,
+	get_entries,
+	check_for_draft_check_run,
+)
 
 year = datetime.date.today().year
 
 
 @pytest.fixture
 def cr():  # return draft check run
-	if (
-		frappe.db.exists("Check Run", f"ACC-CR-{year}-00001")
-		and frappe.get_value("Check Run", f"ACC-CR-{year}-00001", "docstatus") == 0
-	):
-		return frappe.get_doc("Check Run", f"ACC-CR-{year}-00001")
-	cr = frappe.new_doc("Check Run")
+	cr_name = check_for_draft_check_run(
+		company="Chelsea Fruit Co",
+		bank_account="Primary Checking - Local Bank",
+		payable_account="2110 - Accounts Payable - CFC",
+	)
+	cr = frappe.get_doc("Check Run", cr_name)
 	cr.flags.in_test = True
-	cr.company = "Chelsea Fruit Co"
-	cr.bank_account = "Primary Checking - Local Bank"
-	cr.pay_to_account = "2110 - Accounts Payable - CFC"
 	cr.posting_date = cr.end_date = datetime.date(year, 12, 31)
 	cr.set_last_check_number()
 	cr.set_default_payable_account()
