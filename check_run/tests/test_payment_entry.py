@@ -95,7 +95,7 @@ def test_partial_payment_payment_entry_without_terms():
 	pi = frappe.get_doc("Purchase Invoice", pi_name)
 	with pytest.raises(
 		frappe.exceptions.ValidationError,
-		match=f"Row #1 Sphere Cellular / ACC-PINV-{year}-00007: Allocated Amount of 100.0 cannot be greater than outstanding amount of 50.0.",
+		match=f'<b>Row #1</b> Sphere Cellular / <a href="http://test_site:8000/app/purchase-invoice/ACC-PINV-{year}-00007">ACC-PINV-{year}-00007</a>: Allocated Amount of 100.0 cannot be greater than outstanding amount of 50.0.',
 	):
 		pe2.save()
 
