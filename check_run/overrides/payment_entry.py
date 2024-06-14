@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import get_link_to_form, comma_and, flt
+from frappe.utils import get_link_to_form, flt
 from erpnext.accounts.general_ledger import make_gl_entries, process_gl_map
 from frappe.utils.data import getdate
 from erpnext.accounts.doctype.payment_entry.payment_entry import (
@@ -10,7 +10,6 @@ from erpnext.accounts.doctype.payment_entry.payment_entry import (
 	get_outstanding_reference_documents,
 )
 from frappe import _
-import json
 
 
 class CheckRunPaymentEntry(PaymentEntry):
@@ -278,28 +277,28 @@ def validate_duplicate_check_number(doc: PaymentEntry, method: str | None = None
 
 
 @frappe.whitelist()
-def validate_add_payment_term(doc: PaymentEntry, method: str | None = None):
-	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
-	if doc.check_run:
-		return
-	adjusted_refs = []
+def update_outstanding_amount(doc: PaymentEntry, method: str | None = None):
+	paid_amount = doc.paid_amount
 	for r in doc.get("references"):
-		if r.reference_doctype == "Purchase Invoice" and not r.payment_term:
-			pmt_term = frappe.get_all(
+		if r.reference_doctype == "Purchase Invoice":
+			payment_schedule = frappe.get_all(
 				"Payment Schedule",
 				{"parent": r.reference_name, "outstanding": [">", 0.0]},
-				["payment_term"],
+				["name", "outstanding", "payment_term"],
 				order_by="due_date ASC",
 				limit=1,
 			)
-			if pmt_term:
-				r.payment_term = pmt_term[0].get("payment_term")
-				adjusted_refs.append(r.reference_name)
-	if adjusted_refs:
-		frappe.msgprint(
-			msg=frappe._(
-				f"An outstanding Payment Schedule term was detected and added for {comma_and(adjusted_refs)} in the references table.<br>Please review - "
-				"this field must be filled in for the Payment Schedule to synchronize and to prevent a paid invoice portion from showing up in a Check Run."
-			),
-			title=frappe._("Payment Schedule Term Added"),
-		)
+			for term in payment_schedule:
+				if r.payment_term and term.payment_term != r.payment_term:
+					continue
+				if paid_amount <= 0.0:
+					break
+				if term.outstanding > 0.0:
+					if term.outstanding > paid_amount:
+						frappe.db.set_value(
+							"Payment Schedule", term.name, "outstanding", flt(term.outstanding - paid_amount)
+						)
+						break
+					else:
+						paid_amount = paid_amount - term.outstanding
+						frappe.db.set_value("Payment Schedule", term.name, "outstanding", 0)
