@@ -35,6 +35,7 @@ def test_partial_payment_payment_entry_with_terms():
 
 	pi = frappe.get_doc("Purchase Invoice", pi_name)
 	assert pi.payment_schedule[0].outstanding == 120.00
+	assert pi.outstanding_amount == 120.00
 
 	pe1 = get_payment_entry("Purchase Invoice", pi_name)
 	pe1.mode_of_payment = "Check"
@@ -47,6 +48,7 @@ def test_partial_payment_payment_entry_with_terms():
 
 	pi = frappe.get_doc("Purchase Invoice", pi_name)
 	assert pi.payment_schedule[0].outstanding == 0.00
+	assert pi.outstanding_amount == 0.0
 
 
 def test_partial_payment_payment_entry_without_terms():
@@ -68,6 +70,7 @@ def test_partial_payment_payment_entry_without_terms():
 
 	pi = frappe.get_doc("Purchase Invoice", pi_name)
 	assert pi.payment_schedule[0].outstanding == 150.00
+	assert pi.outstanding_amount == 150
 
 	pe1 = get_payment_entry("Purchase Invoice", pi_name)
 	pe1.mode_of_payment = "Check"
@@ -80,6 +83,7 @@ def test_partial_payment_payment_entry_without_terms():
 
 	pi = frappe.get_doc("Purchase Invoice", pi_name)
 	assert pi.payment_schedule[0].outstanding == 50.00
+	assert pi.outstanding_amount == 50.00
 
 	pe2 = get_payment_entry("Purchase Invoice", pi_name)
 	pe2.mode_of_payment = "Check"
@@ -102,6 +106,7 @@ def test_partial_payment_payment_entry_without_terms():
 
 	pi.reload()
 	assert pi.payment_schedule[0].outstanding == 00.00
+	assert pi.outstanding_amount == 0.00
 
 
 def test_outstanding_amount_in_check_run(cr):
@@ -123,6 +128,7 @@ def test_outstanding_amount_in_check_run(cr):
 
 	pi = frappe.get_doc("Purchase Invoice", pi_name)
 	assert pi.payment_schedule[0].outstanding == 90.00
+	assert pi.outstanding_amount == 90.00
 
 	cr.transactions = None
 	cr.save()
