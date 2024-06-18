@@ -976,10 +976,30 @@ def download_pdf(
 	data = ""
 	for d in out.get("html"):
 		data += d[0]
+	
+	style = out.get('style')
+
+	hide_image ="""
+			@media print {
+					@print {
+						margin: 0;
+					}
+					
+					.back_image {
+						background: none !important;
+					}
+				}	
+			"""
+
 	html = """<style type='text/css'>{}</style><link href={}{} rel='stylesheet'>""".format(
-		out.get("style"), baseurl, printcss
+		style, baseurl, printcss
 	)
+
 	html += f"<div class='print-format print-format-preview'>{data}</div>"
+
+
+	modified_html_string = html.replace('</style>', hide_image + '</style>')
+	html = modified_html_string
 	with print_language(language):
 		pdf_file = frappe.get_print(
 			doctype,
