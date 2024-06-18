@@ -4,18 +4,16 @@ import types
 import frappe
 from erpnext.accounts.doctype.account.account import update_account_number
 from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import make_debit_note
-from erpnext.accounts.doctype.sales_invoice.sales_invoice import make_sales_return
 from erpnext.setup.utils import enable_all_roles_and_domains, set_defaults_for_tests
 from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
 from frappe.utils.data import add_days, flt
 
-
 from check_run.tests.fixtures import (
+	customers,
 	employees,
+	sales_tax_templates,
 	suppliers,
 	tax_authority,
-	customers,
-	sales_tax_templates,
 )
 
 
@@ -218,12 +216,33 @@ def create_payment_terms_templates(settings):
 			},
 		)
 		doc.save()
+
 	if not frappe.db.exists("Payment Terms Template", "Net 14"):
 		pt = frappe.new_doc("Payment Term")
 		pt.payment_term_name = "Net 14"
 		pt.due_date_based_on = "Day(s) after invoice date"
 		pt.invoice_portion = 100
 		pt.credit_days = 14
+		pt.save()
+		doc = frappe.new_doc("Payment Terms Template")
+		doc.template_name = pt.name
+		doc.append(
+			"terms",
+			{
+				"payment_term": pt.name,
+				"invoice_portion": pt.invoice_portion,
+				"due_date_based_on": pt.due_date_based_on,
+				"credit_days": pt.credit_days,
+			},
+		)
+		doc.save()
+
+	if not frappe.db.exists("Payment Terms Template", "Due After Month End"):
+		pt = frappe.new_doc("Payment Term")
+		pt.payment_term_name = "Due After Month End"
+		pt.due_date_based_on = "Day(s) after the end of the invoice month"
+		pt.invoice_portion = 100
+		pt.credit_days = 28
 		pt.save()
 		doc = frappe.new_doc("Payment Terms Template")
 		doc.template_name = pt.name

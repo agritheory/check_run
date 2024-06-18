@@ -119,7 +119,7 @@ tax_authority = [
 		"Payroll Taxes",
 		"Check",
 		0.00,
-		"Net 30",
+		"Due After Month End",
 		{
 			"address_line1": "18 Spooner Stravenue",
 			"city": "Danbury",
