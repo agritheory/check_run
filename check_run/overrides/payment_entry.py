@@ -278,27 +278,51 @@ def validate_duplicate_check_number(doc: PaymentEntry, method: str | None = None
 
 @frappe.whitelist()
 def update_outstanding_amount(doc: PaymentEntry, method: str | None = None):
-	paid_amount = doc.paid_amount
+	paid_amount = doc.paid_amount if method == "on_submit" else 0.0
 	for r in doc.get("references"):
 		if r.reference_doctype == "Purchase Invoice":
 			payment_schedule = frappe.get_all(
 				"Payment Schedule",
-				{"parent": r.reference_name, "outstanding": [">", 0.0]},
-				["name", "outstanding", "payment_term"],
+				{"parent": r.reference_name},
+				["name", "outstanding", "payment_term", "payment_amount"],
 				order_by="due_date ASC",
-				limit=1,
 			)
+			payment_schedule = payment_schedule if method == "on_submit" else reversed(payment_schedule)
+
 			for term in payment_schedule:
-				if r.payment_term and term.payment_term != r.payment_term:
-					continue
-				if paid_amount <= 0.0:
-					break
-				if term.outstanding > 0.0:
-					if term.outstanding > paid_amount:
-						frappe.db.set_value(
-							"Payment Schedule", term.name, "outstanding", flt(term.outstanding - paid_amount)
+				if method == "on_submit":
+					if r.payment_term and term.payment_term != r.payment_term:
+						continue
+					if term.outstanding > 0.0 and paid_amount > 0.0:
+						if term.outstanding > paid_amount:
+							frappe.db.set_value(
+								"Payment Schedule",
+								term.name,
+								"outstanding",
+								flt(term.outstanding - paid_amount),  # TODO: add precision
+							)
+							break
+						else:
+							paid_amount = flt(paid_amount - term.outstanding)  # TODO: add precision
+							frappe.db.set_value("Payment Schedule", term.name, "outstanding", 0)
+							if paid_amount <= 0.0:
+								break
+
+				if method == "on_cancel":
+					if r.payment_term and term.payment_term != r.payment_term:
+						continue
+					if term.outstanding != term.payment_amount:
+						# if this payment term had previously been allocated against
+						paid_amount += flt(
+							paid_amount + (term.payment_amount - term.outstanding)
+						)  # TODO: add precision
+						reverse = (
+							flt(paid_amount + term.outstanding)
+							if paid_amount < term.payment_amount
+							else term.payment_amount
 						)
-						break
-					else:
-						paid_amount = paid_amount - term.outstanding
-						frappe.db.set_value("Payment Schedule", term.name, "outstanding", 0)
+						frappe.db.set_value(
+							"Payment Schedule", term.name, "outstanding", reverse  # TODO: add precision
+						)
+						if paid_amount >= doc.paid_amount:
+							break
