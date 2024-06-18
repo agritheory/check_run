@@ -127,9 +127,7 @@ def get_check_run_format(
 
 			settings = json.loads(settings) if isinstance(doc, str) else settings
 
-			if doctype_to_print == "Payment Entry":
-				print_formats = print_format
-			if doctype_to_print == "Payment Entry Secondary Format":
+			if doctype_to_print in ["Payment Entry", "Payment Entry Secondary Format"]:
 				print_formats = print_format
 
 			print_formats = get_print_format_doc(
