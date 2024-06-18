@@ -3,6 +3,7 @@ import json
 
 import frappe
 import pytest
+from erpnext.accounts.party import get_due_date
 from frappe.utils import flt
 
 from check_run.check_run.doctype.check_run.check_run import (
@@ -47,6 +48,13 @@ def test_tax_payable_gl():
 	for doc in sis:
 		precision = frappe.get_precision(doc.doctype, "grand_total")
 		doc.submit()
+		for row in doc.taxes:
+			if row.due_date != doc.posting_date:
+				due_date = get_due_date(doc.posting_date, row.party_type, row.party, doc.company)
+				assert row.due_date == due_date
+			else:
+				assert row.due_date == doc.posting_date
+
 		gl1 = frappe.get_doc(
 			"GL Entry", {"voucher_no": doc.name, "account": "2320 - Sales Tax Payable - CFC"}
 		)

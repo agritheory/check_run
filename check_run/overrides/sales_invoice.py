@@ -9,7 +9,6 @@ from frappe.utils.data import cint, flt
 
 
 class CheckRunSalesInvoice(SalesInvoice):
-	# TODO: update due date in taxes with validate hook
 	def validate(self):
 		super().validate()
 		for row in self.taxes:
