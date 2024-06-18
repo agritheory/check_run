@@ -63,7 +63,7 @@
 						<td style="text-align: left">{{ item.party_name || item.party }}</td>
 						<td style="text-align: left; white-space: nowrap">
 							<a :href="transactionUrl(item)" target="_blank">
-								{{ item.ref_number || item.name }}
+								{{ item.doctype != 'Sales Invoice' ? item.ref_number : item.name }}
 							</a>
 							<div v-if="item.attachments && item.attachments.length > 1" style="float: right" class="dropdown show">
 								<a
@@ -109,7 +109,7 @@
 							</select>
 							<span v-else>{{ transactions[item.name].mode_of_payment }}</span>
 						</td>
-						<td>{{ format_currency(item.amount, frm.pay_to_account_currency, 2) }}</td>
+						<td>{{ format_currency(item.amount, pay_to_account_currency, 2) }}</td>
 						<td>{{ datetime.str_to_user(item.due_date) }}</td>
 						<td v-if="frm.doc.status == 'Draft'" style="text-align: left">
 							<input
@@ -162,6 +162,10 @@ let frm = computed(() => {
 
 let datetime = computed(() => {
 	return unref(window.frappe.datetime)
+})
+
+let pay_to_account_currency = computed(() => {
+	return unref(frm.fields_dict.pay_to_account.df.options)
 })
 
 onMounted(() => {

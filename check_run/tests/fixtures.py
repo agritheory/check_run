@@ -44,7 +44,7 @@ suppliers = [
 	(
 		"AgriTheory",
 		"ERPNext Consulting",
-		"Check",
+		None,
 		1000.00,
 		"Net 14",
 		{
@@ -115,11 +115,39 @@ suppliers = [
 
 tax_authority = [
 	(
-		"Local Tax Authority",
+		"Massachusetts Department of Revenue",
 		"Payroll Taxes",
-		None,
+		"Check",
 		0.00,
-		"Due on Receipt",
+		"Due After Month End",
+		{
+			"address_line1": "18 Spooner Stravenue",
+			"city": "Danbury",
+			"state": "RI",
+			"country": "United States",
+			"pincode": "07165",
+		},
+	),
+	(
+		"Rhode Island Division of Taxation",
+		"Payroll Taxes",
+		"Check",
+		0.00,
+		"Net 30",
+		{
+			"address_line1": "18 Spooner Stravenue",
+			"city": "Danbury",
+			"state": "RI",
+			"country": "United States",
+			"pincode": "07165",
+		},
+	),
+	(
+		"Vermont Department of Taxes",
+		"Payroll Taxes",
+		"Check",
+		0.00,
+		"Net 30",
 		{
 			"address_line1": "18 Spooner Stravenue",
 			"city": "Danbury",
@@ -129,6 +157,64 @@ tax_authority = [
 		},
 	),
 ]
+
+sales_tax_templates = [
+	{
+		"name": "MA Sales Tax - CFC",
+		"doctype": "Sales Taxes and Charges Template",
+		"title": "MA Sales Tax",
+		"is_default": 1,
+		"company": "Chelsea Fruit Co",
+		"taxes": [
+			{
+				"charge_type": "On Net Total",
+				"account_head": "2320 - Sales Tax Payable - CFC",
+				"description": "Sales Tax 6% ",
+				"cost_center": "Main - CFC",
+				"rate": 6.25,
+				"party_type": "Supplier",
+				"party": "Massachusetts Department of Revenue",
+			}
+		],
+	},
+	{
+		"name": "VT Sales Tax - CFC",
+		"doctype": "Sales Taxes and Charges Template",
+		"title": "VT Sales Tax",
+		"is_default": 0,
+		"company": "Chelsea Fruit Co",
+		"taxes": [
+			{
+				"charge_type": "On Net Total",
+				"account_head": "2320 - Sales Tax Payable - CFC",
+				"description": "Sales Tax 6.25% ",
+				"cost_center": "Main - CFC",
+				"rate": 6,
+				"party_type": "Supplier",
+				"party": "Vermont Department of Taxes",
+			}
+		],
+	},
+	{
+		"name": "RI Sales Tax - CFC",
+		"doctype": "Sales Taxes and Charges Template",
+		"title": "RI Sales Tax",
+		"is_default": 0,
+		"company": "Chelsea Fruit Co",
+		"taxes": [
+			{
+				"charge_type": "On Net Total",
+				"account_head": "2320 - Sales Tax Payable - CFC",
+				"description": "Sales Tax 7% ",
+				"cost_center": "Main - CFC",
+				"rate": 7,
+				"party_type": "Supplier",
+				"party": "Rhode Island Division of Taxation",
+			}
+		],
+	},
+]
+
 
 employees = [
 	("Wilmer Larson", "Male", "1977-03-06", "2019-04-12", "20 Gaven Path", "Spokane", "NV", "66308"),
@@ -241,5 +327,68 @@ employees = [
 		"Urbana",
 		"DE",
 		"55975",
+	),
+]
+
+customers = [
+	(
+		"Almacs Food Group",
+		{
+			"address_line1": "1103 Storey Road",
+			"city": "Edina",
+			"state": "AZ",
+			"country": "United States",
+			"pincode": "24632",
+		},
+	),
+	(
+		"Beans and Dreams Roasters",
+		{
+			"address_line1": "743 Dorcas Road",
+			"city": "Salina",
+			"state": "CT",
+			"country": "United States",
+			"pincode": "25901",
+		},
+	),
+	(
+		"Cafe 27 Cafeteria",
+		{
+			"address_line1": "1340 Cook Street",
+			"city": "Salina",
+			"state": "OK",
+			"country": "United States",
+			"pincode": "93312",
+		},
+	),
+	(
+		"Capital Grille Restaurant Group",
+		{
+			"address_line1": "4 South Gate",
+			"city": "Salina",
+			"state": "MA",
+			"country": "United States",
+			"pincode": "08385",
+		},
+	),
+	(
+		"Downtown Deli",
+		{
+			"address_line1": "1302 Sibley Road",
+			"city": "Salina",
+			"state": "MT",
+			"country": "United States",
+			"pincode": "24654",
+		},
+	),
+	(
+		"NRK Dry Fruits",
+		{
+			"address_line1": "1300 Sibley Road",
+			"city": "Salina",
+			"state": "MT",
+			"country": "United States",
+			"pincode": "24655",
+		},
 	),
 ]
