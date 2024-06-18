@@ -127,11 +127,8 @@ def get_check_run_format(
 
 			settings = json.loads(settings) if isinstance(doc, str) else settings
 
-			if doctype_to_print in ["Payment Entry", "Payment Entry Secondary Format"]:
-				print_formats = print_format
-
 			print_formats = get_print_format_doc(
-				print_formats, meta=meta or frappe.get_meta("Payment Entry")
+				print_format, meta=meta or frappe.get_meta("Payment Entry")
 			)
 			set_link_titles(pe_doc)
 

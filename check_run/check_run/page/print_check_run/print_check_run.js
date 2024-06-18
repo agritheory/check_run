@@ -475,6 +475,19 @@ frappe.ui.form.PrintView = class {
 			if (printit) {
 				w.print()
 			}
+			var afterPrint = function () {
+				w.close()
+			}
+			if (w.matchMedia) {
+				var mediaQueryList = w.matchMedia('print')
+				mediaQueryList.addListener(function (mql) {
+					if (!mql.matches) {
+						console.log('out')
+						afterPrint()
+					}
+				})
+			}
+			window.onafterprint = afterPrint
 		})
 		if (!w) {
 			frappe.msgprint(__('Please enable pop-ups'))
