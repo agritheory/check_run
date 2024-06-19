@@ -5,9 +5,9 @@ import frappe
 import pytest
 
 from check_run.check_run.doctype.check_run.check_run import (
+	check_for_draft_check_run,
 	get_check_run_settings,
 	get_entries,
-	check_for_draft_check_run,
 )
 
 year = datetime.date.today().year
