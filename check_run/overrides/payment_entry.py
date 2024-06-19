@@ -250,49 +250,50 @@ def validate_duplicate_check_number(doc: PaymentEntry, method: str | None = None
 def update_outstanding_amount(doc: PaymentEntry, method: str | None = None):
 	paid_amount = doc.paid_amount if method == "on_submit" else 0.0
 	for r in doc.get("references"):
-		if r.reference_doctype == "Purchase Invoice":
-			payment_schedule = frappe.get_all(
-				"Payment Schedule",
-				{"parent": r.reference_name},
-				["name", "outstanding", "payment_term", "payment_amount"],
-				order_by="due_date ASC",
-			)
-			payment_schedule = payment_schedule if method == "on_submit" else reversed(payment_schedule)
+		if r.reference_doctype != "Purchase Invoice":
+			continue
+		payment_schedules = frappe.get_all(
+			"Payment Schedule",
+			{"parent": r.reference_name},
+			["name", "outstanding", "payment_term", "payment_amount"],
+			order_by="due_date ASC",
+		)
+		if not payment_schedules:
+			continue
 
-			for term in payment_schedule:
-				if method == "on_submit":
-					if r.payment_term and term.payment_term != r.payment_term:
-						continue
-					if term.outstanding > 0.0 and paid_amount > 0.0:
-						if term.outstanding > paid_amount:
-							frappe.db.set_value(
-								"Payment Schedule",
-								term.name,
-								"outstanding",
-								flt(term.outstanding - paid_amount),  # TODO: add precision
-							)
-							break
-						else:
-							paid_amount = flt(paid_amount - term.outstanding)  # TODO: add precision
-							frappe.db.set_value("Payment Schedule", term.name, "outstanding", 0)
-							if paid_amount <= 0.0:
-								break
+		payment_schedule = frappe.get_doc("Payment Schedule", payment_schedules[0]["name"])
+		precision = payment_schedule.precision("outstanding")
+		payment_schedules = payment_schedules if method == "on_submit" else reversed(payment_schedules)
 
-				if method == "on_cancel":
-					if r.payment_term and term.payment_term != r.payment_term:
-						continue
-					if term.outstanding != term.payment_amount:
-						# if this payment term had previously been allocated against
-						paid_amount += flt(
-							paid_amount + (term.payment_amount - term.outstanding)
-						)  # TODO: add precision
-						reverse = (
-							flt(paid_amount + term.outstanding)
-							if paid_amount < term.payment_amount
-							else term.payment_amount
-						)
+		for term in payment_schedules:
+			if r.payment_term and term.payment_term != r.payment_term:
+				continue
+
+			if method == "on_submit":
+				if term.outstanding > 0.0 and paid_amount > 0.0:
+					if term.outstanding > paid_amount:
 						frappe.db.set_value(
-							"Payment Schedule", term.name, "outstanding", reverse  # TODO: add precision
+							"Payment Schedule",
+							term.name,
+							"outstanding",
+							flt(term.outstanding - paid_amount, precision),
 						)
-						if paid_amount >= doc.paid_amount:
+						break
+					else:
+						paid_amount = flt(paid_amount - term.outstanding, precision)
+						frappe.db.set_value("Payment Schedule", term.name, "outstanding", 0)
+						if paid_amount <= 0.0:
 							break
+
+			if method == "on_cancel":
+				if term.outstanding != term.payment_amount:
+					# if this payment term had previously been allocated against
+					paid_amount += flt(paid_amount + (term.payment_amount - term.outstanding), precision)
+					reverse = (
+						flt(paid_amount + term.outstanding, precision)
+						if paid_amount < term.payment_amount
+						else term.payment_amount
+					)
+					frappe.db.set_value("Payment Schedule", term.name, "outstanding", reverse)
+					if paid_amount >= doc.paid_amount:
+						break
