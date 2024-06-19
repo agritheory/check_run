@@ -4,9 +4,8 @@
 import json
 
 import frappe
-
-from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import PurchaseInvoice
 from erpnext.accounts.doctype.journal_entry.journal_entry import JournalEntry
+from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import PurchaseInvoice
 from hrms.hr.doctype.expense_claim.expense_claim import ExpenseClaim
 
 
