@@ -49,7 +49,7 @@ frappe.ui.form.Attachments.prototype.add_attachment = attachment => {
 				${frappe.utils.icon(attachment.is_private ? 'lock' : 'unlock', 'sm ml-0')}
 			</a>`
 
-	if (file_name.endsWith('.pdf')) {
+	if (file_name.toLowerCase().endsWith('.pdf')) {
 		icon += `<i class="fa fa-file-pdf-o" data-pdf-preview="${file_url}"></i>`
 	}
 
@@ -61,16 +61,25 @@ frappe.ui.form.Attachments.prototype.add_attachment = attachment => {
 		frappe.ui.pdfPreview(cur_frm, event.currentTarget.dataset.pdfPreview)
 	})
 
-	if (file_name.endsWith('.pdf')) {
-		frappe.ui.addFilePreviewWrapper()
+	if (file_name.toLowerCase().endsWith('.pdf')) {
+		frappe.ui.addFilePreviewWrapper(cur_frm)
 	}
 }
 
-frappe.ui.addFilePreviewWrapper = () => {
-	if ($('#pdf-preview-wrapper').length == 0) {
-		$('.page-body .page-wrapper').append(`<div id="pdf-preview-wrapper">
-		<button class="btn btn-secondary btn-default btn-sm" id='close-pdf-button'>Close PDF Preview</button>
-		</div>`)
+frappe.ui.addFilePreviewWrapper = frm => {
+	$('#pdf-preview-wrapper').remove()
+	let targetDiv = document.querySelector(`[id='page-${frm.doctype}']`)
+	if (targetDiv) {
+		let page_body = targetDiv.querySelector('.page-body')
+		if (page_body) {
+			let page_wrapper = page_body.querySelector('.page-wrapper')
+
+			if (page_wrapper) {
+				$(page_wrapper).append(`<div id="pdf-preview-wrapper">
+			<button class="btn btn-secondary btn-default btn-sm" id='close-pdf-button'>Close PDF Preview</button>
+			</div>`)
+			}
+		}
 	}
 }
 
