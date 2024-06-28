@@ -400,6 +400,8 @@ def create_invoices(settings):
 				"qty": 1,
 			},
 		)
+		if supplier[0].startswith("Sphere"):
+			pi.payment_terms_template = None
 		pi.save()
 		pi.submit()
 	# two electric meters / test invoice aggregation
