@@ -272,9 +272,10 @@ class CheckRun(Document):
 
 	def create_payment_entries(self: Self, transactions: list[frappe._dict]) -> list[frappe._dict]:
 		settings = get_check_run_settings(self)
-		split = 5
-		if settings and settings.number_of_invoices_per_voucher:
-			split = settings.number_of_invoices_per_voucher
+		if not settings.secondary_print_format:
+			split = 5
+			if settings and settings.number_of_invoices_per_voucher:
+				split = settings.number_of_invoices_per_voucher
 		check_count = 0
 		_transactions = []
 		gl_account = frappe.get_value("Bank Account", self.bank_account, "account")
@@ -299,9 +300,12 @@ class CheckRun(Document):
 			_group = list(__group)
 			if _group[0].party_type == "Supplier":
 				supplier_split = frappe.db.get_value("Supplier", party, "number_of_invoices_per_check_voucher")
-				split = supplier_split if supplier_split else split
-
-			if frappe.db.get_value("Mode of Payment", _group[0].mode_of_payment, "type") == "Bank":
+				if not settings.secondary_print_format:
+					split = supplier_split if supplier_split else split
+			if (
+				frappe.db.get_value("Mode of Payment", _group[0].mode_of_payment, "type") == "Bank"
+				and not settings.secondary_print_format
+			):
 				groups = list(zip_longest(*[iter(_group)] * split))
 			else:
 				groups = [_group]  # type: ignore
@@ -433,6 +437,7 @@ class CheckRun(Document):
 		if reprint_check_number and reprint_check_number != "undefined":
 			self.initial_check_number = int(reprint_check_number)
 		output = PdfFileWriter()
+		se_print_output = PdfFileWriter()
 		transactions = json.loads(self.transactions)
 		check_increment = 0
 		_transactions = []
@@ -446,6 +451,14 @@ class CheckRun(Document):
 			mode_of_payment, docstatus = frappe.db.get_value(
 				"Payment Entry", pe, ["mode_of_payment", "docstatus"]
 			) or (None, None)
+			se_print_output = frappe.get_print(
+				"Payment Entry",
+				pe,
+				settings.secondary_print_format or frappe.get_meta("Payment Entry").default_print_format,
+				as_pdf=True,
+				output=se_print_output,
+				no_letterhead=0,
+			)
 			if docstatus == 1 and frappe.db.get_value("Mode of Payment", mode_of_payment, "type") == "Bank":
 				output = frappe.get_print(
 					"Payment Entry",
@@ -489,6 +502,15 @@ class CheckRun(Document):
 		frappe.db.set_value("Bank Account", self.bank_account, "check_number", self.final_check_number)
 		save_file(
 			f"{self.name}.pdf", read_multi_pdf(output), "Check Run", self.name, "Home/Check Run", False, 0
+		)
+		save_file(
+			f"Chaque {self.name}.pdf",
+			read_multi_pdf(se_print_output),
+			"Check Run",
+			self.name,
+			"Home/Check Run",
+			False,
+			0,
 		)
 		frappe.db.commit()
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
@@ -875,6 +897,7 @@ def build_nacha_file_from_payment_entries(
 	return nacha_file
 
 
+# Comment
 @frappe.whitelist()
 def get_check_run_settings(doc: CheckRun | str) -> CheckRunSettings:
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
