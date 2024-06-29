@@ -75,6 +75,10 @@ frappe.ui.form.PrintView = class {
 		)
 	}
 
+	get_language_options() {
+		return frappe.get_languages()
+	}
+
 	setup_sidebar() {
 		this.sidebar = this.page.sidebar.addClass('print-preview-sidebar')
 
@@ -82,20 +86,22 @@ frappe.ui.form.PrintView = class {
 			fieldtype: 'Select',
 			fieldname: 'doctype',
 			placeholder: 'Payment Entry',
-			options: ['Payment Entry', 'Payment Entry Secondary Format', 'Check Run'],
+			options: ['Check Run', 'Payment Entry', 'Payment Entry Secondary Format'],
 			default: 'Payment Entry',
 			change: () => {
+				this.preview()
+				this.refresh_print_options()
 				this.preview()
 			},
 		}).$input
 
 		this.print_sel = this.add_sidebar_item({
-			fieldtype: 'Autocomplete',
+			fieldtype: 'Select',
 			fieldname: 'print_format',
 			label: 'Print Format',
-			options: 'Print Format',
+			options: [this.get_default_option_for_select(__('Select Print Format'))],
 			change: () => this.refresh_print_format(),
-			default: '',
+			default: __('Select Print Format'),
 		}).$input
 
 		this.invoices_per_voucher = this.add_sidebar_item({
@@ -104,15 +110,16 @@ frappe.ui.form.PrintView = class {
 			label: 'Invoices Per Voucher',
 			change: () => this.refresh_print_format(),
 			default: 5,
+			read_only: 1,
 		}).$input
 
-		this.secondary_print_format = this.add_sidebar_item({
-			fieldtype: 'Autocomplete',
-			fieldname: 'secondary_print_format',
-			label: 'Secondary Print Format',
-			options: 'Print Format',
+		this.update_check_ref = this.add_sidebar_item({
+			fieldtype: 'Select',
+			fieldname: 'update_check_ref',
+			label: 'Update Check Reference',
+			options: ['No', 'Yes'],
 			change: () => this.refresh_print_format(),
-			default: '',
+			default: __('No'),
 		}).$input
 	}
 
@@ -153,10 +160,6 @@ frappe.ui.form.PrintView = class {
 			this.page.add_menu_item(__('Raw Printing Setting'), () => {
 				this.printer_setting_dialog()
 			})
-		}
-
-		if (frappe.model.can_create('Print Format')) {
-			this.page.add_menu_item(__('Customize'), () => this.edit_print_format())
 		}
 
 		if (cint(this.print_settings.enable_print_server)) {
@@ -213,6 +216,10 @@ frappe.ui.form.PrintView = class {
 		})
 	}
 
+	get_letterhead() {
+		return this.letterhead_selector.val()
+	}
+
 	preview_beta() {
 		let print_format = this.get_print_format()
 		const iframe = this.print_wrapper.find('.preview-beta-wrapper iframe')
@@ -234,8 +241,19 @@ frappe.ui.form.PrintView = class {
 			`<style type="text/css">${out.style}</style>
 			<link href="${base_url}${print_css}" rel="stylesheet">`
 		)
+		if (this.doctype_to_print.val() == 'Check Run') {
+			this.$print_format_body.find('body').html(`<div class="print-format print-format-preview">${out.html}</div>`)
+		} else {
+			this.$print_format_body.find('body').html(`<div class="print-format print-format-preview"></div>`)
 
-		this.$print_format_body.find('body').html(`<div class="print-format print-format-preview">${out.html}</div>`)
+			let $parentDiv = this.$print_format_body.find('.print-format-preview')
+
+			// Use forEach to append each HTML string to the parent div
+			out.html.forEach(function (htmlContent) {
+				$parentDiv.append(htmlContent)
+				$parentDiv.append(`<div class="page-break"></div>`)
+			})
+		}
 
 		this.show_footer()
 
@@ -336,6 +354,7 @@ frappe.ui.form.PrintView = class {
 		} else {
 			me.render_page('/print_check_run?', true)
 		}
+		this.confirm_print(me)
 	}
 
 	print_by_server() {
@@ -401,27 +420,71 @@ frappe.ui.form.PrintView = class {
 				return
 			}
 		} else {
-			this.render_page('/api/method/frappe.utils.print_format.download_pdf?')
+			this.render_check_run_pdf('/api/method/check_run.check_run.doctype.check_run.check_run.download_pdf?')
 		}
+	}
+
+	set_user_lang() {
+		console.log(this.language_sel.val())
+		this.lang_code = this.language_sel.val()
+	}
+
+	render_check_run_pdf(method) {
+		let base_url = frappe.urllib.get_base_url()
+		let print_css = frappe.assets.bundled_asset('print.bundle.css', frappe.utils.is_rtl(this.lang_code))
+		let w = window.open(
+			frappe.urllib.get_full_url(`${method}
+				doctype=${encodeURIComponent(this.frm.doc.doctype)}
+				&name=${encodeURIComponent(this.frm.doc.name)}
+				&formattype=${encodeURIComponent(this.doctype_to_print.val())}
+				&print_format=${encodeURIComponent(this.print_sel.val())}
+				&baseurl=${encodeURIComponent(base_url)}
+				&printcss=${encodeURIComponent(print_css)}
+				&lang=${encodeURIComponent('en')}`)
+		)
 	}
 
 	render_page(method, printit = false) {
 		let w = window.open(
-			frappe.urllib.get_full_url(
-				method +
-					'doctype=' +
-					encodeURIComponent(this.frm.doc.doctype) +
-					'&name=' +
-					encodeURIComponent(this.frm.doc.name) +
-					(printit ? '&trigger_print=1' : '') +
-					'&format=' +
-					encodeURIComponent(this.selected_format()) +
-					'&no_letterhead=0' +
-					'&settings=' +
-					encodeURIComponent(JSON.stringify(this.additional_settings)) +
-					(this.lang_code ? '&_lang=' + this.lang_code : '')
-			)
+			frappe.urllib.get_full_url(`${method}
+					doctype=${encodeURIComponent(this.frm.doc.doctype)}
+					&name=${encodeURIComponent(this.frm.doc.name)}
+					&formattype=${encodeURIComponent(this.doctype_to_print)}
+					&lang=${encodeURIComponent('en')}`)
 		)
+
+		this.get_print_html(out => {
+			let base_url = frappe.urllib.get_base_url()
+			let print_css = frappe.assets.bundled_asset('print.bundle.css', frappe.utils.is_rtl(this.lang_code))
+			w.document.write(`<style type="text/css">.page-break { page-break-after: always; }${out.style}</style>
+				<link href="${base_url}${print_css}" rel="stylesheet">`)
+			w.document.write(`<div class="print-format print-format-preview">`)
+			if (this.doctype_to_print != 'Check Run') {
+				out.html.forEach(function (htmlContent) {
+					w.document.write(`${htmlContent}`)
+				})
+			} else {
+				w.document.write(`${out.html}`)
+			}
+			w.document.write(`</div>`)
+			w.document.close()
+			if (printit) {
+				w.print()
+			}
+			var afterPrint = function () {
+				w.close()
+			}
+			if (w.matchMedia) {
+				var mediaQueryList = w.matchMedia('print')
+				mediaQueryList.addListener(function (mql) {
+					if (!mql.matches) {
+						console.log('out')
+						afterPrint()
+					}
+				})
+			}
+			window.onafterprint = afterPrint
+		})
 		if (!w) {
 			frappe.msgprint(__('Please enable pop-ups'))
 			return
@@ -486,8 +549,16 @@ frappe.ui.form.PrintView = class {
 		}
 	}
 
-	refresh_print_options() {
+	async refresh_print_options() {
 		this.print_formats = frappe.meta.get_print_formats(this.frm.doctype)
+		if (this.doctype_to_print.val() == 'Payment Entry') {
+			this.print_formats = await frappe.xcall('check_run.www.print_check_run.get_formats', { doctype: 'Payment Entry' })
+		}
+		if (this.doctype_to_print.val() == 'Payment Entry Secondary Format') {
+			this.print_formats = await frappe.xcall('check_run.www.print_check_run.get_formats', {
+				doctype: this.frm.docname,
+			})
+		}
 		const print_format_select_val = this.print_sel.val()
 		this.print_sel
 			.empty()
@@ -516,8 +587,72 @@ frappe.ui.form.PrintView = class {
 		return print_format
 	}
 
+	with_letterhead() {
+		return cint(this.get_letterhead() !== __('No Letterhead'))
+	}
+
 	set_style(style) {
 		frappe.dom.set_style(style || frappe.boot.print_css, 'print-style')
+	}
+
+	confirm_print(me) {
+		if (this.update_check_ref.val() == 'No') {
+			return
+		}
+
+		let frm = me.frm
+		let d = new frappe.ui.Dialog({
+			title: __('Confirm Print'),
+			fields: [
+				{
+					fieldname: 'ht',
+					fieldtype: 'HTML',
+					options: `<button id="confirm-print" class="btn btn-sm btn-success" style="width: 48%">${__(
+						'Confirm Print'
+					)}</button>
+				<button id="reprint" class="btn btn-sm btn-warning" style="width: 48%; color: white;">${__('Re-Print Checks')}</button>
+				<br><br>`,
+				},
+				{
+					fieldname: 'reprint_check_number',
+					fieldtype: 'Data',
+					label: __('New Initial Check Number'),
+				},
+			],
+			minimizable: false,
+			static: true,
+		})
+		d.wrapper.find('#confirm-print').on('click', () => {
+			frappe
+				.xcall('check_run.check_run.doctype.check_run.check_run.confirm_print', {
+					docname: frm.doc.name,
+				})
+				.then(() => {
+					d.hide()
+				})
+		})
+		d.wrapper.find('#reprint').on('click', () => {
+			d.fields_dict.reprint_check_number.df.reqd = 1
+			let values = cur_dialog.get_values()
+			this.render_checks(me, frm, values.reprint_check_number || undefined)
+			frm.doc.status = 'Submitted'
+			me.page.set_indicator(__('Submitted'), 'blue')
+			d.hide()
+		})
+		d.show()
+	}
+
+	render_checks(me, frm, reprint_check_number = undefined) {
+		frappe
+			.call({
+				method: 'increment_print_count',
+				doc: frm.doc,
+				args: { reprint_check_number: reprint_check_number },
+			})
+			.done(() => {
+				frappe.msgprint('Check Reference No updated successfully')
+			})
+			.fail(r => {})
 	}
 
 	printer_setting_dialog() {
