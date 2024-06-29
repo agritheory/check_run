@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## v15.0.2 (2024-06-29)
+
+### Fix
+
+* fix: clean up and upgrade dependencies in v14 (#259) ([`ae18154`](https://github.com/agritheory/check_run/commit/ae181546d750bf2c6a3f5e2308f0721f75d8eb74))
+
 ## v15.0.1 (2024-06-29)
 
 ### Ci
