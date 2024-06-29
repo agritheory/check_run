@@ -68,12 +68,11 @@ frappe.ui.form.Attachments.prototype.add_attachment = attachment => {
 
 frappe.ui.addFilePreviewWrapper = frm => {
 	$('#pdf-preview-wrapper').remove()
-	let targetDiv = document.querySelector(`[id='page-${frm.doctype}']`)
-	if (targetDiv) {
-		let page_body = targetDiv.querySelector('.page-body')
+	let target_div = $(`[id='page-${frm.doctype}']`)
+	if (target_div) {
+		let page_body = target_div.find('.page-body')
 		if (page_body) {
-			let page_wrapper = page_body.querySelector('.page-wrapper')
-
+			let page_wrapper = page_body.find('.page-wrapper')
 			if (page_wrapper) {
 				$(page_wrapper).append(`<div id="pdf-preview-wrapper">
 			<button class="btn btn-secondary btn-default btn-sm" id='close-pdf-button'>Close PDF Preview</button>
