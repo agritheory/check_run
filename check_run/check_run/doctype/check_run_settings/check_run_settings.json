@@ -22,6 +22,7 @@
   "check_formats_with_background_image",
   "background_image",
   "column_break_9",
+  "print_preview",
   "number_of_invoices_per_voucher",
   "secondary_print_format",
   "split_by_address",
@@ -254,10 +255,17 @@
    "fieldname": "background_image",
    "fieldtype": "Attach",
    "label": "Background Image"
+  },
+  {
+   "default": "Automatically Render PDF After Submit",
+   "fieldname": "print_preview",
+   "fieldtype": "Select",
+   "label": "Print Preview",
+   "options": "Automatically Render PDF After Submit\nPrint from Print Preview"
   }
  ],
  "links": [],
- "modified": "2024-06-06 06:57:27.879988",
+ "modified": "2024-07-10 12:03:31.615288",
  "modified_by": "Administrator",
  "module": "Check Run",
  "name": "Check Run Settings",

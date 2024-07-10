@@ -294,6 +294,9 @@ function confirm_print(frm) {
 }
 
 function reprint_checks(frm) {
+	if (frm.settings.print_preview == 'Print from Print Preview') {
+		return
+	}
 	frm.set_value('status', 'Submitted')
 	let d = new frappe.ui.Dialog({
 		title: __('Re-Print'),
@@ -326,16 +329,25 @@ function reprint_checks(frm) {
 }
 
 function ach_only(frm) {
-	frappe
-		.xcall('check_run.check_run.doctype.check_run.check_run.ach_only', {
-			docname: frm.doc.name,
-		})
-		.then(r => {
-			if (!r.ach_only) {
-				if (frm.doc.docstatus == 1) {
-					if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
-						frm.add_custom_button(__('Re-Print Checks'), () => {
-							reprint_checks(frm)
+	if (frm.settings.print_preview != 'Print from Print Preview') {
+		frappe
+			.xcall('check_run.check_run.doctype.check_run.check_run.ach_only', {
+				docname: frm.doc.name,
+			})
+			.then(r => {
+				if (!r.ach_only) {
+					if (frm.doc.docstatus == 1) {
+						if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
+							frm.add_custom_button(__('Re-Print Checks'), () => {
+								reprint_checks(frm)
+							})
+						} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
+							render_checks(frm)
+						}
+					}
+					if (frm.doc.status == 'Ready to Print') {
+						frm.add_custom_button(__('Download Checks'), () => {
+							download_checks(frm)
 						})
 					} else if (
 						frm.doc.print_count == 0 && 
@@ -344,20 +356,15 @@ function ach_only(frm) {
 						render_checks(frm)
 					}
 				}
-				if (frm.doc.status == 'Ready to Print') {
-					frm.add_custom_button(__('Download Checks'), () => {
-						download_checks(frm)
-					})
+				if (!r.print_checks_only) {
+					if (frm.doc.docstatus == 1) {
+						frm.add_custom_button(__('Download NACHA File'), () => {
+							download_nacha(frm)
+						})
+					}
 				}
-			}
-			if (!r.print_checks_only) {
-				if (frm.doc.docstatus == 1) {
-					frm.add_custom_button(__('Download NACHA File'), () => {
-						download_nacha(frm)
-					})
-				}
-			}
-		})
+			})
+	}
 }
 
 function validate_mode_of_payment_mandatory(frm) {

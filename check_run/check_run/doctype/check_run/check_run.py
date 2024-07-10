@@ -524,15 +524,16 @@ class CheckRun(Document):
 			save_file(
 				f"{self.name}.pdf", read_multi_pdf(output), "Check Run", self.name, "Home/Check Run", False, 0
 			)
-			save_file(
-				f"{self.name}.pdf",
-				read_multi_pdf(se_print_output),
-				"Check Run",
-				self.name,
-				"Home/Check Run",
-				False,
-				0,
-			)
+			# TODO: this is raising an issue
+			# save_file(
+			# 	f"{self.name}.pdf",
+			# 	read_multi_pdf(se_print_output),
+			# 	"Check Run",
+			# 	self.name,
+			# 	"Home/Check Run",
+			# 	False,
+			# 	0,
+			# )
 			frappe.db.commit()
 			frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 			return None
