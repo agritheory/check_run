@@ -90,12 +90,19 @@ def test_process_check_run_on_hold_invoice_auto_release(cr):
 
 
 def test_return_included_in_check_run_error(cr):
-	# Test for ValidationError when Check Run only includes a return transaction
-	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
-	for row in cr.transactions:
+	_transactions = get_entries(cr).get("transactions")
+	settings = get_check_run_settings(cr)
+	assert settings.allow_stand_alone_debit_notes == "No"
+	settings.allow_stand_alone_debit_notes = "Yes"
+	settings.save()
+	cr.posting_date = cr.end_date = datetime.date(year, 12, 30)
+	cr.transactions = ""
+	transactions = get_entries(cr).get("transactions")
+	assert transactions != _transactions
+	for row in transactions:
 		if row.get("party") == "Cooperative Ag Finance" and row.get("amount") < 0:
 			row["pay"] = True
-	cr.transactions = frappe.as_json(cr.transactions)
+	cr.transactions = frappe.as_json(transactions)
 	cr.flags.in_test = True
 	cr.save()
 
