@@ -183,11 +183,13 @@ class CheckRun(Document):
 		self.run_method("validate")
 		self.status = "Submitting"
 		self.filter_transactions()
-		transactions = [
-			t
-			for t in json.loads(self.transactions)
-			if t.get("pay") and not self.not_outstanding_or_cancelled(t)
-		]
+		transactions = []
+		if self.transactions:
+			transactions = [
+				t
+				for t in json.loads(self.transactions)
+				if t.get("pay") and not self.not_outstanding_or_cancelled(t)
+			]
 		if not len(transactions):
 			frappe.msgprint(
 				"Please check; maybe you have not selected any document to pay, or the selected document has already been paid.<br><br>Kindly refresh the page."
