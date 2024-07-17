@@ -4,23 +4,24 @@ import json
 import frappe
 import pytest
 
-from check_run.check_run.doctype.check_run.check_run import get_check_run_settings, get_entries
+from check_run.check_run.doctype.check_run.check_run import (
+	check_for_draft_check_run,
+	get_check_run_settings,
+	get_entries,
+)
 
 year = datetime.date.today().year
 
 
 @pytest.fixture
 def cr():  # return draft check run
-	if (
-		frappe.db.exists("Check Run", f"ACC-CR-{year}-00001")
-		and frappe.get_value("Check Run", f"ACC-CR-{year}-00001", "docstatus") == 0
-	):
-		return frappe.get_doc("Check Run", f"ACC-CR-{year}-00001")
-	cr = frappe.new_doc("Check Run")
+	cr_name = check_for_draft_check_run(
+		company="Chelsea Fruit Co",
+		bank_account="Primary Checking - Local Bank",
+		payable_account="2110 - Accounts Payable - CFC",
+	)
+	cr = frappe.get_doc("Check Run", cr_name)
 	cr.flags.in_test = True
-	cr.company = "Chelsea Fruit Co"
-	cr.bank_account = "Primary Checking - Local Bank"
-	cr.pay_to_account = "2110 - Accounts Payable - CFC"
 	cr.posting_date = cr.end_date = datetime.date(year, 12, 31)
 	cr.set_last_check_number()
 	cr.set_default_payable_account()
@@ -89,12 +90,19 @@ def test_process_check_run_on_hold_invoice_auto_release(cr):
 
 
 def test_return_included_in_check_run_error(cr):
-	# Test for ValidationError when Check Run only includes a return transaction
-	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
-	for row in cr.transactions:
+	_transactions = get_entries(cr).get("transactions")
+	settings = get_check_run_settings(cr)
+	assert settings.allow_stand_alone_debit_notes == "No"
+	settings.allow_stand_alone_debit_notes = "Yes"
+	settings.save()
+	cr.posting_date = cr.end_date = datetime.date(year, 12, 30)
+	cr.transactions = ""
+	transactions = get_entries(cr).get("transactions")
+	assert transactions != _transactions
+	for row in transactions:
 		if row.get("party") == "Cooperative Ag Finance" and row.get("amount") < 0:
 			row["pay"] = True
-	cr.transactions = frappe.as_json(cr.transactions)
+	cr.transactions = frappe.as_json(transactions)
 	cr.flags.in_test = True
 	cr.save()
 
