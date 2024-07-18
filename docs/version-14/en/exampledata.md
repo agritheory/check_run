@@ -6,6 +6,7 @@ It's recommended to install the demo data into its own site to avoid potential i
 
 With `bench start` running in the background, run the following command to install the demo data:
 
+
 ```shell
 bench execute 'check_run.test_setup.before_test'
 # to reinstall from scratch and setup test data
