@@ -10,6 +10,8 @@ app_email = "support@agritheory.dev"
 app_license = "MIT"
 required_apps = ["frappe/erpnext", "frappe/hrms"]
 
+docs_languages = ["es"]
+
 # Includes in <head>
 # ------------------
 
