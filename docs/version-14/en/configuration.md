@@ -48,3 +48,4 @@ The `Bank` and `Bank Account` fields are retrieved by the system to facilitate p
 Similarly, the `Employee` doctype includes new `Mode of Payment`, `Bank`, and `Bank Account` fields in the "Salary Details" section. The `Mode of Payment` value will show in a Check Run, and the system uses the `Bank` and `Bank Account` values for electronic payments.
 
 ![Employee doctype detail showing the expanded Salary Details section with new fields for Mode of Payment, Bank, and Bank Account.](./assets/ConfigEmployee.png)
+

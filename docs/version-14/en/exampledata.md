@@ -14,3 +14,4 @@ bench reinstall --yes --admin-password admin --mariadb-root-password admin && be
 ```
 
 Refer to the [installation guide](./installationguide.md) for detailed instructions for how to set up a bench, a new site, and installing ERPNext and the Check Run application.
+

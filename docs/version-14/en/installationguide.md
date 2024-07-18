@@ -62,3 +62,4 @@ Optional: install a [demo Company and its data](./exampledata.md) to test the Ch
 ```shell
 bench execute 'check_run.tests.setup.before_test'
 ```
+
