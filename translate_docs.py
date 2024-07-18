@@ -43,18 +43,13 @@ def reintegrate_code_blocks(translated_text, code_blocks):
 	return translated_text
 
 
-def translate_file(source_file, target_file, target_language, translate_client):
-	with open(source_file, encoding="utf-8") as file:
-		content = file.read()
-
-	text_without_code, code_blocks = extract_code_blocks(content)
+def translate_file(source_content, target_file, target_language, translate_client):
+	text_without_code, code_blocks = extract_code_blocks(source_content)
 	translation = translate_client.translate(
 		text_without_code, target_language=target_language, format_="text"
 	)
 	final_text = reintegrate_code_blocks(translation["translatedText"], code_blocks)
-	print(final_text)
 	with open(target_file, "w", encoding="utf-8") as f:
-		print(f)
 		f.write(final_text)
 
 
@@ -98,13 +93,12 @@ def translate_md_files():
 			for target_language in target_languages:
 				for filename, modified_file in modified_files.items():
 					if filename.startswith(f"docs/{version}/en") and filename.endswith(".md"):
-						source_file = modified_file
 						target_folder = f"docs/{version}/{target_language}"
 						target_file = os.path.join(target_folder, os.path.basename(filename))
 						if not os.path.exists(target_folder):
 							os.makedirs(target_folder)
 						futures.append(
-							executor.submit(translate_file, source_file, target_file, target_language, translate_client)
+							executor.submit(translate_file, modified_file, target_file, target_language, translate_client)
 						)
 
 		for future in as_completed(futures):
