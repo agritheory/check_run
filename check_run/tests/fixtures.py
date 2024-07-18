@@ -74,7 +74,7 @@ suppliers = [
 		"Phone Services",
 		"ACH/EFT",
 		250.00,
-		"Net 30",
+		"",
 		{
 			"address_line1": "1198 Carpenter Road",
 			"city": "Rolla",
