@@ -52,7 +52,9 @@ def translate_file(source_file, target_file, target_language, translate_client):
 		text_without_code, target_language=target_language, format_="text"
 	)
 	final_text = reintegrate_code_blocks(translation["translatedText"], code_blocks)
+	print(final_text)
 	with open(target_file, "w", encoding="utf-8") as f:
+		print(f)
 		f.write(final_text)
 
 
