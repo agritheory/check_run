@@ -98,7 +98,9 @@ def translate_md_files():
 						if not os.path.exists(target_folder):
 							os.makedirs(target_folder)
 						futures.append(
-							executor.submit(translate_file, modified_file, target_file, target_language, translate_client)
+							executor.submit(
+								translate_file, modified_file, target_file, target_language, translate_client
+							)
 						)
 
 		for future in as_completed(futures):
@@ -110,7 +112,7 @@ def translate_md_files():
 	for version in version_folders:
 		for target_language in target_languages:
 			target_folder = f"docs/{version}/{target_language}"
-			branch_name = f"translate-{target_language}"
+			branch_name = f"translate-{target_language}-{pull_request_number}"
 			repo.git.checkout(base_branch)
 			repo.git.checkout("-b", branch_name)
 			repo.index.add([target_folder])
