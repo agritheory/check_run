@@ -31,12 +31,29 @@ def get_pull_request_number():
 	return int(match.group(1)) if match else None
 
 
+def extract_code_blocks(text):
+	code_blocks = re.findall(r"```.*?```", text, re.DOTALL)
+	text_without_code = re.sub(r"```.*?```", "CODE_BLOCK_PLACEHOLDER", text, flags=re.DOTALL)
+	return text_without_code, code_blocks
+
+
+def reintegrate_code_blocks(translated_text, code_blocks):
+	for code in code_blocks:
+		translated_text = translated_text.replace("CODE_BLOCK_PLACEHOLDER", code, 1)
+	return translated_text
+
+
 def translate_file(source_file, target_file, target_language, translate_client):
+	with open(source_file, encoding="utf-8") as file:
+		content = file.read()
+
+	text_without_code, code_blocks = extract_code_blocks(content)
 	translation = translate_client.translate(
-		source_file, target_language=target_language, format_="text"
+		text_without_code, target_language=target_language, format_="text"
 	)
+	final_text = reintegrate_code_blocks(translation["translatedText"], code_blocks)
 	with open(target_file, "w", encoding="utf-8") as f:
-		f.write(translation["translatedText"])
+		f.write(final_text)
 
 
 def translate_md_files():
