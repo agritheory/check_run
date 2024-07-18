@@ -10,6 +10,8 @@ app_email = "support@agritheory.dev"
 app_license = "MIT"
 required_apps = ["frappe/erpnext", "frappe/hrms"]
 
+docs_languages = ["es"]
+
 # Includes in <head>
 # ------------------
 
@@ -110,9 +112,14 @@ doc_events = {
 	"Payment Entry": {
 		"validate": [
 			"check_run.overrides.payment_entry.validate_duplicate_check_number",
-			"check_run.overrides.payment_entry.validate_add_payment_term",
 		],
-		"on_submit": ["check_run.overrides.payment_entry.update_check_number"],
+		"on_submit": [
+			"check_run.overrides.payment_entry.update_outstanding_amount",
+			"check_run.overrides.payment_entry.update_check_number",
+		],
+		"on_cancel": [
+			"check_run.overrides.payment_entry.update_outstanding_amount",
+		],
 	},
 	"Purchase Invoice": {
 		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]

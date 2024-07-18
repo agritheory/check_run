@@ -1,0 +1,43 @@
+name: Translate Markdown Files
+
+on:
+  pull_request:
+    paths:
+      - 'docs/*/en/*.md'
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Set up credentials
+        run: echo "$GOOGLE_APPLICATION_CREDENTIALS" > credentials.json
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install google-cloud-translate
+          pip install gitpython
+          pip install PyGithub
+
+      - name: Translate Markdown files
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ secrets.GITHUB_REPOSITORY }}
+          GITHUB_BASE_REF: ${{ secrets.GITHUB_SHA }}
+          GITHUB_REF: ${{ secrets.GITHUB_REF }}
+        run: |
+          python translate_docs.py
+
+      - name: Remove credentials file
+        run: rm credentials.json

@@ -21,6 +21,7 @@
 		"validate_unique_check_number",
 		"column_break_9",
 		"number_of_invoices_per_voucher",
+		"secondary_print_format",
 		"split_by_address",
 		"automatically_release_on_hold_invoices",
 		"file_preview_threshold",
@@ -228,6 +229,14 @@
 			"label": "Validate Unique Check Number"
 		},
 		{
+
+			"fieldname": "secondary_print_format",
+			"fieldtype": "Link",
+			"label": "Secondary Print Format",
+			"options": "Print Format"
+		},
+		{
+
 			"default": "No",
 			"fieldname": "allow_stand_alone_debit_notes",
 			"fieldtype": "Select",

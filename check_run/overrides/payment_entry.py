@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 import frappe
-from frappe.utils import get_link_to_form, comma_and, flt
+from frappe.utils import get_link_to_form, flt
 from erpnext.accounts.general_ledger import make_gl_entries, process_gl_map
 from frappe.utils.data import getdate
 from erpnext.accounts.doctype.payment_entry.payment_entry import (
@@ -10,13 +10,12 @@ from erpnext.accounts.doctype.payment_entry.payment_entry import (
 	get_outstanding_reference_documents,
 )
 from frappe import _
-import json
 
 
 class CheckRunPaymentEntry(PaymentEntry):
 	def make_gl_entries(self, cancel=0, adv_adj=0):
 		"""
-		HASH: 38cc28a4c34597e09dc8fe70884fefc30eaa24db
+		HASH: 49e50662b6d5c315fb24366eaeb7505cd4b35947
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: make_gl_entries
@@ -42,7 +41,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def set_status(self):
 		"""
-		HASH: 38cc28a4c34597e09dc8fe70884fefc30eaa24db
+		HASH: 49e50662b6d5c315fb24366eaeb7505cd4b35947
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: set_status
@@ -61,7 +60,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 	# Bug Fix
 	def get_valid_reference_doctypes(self):
 		"""
-		HASH: 38cc28a4c34597e09dc8fe70884fefc30eaa24db
+		HASH: 49e50662b6d5c315fb24366eaeb7505cd4b35947
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: get_valid_reference_doctypes
@@ -87,7 +86,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def validate_allocated_amount(self):
 		"""
-		HASH: 38cc28a4c34597e09dc8fe70884fefc30eaa24db
+		HASH: 49e50662b6d5c315fb24366eaeb7505cd4b35947
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: validate_allocated_amount
@@ -127,7 +126,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def validate_allocated_amount_with_latest_data(self):
 		"""
-		HASH: 38cc28a4c34597e09dc8fe70884fefc30eaa24db
+		HASH: 49e50662b6d5c315fb24366eaeb7505cd4b35947
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: validate_allocated_amount_with_latest_data
@@ -278,28 +277,53 @@ def validate_duplicate_check_number(doc: PaymentEntry, method: str | None = None
 
 
 @frappe.whitelist()
-def validate_add_payment_term(doc: PaymentEntry, method: str | None = None):
-	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
-	if doc.check_run:
-		return
-	adjusted_refs = []
+def update_outstanding_amount(doc: PaymentEntry, method: str | None = None):
+	paid_amount = doc.paid_amount if method == "on_submit" else 0.0
 	for r in doc.get("references"):
-		if r.reference_doctype == "Purchase Invoice" and not r.payment_term:
-			pmt_term = frappe.get_all(
-				"Payment Schedule",
-				{"parent": r.reference_name, "outstanding": [">", 0.0]},
-				["payment_term"],
-				order_by="due_date ASC",
-				limit=1,
-			)
-			if pmt_term:
-				r.payment_term = pmt_term[0].get("payment_term")
-				adjusted_refs.append(r.reference_name)
-	if adjusted_refs:
-		frappe.msgprint(
-			msg=frappe._(
-				f"An outstanding Payment Schedule term was detected and added for {comma_and(adjusted_refs)} in the references table.<br>Please review - "
-				"this field must be filled in for the Payment Schedule to synchronize and to prevent a paid invoice portion from showing up in a Check Run."
-			),
-			title=frappe._("Payment Schedule Term Added"),
+		if r.reference_doctype != "Purchase Invoice":
+			continue
+		payment_schedules = frappe.get_all(
+			"Payment Schedule",
+			{"parent": r.reference_name},
+			["name", "outstanding", "payment_term", "payment_amount"],
+			order_by="due_date ASC",
 		)
+		if not payment_schedules:
+			continue
+
+		payment_schedule = frappe.get_doc("Payment Schedule", payment_schedules[0]["name"])
+		precision = payment_schedule.precision("outstanding")
+		payment_schedules = payment_schedules if method == "on_submit" else reversed(payment_schedules)
+
+		for term in payment_schedules:
+			if r.payment_term and term.payment_term != r.payment_term:
+				continue
+
+			if method == "on_submit":
+				if term.outstanding > 0.0 and paid_amount > 0.0:
+					if term.outstanding > paid_amount:
+						frappe.db.set_value(
+							"Payment Schedule",
+							term.name,
+							"outstanding",
+							flt(term.outstanding - paid_amount, precision),
+						)
+						break
+					else:
+						paid_amount = flt(paid_amount - term.outstanding, precision)
+						frappe.db.set_value("Payment Schedule", term.name, "outstanding", 0)
+						if paid_amount <= 0.0:
+							break
+
+			if method == "on_cancel":
+				if term.outstanding != term.payment_amount:
+					# if this payment term had previously been allocated against
+					paid_amount += flt(paid_amount + (term.payment_amount - term.outstanding), precision)
+					reverse = (
+						flt(paid_amount + term.outstanding, precision)
+						if paid_amount < term.payment_amount
+						else term.payment_amount
+					)
+					frappe.db.set_value("Payment Schedule", term.name, "outstanding", reverse)
+					if paid_amount >= doc.paid_amount:
+						break
