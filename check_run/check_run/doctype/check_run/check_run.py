@@ -484,9 +484,9 @@ class CheckRun(Document):
 						as_pdf=False,
 						no_letterhead=0,
 					)
-					soup = BeautifulSoup(_output,"html.parser")
-					soup.find('div', class_="action-banner").decompose()
-					soup.find('div', class_="print-format-gutter").unwrap()
+					soup = BeautifulSoup(_output, "html.parser")
+					soup.find("div", class_="action-banner").decompose()
+					soup.find("div", class_="print-format-gutter").unwrap()
 					html.append(soup.prettify())
 				if initial_check_number != reprint_check_number:
 					frappe.db.set_value(
@@ -538,7 +538,9 @@ class CheckRun(Document):
 			frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 			return None
 		else:
-			return '<p style="page-break-after: always;"><hr style="border: 1px dashed gray"></p>'.join(html)
+			return '<p style="page-break-after: always;"><hr style="border: 1px dashed gray"></p>'.join(
+				html
+			)
 
 
 @frappe.whitelist()
