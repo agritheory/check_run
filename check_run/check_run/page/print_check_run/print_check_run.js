@@ -35,10 +35,13 @@ frappe.ui.form.PrintView = class {
 
 	make() {
 		this.print_wrapper = this.page.main.empty().html(
-			`<div class="preview-beta-wrapper">
-			<iframe width="100%" height="0" frameBorder="0"></iframe>
-		</div>
-		`
+			`<div class="print-preview-wrapper">
+				<div class="print-preview">
+					${frappe.render_template('print_skeleton_loading')}
+					<iframe class="print-format-container" width="100%" height="0" frameBorder="0" scrolling="no">
+					</iframe>
+				</div>
+			</div>`
 		)
 
 		this.print_settings = frappe.model.get_doc(':Print Settings', 'Print Settings')
