@@ -1,41 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="{{ lang }}" dir="{{ layout_direction }}">
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>{{ title }}</title>
-	<meta name="generator" content="frappe">
-	{{ include_style('print.bundle.css') }}
-	{% if print_style %}
-	<style>
-		{{ print_style }}
-	</style>
-	{% endif %}
-</head>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{{ title }}</title>
+		<meta name="generator" content="frappe" />
+		{{ include_style('print.bundle.css') }} {% if print_style %}
+		<style>
+			{{ print_style }}
+		</style>
+		{% endif %}
+	</head>
 
-<body>
-	<div class="print-format-gutter">
-		<div class="print-format">
-			{{ body }}
+	<body>
+		<div class="print-format-gutter">
+			<div class="print-format">{{ body }}</div>
 		</div>
-	</div>
-	<script>
-		document.addEventListener('DOMContentLoaded', () => {
-			console.log('dom content loaded')
-			const page_div = document.querySelector('.page-break');
-			page_div.style.display = 'flex';
-			page_div.style.flexDirection = 'column';
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				console.log('dom content loaded')
+				const page_div = document.querySelector('.page-break')
+				page_div.style.display = 'flex'
+				page_div.style.flexDirection = 'column'
 
-			const footer_html = document.getElementById('footer-html');
-			footer_html.classList.add('hidden-pdf');
-			footer_html.classList.remove('visible-pdf');
-			footer_html.style.order = 1;
-			footer_html.style.marginTop = '20px';
-		});
-	</script>
-</body>
-{%- if comment -%}
-<!-- {{ comment }} -->
-{%- endif -%}
-
+				const footer_html = document.getElementById('footer-html')
+				footer_html.classList.add('hidden-pdf')
+				footer_html.classList.remove('visible-pdf')
+				footer_html.style.order = 1
+				footer_html.style.marginTop = '20px'
+			})
+		</script>
+	</body>
+	{%- if comment -%}
+	<!-- {{ comment }} -->
+	{%- endif -%}
 </html>

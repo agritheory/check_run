@@ -350,9 +350,10 @@ function ach_only(frm) {
 							download_checks(frm)
 						})
 					} else if (
-						frm.doc.print_count == 0 && 
+						frm.doc.print_count == 0 &&
 						frm.doc.status == 'Submitted' &&
-						frm.doc.__onload.print_preview == 'Automatically Render PDF after Submit') {
+						frm.doc.__onload.print_preview == 'Automatically Render PDF after Submit'
+					) {
 						render_checks(frm)
 					}
 				}
