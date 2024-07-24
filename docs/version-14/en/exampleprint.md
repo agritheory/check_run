@@ -7,3 +7,4 @@ The example print format included with this application can be found in the Prin
 Additional resources:
 
 - [ERPNext print format documentation](https://docs.erpnext.com/docs/v14/user/manual/en/customize-erpnext/print-format)
+
