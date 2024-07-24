@@ -12,3 +12,5 @@ Only one draft Check Run is allowed per payable/bank account combination. This i
 
 ## Role Permissions
 Out of the box, Check Run is permissioned the same as Payment Entry. For most small organizations this may be fine, but larger organizations with document approval policies and a desire to limit persons with access to printed checks will likely want to implement additional policies. Check Run print and ACH generation policies are based on permissions for Payment Entry, not on Check Run itself.
+
+
