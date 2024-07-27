@@ -67,6 +67,9 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+
       - name: Install JS Dependencies
         run: yarn --prefer-offline
 
@@ -85,4 +88,12 @@ jobs:
         working-directory: /home/runner/frappe-bench
         run: |
           source env/bin/activate
-          pytest ./apps/check_run/check_run/tests/ --disable-warnings -s
+          cd apps/check_run
+          poetry install
+          pytest --cov=check_run --cov-report=xml --disable-warnings -s | tee pytest-coverage.txt
+
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-coverage-path: /home/runner/frappe-bench/apps/check_run/pytest-coverage.txt
+          pytest-xml-coverage-path: /home/runner/frappe-bench/apps/check_run/coverage.xml

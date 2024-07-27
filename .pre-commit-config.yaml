@@ -59,14 +59,18 @@ repos:
         exclude: ^tests/
         args: [--ignore-missing-imports]
 
-  - repo: local
+  - repo: https://github.com/agritheory/test_utils
+    rev: v0.14.1
     hooks:
+      - id: update_pre_commit_config
+      - id: validate_copyright
+        files: '\.(js|ts|py|md)$'
+        args: ["--app", "approvals"]
+      - id: clean_customized_doctypes
+        args: ["--app", "check_run"]
       - id: validate_customizations
-        always_run: true
-        name: .github/validate_customizations.py
-        entry: python .github/validate_customizations.py
-        language: system
-        types: [python]
+      - id: validate_python_dependencies
+      - id: validate_javascript_dependencies
 
 ci:
   autoupdate_schedule: weekly
