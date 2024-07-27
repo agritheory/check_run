@@ -65,7 +65,7 @@ repos:
       - id: update_pre_commit_config
       - id: validate_copyright
         files: '\.(js|ts|py|md)$'
-        args: ["--app", "approvals"]
+        args: ["--app", "check_run"]
       - id: clean_customized_doctypes
         args: ["--app", "check_run"]
       - id: validate_customizations
