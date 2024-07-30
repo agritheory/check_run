@@ -7,7 +7,7 @@ repos:
     rev: v4.3.0
     hooks:
       - id: trailing-whitespace
-        files: 'frappe.*'
+        files: 'check_run.*'
         exclude: '.*json$|.*txt$|.*csv|.*md|.*svg'
       - id: check-yaml
       - id: no-commit-to-branch
@@ -38,12 +38,12 @@ repos:
         # Ignore any files that might contain jinja / bundles
         exclude: |
           (?x)^(
-              frappe/public/dist/.*|
+              check_run/public/dist/.*|
               .*node_modules.*|
               .*boilerplate.*|
-              frappe/www/website_script.js|
-              frappe/templates/includes/.*|
-              frappe/public/js/lib/.*
+              check_run/www/website_script.js|
+              check_run/templates/includes/.*|
+              check_run/public/js/lib/.*
           )$
 
   - repo: https://github.com/PyCQA/flake8
@@ -59,14 +59,18 @@ repos:
         exclude: ^tests/
         args: [--ignore-missing-imports]
 
-  - repo: local
+  - repo: https://github.com/agritheory/test_utils
+    rev: v0.14.1
     hooks:
+      - id: update_pre_commit_config
+      - id: validate_copyright
+        files: '\.(js|ts|py|md)$'
+        args: ["--app", "check_run"]
+      - id: clean_customized_doctypes
+        args: ["--app", "check_run"]
       - id: validate_customizations
-        always_run: true
-        name: .github/validate_customizations.py
-        entry: python .github/validate_customizations.py
-        language: system
-        types: [python]
+      - id: validate_python_dependencies
+      - id: validate_javascript_dependencies
 
 ci:
   autoupdate_schedule: weekly
