@@ -83,47 +83,64 @@ frappe.ui.form.PrintView = class {
 	}
 
 	setup_sidebar() {
-		this.sidebar = this.page.sidebar.addClass('print-preview-sidebar')
+		frappe.db.get_doc('Check Run', frappe.get_route()[1]).then(checkrun => {
+			frappe.db
+				.get_value(
+					'Check Run Settings',
+					{ bank_account: checkrun.bank_account, pay_to_account: checkrun.pay_to_account, company: checkrun.company },
+					['number_of_invoices_per_voucher', 'print_format']
+				)
+				.then(r => {
+					let inv_per_voucher =
+						r && r.message && r.message.number_of_invoices_per_voucher > 0
+							? r.message.number_of_invoices_per_voucher
+							: 5
+					let default_print_format =
+						r && r.message && r.message.print_format ? r.message.print_format : __('Select Print Format')
 
-		this.doctype_to_print = this.add_sidebar_item({
-			fieldtype: 'Select',
-			fieldname: 'doctype',
-			placeholder: 'Payment Entry',
-			options: ['Check Run', 'Payment Entry', 'Payment Entry Secondary Format'],
-			default: 'Payment Entry',
-			change: () => {
-				this.preview()
-				this.refresh_print_options()
-				this.preview()
-			},
-		}).$input
+					this.sidebar = this.page.sidebar.addClass('print-preview-sidebar')
 
-		this.print_sel = this.add_sidebar_item({
-			fieldtype: 'Select',
-			fieldname: 'print_format',
-			label: 'Print Format',
-			options: [this.get_default_option_for_select(__('Select Print Format'))],
-			change: () => this.refresh_print_format(),
-			default: __('Select Print Format'),
-		}).$input
+					this.doctype_to_print = this.add_sidebar_item({
+						fieldtype: 'Select',
+						fieldname: 'doctype',
+						placeholder: 'Payment Entry',
+						options: ['Check Run', 'Payment Entry', 'Payment Entry Secondary Format'],
+						default: 'Payment Entry',
+						change: () => {
+							this.preview()
+							this.refresh_print_options()
+							this.preview()
+						},
+					}).$input
 
-		this.invoices_per_voucher = this.add_sidebar_item({
-			fieldtype: 'Int',
-			fieldname: 'invoices_per_voucher',
-			label: 'Invoices Per Voucher',
-			change: () => this.refresh_print_format(),
-			default: 5,
-			read_only: 1,
-		}).$input
+					this.print_sel = this.add_sidebar_item({
+						fieldtype: 'Select',
+						fieldname: 'print_format',
+						label: 'Print Format',
+						options: [this.get_default_option_for_select(__('Select Print Format'))],
+						change: () => this.refresh_print_format(),
+						default: __(default_print_format), // TODO: why isn't default showing as selected?
+					}).$input
 
-		this.update_check_ref = this.add_sidebar_item({
-			fieldtype: 'Select',
-			fieldname: 'update_check_ref',
-			label: 'Update Check Reference',
-			options: ['No', 'Yes'],
-			change: () => this.refresh_print_format(),
-			default: __('No'),
-		}).$input
+					this.invoices_per_voucher = this.add_sidebar_item({
+						fieldtype: 'Int',
+						fieldname: 'invoices_per_voucher',
+						label: 'Invoices Per Voucher',
+						change: () => this.refresh_print_format(),
+						default: inv_per_voucher,
+						read_only: 1,
+					}).$input
+
+					this.update_check_ref = this.add_sidebar_item({
+						fieldtype: 'Select',
+						fieldname: 'update_check_ref',
+						label: 'Update Check Reference',
+						options: ['No', 'Yes'],
+						change: () => this.refresh_print_format(),
+						default: __('No'),
+					}).$input
+				})
+		})
 	}
 
 	add_sidebar_item(df, is_dynamic) {
