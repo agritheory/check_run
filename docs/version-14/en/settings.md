@@ -39,6 +39,21 @@ If the system doesn't find settings for the account combination you're using in 
 
 ![Check Run output table showing a row for eight invoices paid (two for AgriTheory, two for Cooperative Ag Finance, and four for Exceptional Grid). The first two Exceptional Grid invoices have Check Reference Number ACC-PAY-2022-00003 and the next set of two invoices have Check Reference Number ACC-PAY-2022-00004. They were split into different vouchers because the setting limited two invoices per voucher.](./assets/VoucherGroup.png)
 
+The Print Settings section covers the print-related options.
+
+![Screen shot showing the Print Settings section.](./assets/settings_print_section.png)
+
+- **Print Preview:**
+    - The default value is to Automatically Render PDF After Submit, however the Print from Print Preview option allows for viewing and printing using different Print Formats
+- **Print Format:**
+    - Links to a preferred default Print Format
+- **Secondary Print Format:**
+    - Links to a backup Print Format
+- **Printable Modes of Payment in Check Run:**
+    - A collection of the Mode of Payments that are meant to be printed. As detailed in the [configuration page](./configuration.md), this should include the Modes of Payment with the Type "Bank". To see an application of how this is used in a Print Format, see the code in the [Example Voucher](./exampleprint.md) included in Check Run, which only renders payments that have a Mode of Payment included in this list
+- **Check formats with background image:**
+    - Default is unselected, if this is checked, it allows the user to upload a background image to apply in print preview (see the code in the [Example Voucher](./exampleprint.md) for how this is used)
+
 The next section of settings allow for an optional default Mode of Payment for Purchase Invoices, Expense Claims, and Journal Entries. If there isn't a Mode of Payment specified in the Purchase Invoice, Expense Claim, or Journal Entry itself, and there isn't a default set for the party (see the [Configuration page](./configuration.md) for more details), then this field is used to populate the Mode of Payment column in the Check Run.
 
 ![Screen shot showing the Default Mode of Payment section in settings.](./assets/Settings_MOP.png)
