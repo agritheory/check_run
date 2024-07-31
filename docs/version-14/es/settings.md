@@ -39,6 +39,21 @@ Si el sistema no encuentra la configuración para la combinación de cuentas que
 
 ![Verifique la tabla de salida de Ejecutar que muestra una fila de ocho facturas pagadas (dos para AgriTheory, dos para Cooperative Ag Finance y cuatro para Exceptional Grid). Las dos primeras facturas de Exceptional Grid tienen el número de referencia del cheque ACC-PAY-2022-00003 y el siguiente conjunto de dos facturas tiene el número de referencia del cheque ACC-PAY-2022-00004. Se dividieron en diferentes vales porque la configuración limitaba dos facturas por vale.](./assets/VoucherGroup.png)
 
+La sección Configuración de impresión cubre las opciones relacionadas con la impresión.
+
+![Captura de pantalla que muestra la sección Configuración de impresión.](./assets/settings_print_section.png)
+
+- **Vista previa de impresión:**
+    - El valor predeterminado es Renderizar PDF automáticamente después del envío; sin embargo, la opción Imprimir desde vista previa de impresión permite ver e imprimir usando diferentes formatos de impresión.
+- **Formato de impresión:**
+    - Enlaces a un formato de impresión predeterminado preferido
+- **Formato de impresión secundario:**
+    - Enlaces a un formato de impresión de respaldo
+- **Modos de pago imprimibles en ejecución de cheques:**
+    - Una colección de los Modos de Pago que se pretende imprimir. Como se detalla en la [página de configuración](./configuration.md), esta debe incluir los Modos de Pago con el Tipo "Banco". Para ver una aplicación de cómo se usa esto en un formato de impresión, consulte el código en [Vale de ejemplo](./exampleprint.md) incluido en Ejecución de cheques, que solo genera pagos que tienen un Modo de pago incluido en esta lista.
+- **Consultar formatos con imagen de fondo:**
+    - El valor predeterminado no está seleccionado; si está marcado, le permite al usuario cargar una imagen de fondo para aplicarla en la vista previa de impresión (consulte el código en [Vale de ejemplo](./exampleprint.md) para saber cómo se usa)
+
 La siguiente sección de configuración permite un modo de pago predeterminado opcional para facturas de compra, declaraciones de gastos y asientos de diario. Si no hay un Modo de pago especificado en la Factura de compra, Reclamo de gastos o Asiento de diario en sí, y no hay un modo predeterminado establecido para la parte (consulte la [página de Configuración](./configuration.md) para obtener más información detalles), este campo se utiliza para completar la columna Modo de pago en la Ejecución de cheque.
 
 ![Captura de pantalla que muestra la sección Modo de pago predeterminado en la configuración.](./assets/Settings_MOP.png)
@@ -77,5 +92,5 @@ Check Run aprovecha el mecanismo integrado de ERPNext que actualiza automáticam
 
 2. Si está creando una Entrada de pago fuera de una Ejecución de verificación que es para una parte de una factura (para cumplir con un Término de pago), existe una validación para verificar y vincular al Término de pago pendiente más reciente. Si el campo Condiciones de pago en la tabla Referencias de pago se deja en blanco, intenta completar el campo y advertir al usuario que lo revise. Si la Entrada de pago cubre varias Condiciones de pago, debe haber una fila para cada parte del pago con un enlace a su respectiva Condiciones de pago.
 
-![Captura de pantalla del cuadro de diálogo del formulario cuando se edita una fila en la tabla Referencias de pago. El campo Plazo de pago muestra un valor de "Cuota de alquiler 3" para vincular el monto asignado del pago al plazo apropiado en el Programa de pagos de la factura.](./assets/PaymentEntryPaymentTerm.png)
+![Captura de pantalla del cuadro de diálogo del formulario cuando se edita una fila en la tabla Referencias de pago. El campo Plazo de pago muestra un valor de "Cuota de alquiler 3" para vincular el monto asignado del pago al plazo apropiado en el Programa de pago de la factura.](./assets/PaymentEntryPaymentTerm.png)
 
