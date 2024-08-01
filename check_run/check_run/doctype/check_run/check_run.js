@@ -128,6 +128,20 @@ frappe.ui.form.on('Check Run', {
 	},
 })
 
+let focus_first_row = () => {
+	if (document.activeElement.tagName != 'TR') {
+		let el = document.getElementsByTagName('tbody')[0].firstElementChild
+		el.focus()
+	}
+}
+
+frappe.ui.keys.add_shortcut({
+	shortcut: 'down',
+	action: () => focus_first_row('down'),
+	description: 'Navigate check-run list down',
+	page: this.page,
+})
+
 function show_progress_bar(frm, data, action) {
 	if (data.check_run !== frm.doc.name) {
 		return

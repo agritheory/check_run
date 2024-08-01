@@ -8,6 +8,7 @@ from io import StringIO
 from typing_extensions import Self
 
 from PyPDF2 import PdfFileWriter
+
 import frappe
 from frappe.model.document import Document
 from frappe.utils.data import flt
