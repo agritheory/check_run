@@ -31,12 +31,26 @@ def get_pull_request_number():
 	return int(match.group(1)) if match else None
 
 
-def translate_file(source_file, target_file, target_language, translate_client):
+def extract_code_blocks(text):
+	code_blocks = re.findall(r"```.*?```", text, re.DOTALL)
+	text_without_code = re.sub(r"```.*?```", "CODE_BLOCK_PLACEHOLDER", text, flags=re.DOTALL)
+	return text_without_code, code_blocks
+
+
+def reintegrate_code_blocks(translated_text, code_blocks):
+	for code in code_blocks:
+		translated_text = translated_text.replace("CODE_BLOCK_PLACEHOLDER", code, 1)
+	return translated_text
+
+
+def translate_file(source_content, target_file, target_language, translate_client):
+	text_without_code, code_blocks = extract_code_blocks(source_content)
 	translation = translate_client.translate(
-		source_file, target_language=target_language, format_="text"
+		text_without_code, target_language=target_language, format_="text"
 	)
+	final_text = reintegrate_code_blocks(translation["translatedText"], code_blocks)
 	with open(target_file, "w", encoding="utf-8") as f:
-		f.write(translation["translatedText"])
+		f.write(final_text)
 
 
 def translate_md_files():
@@ -79,13 +93,14 @@ def translate_md_files():
 			for target_language in target_languages:
 				for filename, modified_file in modified_files.items():
 					if filename.startswith(f"docs/{version}/en") and filename.endswith(".md"):
-						source_file = modified_file
 						target_folder = f"docs/{version}/{target_language}"
 						target_file = os.path.join(target_folder, os.path.basename(filename))
 						if not os.path.exists(target_folder):
 							os.makedirs(target_folder)
 						futures.append(
-							executor.submit(translate_file, source_file, target_file, target_language, translate_client)
+							executor.submit(
+								translate_file, modified_file, target_file, target_language, translate_client
+							)
 						)
 
 		for future in as_completed(futures):
@@ -97,7 +112,7 @@ def translate_md_files():
 	for version in version_folders:
 		for target_language in target_languages:
 			target_folder = f"docs/{version}/{target_language}"
-			branch_name = f"translate-{target_language}"
+			branch_name = f"translate-{target_language}-{pull_request_number}"
 			repo.git.checkout(base_branch)
 			repo.git.checkout("-b", branch_name)
 			repo.index.add([target_folder])

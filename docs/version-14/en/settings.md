@@ -78,3 +78,4 @@ Check Run leverages the built-in ERPNext mechanism that automatically updates an
 2. If you're creating a Payment Entry outside of a Check Run that's for a portion of an invoice (to satisfy a Payment Term), there's a validation in place to check for and link to the most recent outstanding Payment Term. If the Payment Term field in the Payment References table is left blank, it attempts to fill in the field and warn the user to review. If the Payment Entry covers multiple Payment Terms, there should be a row for each portion of the payment with a link to its respective Payment Term.
 
 ![Screen shot of the form dialog when a row in the Payment References table is edited. The Payment Term field shows a value of "Rental Installment 3" to link the allocated amount of the payment to the appropriate term in the invoice's Payment Schedule.](./assets/PaymentEntryPaymentTerm.png)
+
