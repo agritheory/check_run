@@ -104,9 +104,10 @@ frappe.ui.form.PrintView = class {
 						fieldtype: 'Select',
 						fieldname: 'doctype',
 						placeholder: 'Payment Entry',
-						options: ['Check Run', 'Payment Entry', 'Payment Entry Secondary Format'],
+						options: ['Check Run', 'Payment Entry'],
 						default: 'Payment Entry',
 						change: () => {
+							this.print_sel[0].value = ''
 							this.preview()
 							this.refresh_print_options()
 							this.preview()
@@ -114,12 +115,17 @@ frappe.ui.form.PrintView = class {
 					}).$input
 
 					this.print_sel = this.add_sidebar_item({
-						fieldtype: 'Select',
+						fieldtype: 'Link',
 						fieldname: 'print_format',
 						label: 'Print Format',
-						options: [this.get_default_option_for_select(__('Select Print Format'))],
+						options: 'Print Format',
 						change: () => this.refresh_print_format(),
-						default: __(default_print_format), // TODO: why isn't default showing as selected?
+						default: __(default_print_format),
+						get_query: () => {
+							return {
+								filters: { doc_type: this.doctype_to_print[0].value },
+							}
+						},
 					}).$input
 
 					this.invoices_per_voucher = this.add_sidebar_item({
