@@ -144,7 +144,7 @@ def get_check_run_format(
 					trigger_print=trigger_print,
 					settings=frappe.parse_json(settings),
 				)
-				html_code += "<div class='page-break'></div>"
+				# html_code += "<div class='page-break'></div>"
 				html_.append(html_code)
 				html.append(html_)
 			except frappe.TemplateNotFoundError:
