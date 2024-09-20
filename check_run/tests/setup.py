@@ -7,8 +7,7 @@ from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import make_debi
 from erpnext.setup.utils import enable_all_roles_and_domains, set_defaults_for_tests
 from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
 from frappe.utils.data import add_days, flt
-
-from check_run.tests.fixtures import employees, suppliers, tax_authority
+from check_run.tests.fixtures import employees, sepa_supplier, suppliers, tax_authority
 
 
 def before_test():
@@ -60,6 +59,7 @@ def create_test_data():
 		}
 	)
 	create_bank_and_bank_account(settings)
+	create_eur_bank_and_bank_account(settings)
 	create_payment_terms_templates(settings)
 	create_suppliers(settings)
 	create_items(settings)
@@ -148,6 +148,49 @@ def create_bank_and_bank_account(settings):
 	)
 	doc.save()
 	doc.submit()
+
+
+def create_eur_bank_and_bank_account(settings):
+	if not frappe.db.exists("Mode of Payment", "SEPA"):
+		mop = frappe.new_doc("Mode of Payment")
+		mop.mode_of_payment = "SEPA"
+		mop.enabled = 1
+		mop.type = "Electronic"
+		mop.append(
+			"accounts", {"company": settings.company, "default_account": settings.company_account}
+		)
+		mop.save()
+	if not frappe.db.exists("Bank", "EUR Bank"):
+		bank = frappe.new_doc("Bank")
+		bank.bank_name = "EUR Bank"
+		bank.save()
+	if not frappe.db.exists("Account", "1202 - Primary EUR Account - CFC"):
+		acc = frappe.new_doc("Account")
+		acc.account_currency = "EUR"
+		acc.account_name = "1202 - Primary EUR Account"
+		acc.account_type = "Bank"
+		acc.company = "Chelsea Fruit Co"
+		acc.parent_account = "1200 - Bank Accounts - CFC"
+		acc.save()
+	if not frappe.db.exists("Bank Account", "Primary Checking - EUR Bank"):
+		ba = frappe.new_doc("Bank Account")
+		ba.account_name = "Primary Checking"
+		ba.bank = "EUR Bank"
+		ba.is_company_account = 1
+		ba.account = "1202 - Primary EUR Account - CFC"
+		ba.branch_code = "CXF6754"
+		ba.iban = "GB82 WEST 1234 5698 7654 32"
+		ba.save()
+
+	# New chart of account
+	account = frappe.new_doc("Account")
+	account.account_name = "EUR Account Payable"
+	account.account_number = "2130"
+	account.account_type = "Payable"
+	account.parent_account = "2100 - Accounts Payable - CFC"
+	account.account_currency = "EUR"
+	account.root_type = "Liability"
+	account.save()
 
 
 def setup_accounts():
@@ -288,9 +331,43 @@ def create_suppliers(settings):
 	addr.append("links", {"link_doctype": "Supplier", "link_name": "HIJ Telecom, Inc"})
 	addr.save()
 
+	for supplier in sepa_supplier:
+		su = frappe.new_doc("Supplier")
+		su.supplier_name = supplier[0]
+		su.supplier_group = "Services"
+		su.country = "Germany"
+		su.supplier_default_mode_of_payment = supplier[2]
+		if su.supplier_default_mode_of_payment == "SEPA":
+			su.bank = "EUR Bank"
+			su.iban = "DE89370400440532013000"
+		su.currency = "EUR"
+		su.default_price_list = "Standard Buying"
+		su.payment_terms = supplier[4]
+		su.save()
+
+		ba = frappe.new_doc("Bank Account")
+		ba.account_name = "NRW Global Business"
+		ba.bank = "EUR Bank"
+		ba.party_type = "Supplier"
+		ba.party = "NRW Global Business"
+		ba.iban = "DE89370400440532013000"
+		ba.branch_code = "BGYH7876"
+		ba.save()
+
+		addr = frappe.new_doc("Address")
+		addr.address_title = f"{supplier[0]} - {supplier[5]['city']}"
+		addr.address_type = "Billing"
+		addr.address_line1 = supplier[5]["address_line1"]
+		addr.city = supplier[5]["city"]
+		addr.state = supplier[5]["state"]
+		addr.country = supplier[5]["country"]
+		addr.pincode = supplier[5]["pincode"]
+		addr.append("links", {"link_doctype": "Supplier", "link_name": supplier[0]})
+		addr.save()
+
 
 def create_items(settings):
-	for supplier in suppliers + tax_authority:
+	for supplier in suppliers + tax_authority + sepa_supplier:
 		item = frappe.new_doc("Item")
 		item.item_code = item.item_name = supplier[1]
 		item.item_group = "Services"
@@ -457,6 +534,38 @@ def create_invoices(settings):
 	pi.validate_release_date = types.MethodType(
 		validate_release_date, pi
 	)  # allow date to be backdated for testing
+	pi.save()
+	pi.submit()
+
+	spi = frappe.get_value(
+		"Purchase Invoice",
+		{"supplier": "Cooperative Ag Finance"},
+		order_by="posting_date DESC",
+	)
+	rpi = make_debit_note(spi)
+	rpi.return_against = (
+		None  # this approach isn't best practice but it allows us to see a negative PI in the check run
+	)
+	rpi.items[0].rate = 500
+	rpi.save()
+	rpi.submit()
+
+	pi = frappe.new_doc("Purchase Invoice")
+	pi.company = settings.company
+	pi.set_posting_time = 1
+	pi.posting_date = settings.day
+	pi.supplier = sepa_supplier[0][0]
+	pi.currency = "EUR"
+	pi.credit_to = "2130 - EUR Account Payable - CFC"
+	pi.append(
+		"items",
+		{
+			"item_code": sepa_supplier[0][1],
+			"rate": 25000.00,
+			"qty": 1,
+		},
+	)
+	pi.supplier_address = "NRW Global Business - Dusseldorf-Billing"
 	pi.save()
 	pi.submit()
 

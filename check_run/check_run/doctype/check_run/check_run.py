@@ -924,3 +924,19 @@ def get_authorized_role_for_ach(doc):
 		"role_allowed_to_download_ach_file_multiple_times",
 	)
 	return role
+
+
+@frappe.whitelist()
+def get_authorized_role(doc):
+	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+	role = frappe.db.get_value(
+		"Check Run Settings",
+		{"pay_to_account": doc.pay_to_account, "bank_account": doc.bank_account},
+		"sepa_authorized_role",
+	)
+	return role
+
+
+@frappe.whitelist()
+def get_default_currency(company):
+	return frappe.db.get_value("Company", company, "default_currency")

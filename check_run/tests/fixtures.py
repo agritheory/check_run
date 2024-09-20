@@ -113,6 +113,23 @@ suppliers = [
 	),
 ]
 
+sepa_supplier = [
+	(
+		"NRW Global Business",
+		"Export Service",
+		"SEPA",
+		20000.00,
+		"Net 30",
+		{
+			"address_line1": "Volklinger Str. 4",
+			"city": "Dusseldorf",
+			"state": "Berlin",
+			"country": "Germany",
+			"pincode": "40219",
+		},
+	)
+]
+
 tax_authority = [
 	(
 		"Local Tax Authority",

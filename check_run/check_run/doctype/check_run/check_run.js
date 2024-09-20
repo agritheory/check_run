@@ -45,10 +45,16 @@ frappe.ui.form.on('Check Run', {
 					e.stopPropagation()
 				})
 		}
+		change_amount_label(frm)
 		settings_button(frm)
 		permit_first_user(frm)
 		get_defaults(frm)
 		set_queries(frm)
+		if (frm.doc.docstatus == 1 && frm.doc.sepa_file_generated == 0 && frm.pay_to_account_currency == 'EUR') {
+			downloadsepa(frm)
+		} else if (frm.doc.sepa_file_generated == 1 && frm.doc.docstatus == 1 && frm.pay_to_account_currency == 'EUR') {
+			gen_sepa_xml(frm)
+		}
 		frappe.realtime.off('reload')
 		frappe.realtime.on('reload', message => {
 			frm.reload_doc()
@@ -447,4 +453,43 @@ function check_settings(frm) {
 			}
 		})
 	}
+}
+
+function gen_sepa_xml(frm) {
+	frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_authorized_role', { doc: frm.doc }).then(r => {
+		if (frappe.user.has_role(r)) {
+			downloadsepa(frm)
+		}
+	})
+}
+
+function downloadsepa(frm) {
+	frm.add_custom_button('Download SEPA', () => {
+		frappe.xcall('check_run.check_run.doctype.check_run.gen_sepa_xml.gen_sepa_xml_file', { doc: frm.doc }).then(r => {
+			downloadXML('payments.xml', r)
+			cur_frm.refresh()
+		})
+	})
+}
+
+function downloadXML(filename, content) {
+	var element = document.createElement('a')
+	element.setAttribute('href', 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(content))
+	element.setAttribute('download', filename)
+	element.style.display = 'none'
+	document.body.appendChild(element)
+	element.click()
+	document.body.removeChild(element)
+}
+
+function change_amount_label(frm) {
+	frappe
+		.xcall('check_run.check_run.doctype.check_run.check_run.get_default_currency', { company: frm.doc.company })
+		.then(r => {
+			if (r) {
+				if (r != frm.pay_to_account_currency) {
+					cur_frm.fields_dict.amount_check_run.set_label('Estimated Amount in Check Run')
+				}
+			}
+		})
 }
