@@ -7,7 +7,6 @@ from erpnext.accounts.doctype.purchase_invoice.purchase_invoice import make_debi
 from erpnext.setup.utils import enable_all_roles_and_domains, set_defaults_for_tests
 from frappe.desk.page.setup_wizard.setup_wizard import setup_complete
 from frappe.utils.data import add_days, flt
-
 from check_run.tests.fixtures import employees, sepa_supplier, suppliers, tax_authority
 
 
@@ -40,7 +39,6 @@ def before_test():
 	for modu in frappe.get_all("Module Onboarding"):
 		frappe.db.set_value("Module Onboarding", modu, "is_complete", 1)
 	frappe.set_value("Website Settings", "Website Settings", "home_page", "login")
-	frappe.db.commit()
 
 
 def create_test_data():
@@ -70,8 +68,8 @@ def create_test_data():
 	create_employees(settings)
 	create_expense_claim(settings)
 	for month in range(1, 13):
-		create_payroll_journal_entry(settings)
 		settings.day = settings.day.replace(month=month)
+		create_payroll_journal_entry(settings)
 	create_manual_payment_entry(settings)
 
 
@@ -477,6 +475,8 @@ def create_invoices(settings):
 				"qty": 1,
 			},
 		)
+		if supplier[0].startswith("Sphere"):
+			pi.payment_terms_template = None
 		pi.save()
 		pi.submit()
 	# two electric meters / test invoice aggregation
@@ -729,8 +729,7 @@ def create_payroll_journal_entry(settings):
 	je = frappe.new_doc("Journal Entry")
 	je.entry_type = "Journal Entry"
 	je.company = settings.company
-	je.posting_date = settings.day
-	je.due_date = settings.day
+	je.due_date = je.posting_date = settings.day
 	total_payroll = 0.0
 	for idx, emp in enumerate(emps):
 		employee_name = frappe.get_value(
@@ -795,6 +794,7 @@ def create_payroll_journal_entry(settings):
 	)
 	je.save()
 	je.submit()
+	print(je.posting_date, je.due_date)
 
 
 """

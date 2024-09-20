@@ -188,6 +188,9 @@ function set_queries(frm) {
 
 function get_entries(frm) {
 	return new Promise(function (resolve, reject) {
+		if (!frm.doc.transactions && check_run.transactions) {
+			frm.dirty()
+		}
 		resolve(window.check_run.mount(frm))
 	})
 }

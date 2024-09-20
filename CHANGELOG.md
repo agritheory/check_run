@@ -1,6 +1,76 @@
 # CHANGELOG
 
+## v15.1.2 (2024-07-18)
 
+### Fix
+
+* fix: serialize null transactions(v15) (#262)
+
+* fix: serialize null transactions(v15)
+
+* fix: remove ci jobs dependency ([`5e13ec7`](https://github.com/agritheory/check_run/commit/5e13ec7514b78ce6d2596ed5c640e4f2c1d9bada))
+
+### Unknown
+
+* Allow or Disallow stand-alone debit note in check run -- Version 15 (#257)
+
+* allow or disallow standalone debit note
+
+* test cases changes&#39; ([`e0707df`](https://github.com/agritheory/check_run/commit/e0707df4fba64ac63e9fd4d36627c792748db292))
+
+* Fix payment schedule outstanding v15 (#254)
+
+* fix: fix payment schedule outstanding
+
+* test: assert parent doc amount matches
+
+* tests: fix matching error message
+
+* feat: on_cancel hook and tests
+
+* feat: minor changes, add precision (#253)
+
+* fix: isort, JE generation issue
+
+---------
+
+Co-authored-by: Francisco Roldán &lt;franciscoproldan@gmail.com&gt; ([`624f36e`](https://github.com/agritheory/check_run/commit/624f36ebf195e734795216cdc790b0b1112ee802))
+
+## v15.1.1 (2024-05-29)
+
+### Ci
+
+* ci: add conftest file updated for json (#228) ([`dc306c3`](https://github.com/agritheory/check_run/commit/dc306c3364ac9ecb2d02003137284a138340ef42))
+
+* ci: remove cypress, fix hrms install, conform (#221)
+
+* ci: remove cypress, fix hrms install, conform
+
+* ci: fix mypy error ([`f6b629b`](https://github.com/agritheory/check_run/commit/f6b629b7876a14795f39dc6d853ea5b7f8722098))
+
+### Fix
+
+* fix: bankaccount =&gt; bank typing (#247) ([`da77cc3`](https://github.com/agritheory/check_run/commit/da77cc329e28d95f84783d98dbd204addb39d0e8))
+
+### Test
+
+* test: add tests, remove cypress (#238) ([`c20ed6e`](https://github.com/agritheory/check_run/commit/c20ed6e23fc744f0718dd85665f407c134bb7a56))
+
+### Unknown
+
+* Grant file download access for multiple downloads only to specific roles (#237)
+
+* ach file download access
+
+* replace super class validate
+
+* chore: prettier
+
+* ci: remove old linters
+
+---------
+
+Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt; ([`160f609`](https://github.com/agritheory/check_run/commit/160f6090b3e3061f12c8f9649c4755bb358a8f70))
 
 ## v15.1.0 (2024-03-18)
 
@@ -13,7 +83,6 @@
 * feat: release version-15 ([`6cd1a27`](https://github.com/agritheory/check_run/commit/6cd1a2788dc6597b3236d867b2dfd3f047dd4d6f))
 
 * feat: version-15 ([`0f2cd0a`](https://github.com/agritheory/check_run/commit/0f2cd0ada07d1cb3e13ebe5325a0b9d6ab2e3876))
-
 
 ## v15.0.0 (2024-03-05)
 
@@ -32,7 +101,6 @@
 * feat: progress bar in check run processing
 
 * feat: improvement and progress in print ([`d98f198`](https://github.com/agritheory/check_run/commit/d98f1985e853d68b9e7bb3661b370b6b0b194e82))
-
 
 ## v14.11.5 (2024-02-06)
 
@@ -70,7 +138,6 @@ Co-authored-by: viralpatel15 &lt;viralkansodiya167@gmail.com&gt; ([`80fa4cf`](ht
 
 * class name has been changed (#201) ([`8d46b53`](https://github.com/agritheory/check_run/commit/8d46b535748949e1d5467b05f69abc6d68dc077b))
 
-
 ## v14.11.4 (2024-01-22)
 
 ### Fix
@@ -85,20 +152,17 @@ Co-authored-by: viralpatel15 &lt;viralkansodiya167@gmail.com&gt; ([`80fa4cf`](ht
 
 * docs: update for Payment Entry payment term customizations ([`1156621`](https://github.com/agritheory/check_run/commit/1156621b4b80f0e7a5cc3f7c10076910305ad29b))
 
-
 ## v14.11.3 (2024-01-18)
 
 ### Fix
 
 * fix: add docstatus check first before fetching supplier MOP (#195) ([`9691364`](https://github.com/agritheory/check_run/commit/9691364f52248e4dfd2c79eaa89bdaba41c5d148))
 
-
 ## v14.11.2 (2024-01-18)
 
 ### Fix
 
 * fix: remove validation (#194) ([`efda8ae`](https://github.com/agritheory/check_run/commit/efda8ae0f58ce272eae7888a0dd867a7ede4c792))
-
 
 ## v14.11.1 (2024-01-18)
 
@@ -171,7 +235,6 @@ Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt; ([`1e8cd26`](https:/
 Co-authored-by: fproldan &lt;fproldan@users.noreply.github.com&gt;
 Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt; ([`a84c566`](https://github.com/agritheory/check_run/commit/a84c5667edafa09b876a17f80661f0ced65a796e))
 
-
 ## v14.11.0 (2024-01-08)
 
 ### Feature
@@ -182,13 +245,11 @@ Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt; ([`a84c566`](https:/
 
 * patch: update outsanting in old payment schedule entries (#183) ([`a9e3e8b`](https://github.com/agritheory/check_run/commit/a9e3e8b1685cdad2c243e6c383ad0563f31f5c27))
 
-
 ## v14.10.0 (2023-12-14)
 
 ### Feature
 
 * feat: ignore PI where debit not has been issued (#181) ([`e085e96`](https://github.com/agritheory/check_run/commit/e085e9675a70c81fdc560e2341472d345c92ee70))
-
 
 ## v14.9.0 (2023-12-12)
 
@@ -210,13 +271,11 @@ Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt; ([`a84c566`](https:/
 
 feat: add fallbacks for mode of payment per source document type ([`c609603`](https://github.com/agritheory/check_run/commit/c6096038c1363e14a2ba7abb29f2cf73d25ce860))
 
-
 ## v14.8.4 (2023-12-11)
 
 ### Fix
 
 * fix: only fetch check number on &#34;pay&#34; payment types (#179) ([`1b6dd48`](https://github.com/agritheory/check_run/commit/1b6dd488a6cf921c4497737f47d27627f19e510f))
-
 
 ## v14.8.3 (2023-12-11)
 
@@ -269,7 +328,6 @@ Co-authored-by: Heather Kusmierz &lt;heather.kusmierz@gmail.com&gt; ([`bbb66d6`]
 
 * docs: add docs for per supplier invoices per voucher ([`567762c`](https://github.com/agritheory/check_run/commit/567762c67c9cbbc89e57f345beca61a64e28961a))
 
-
 ## v14.8.2 (2023-09-22)
 
 ### Fix
@@ -279,7 +337,6 @@ Co-authored-by: Heather Kusmierz &lt;heather.kusmierz@gmail.com&gt; ([`bbb66d6`]
 * fix: required_apps
 
 * fix: required_apps ([`31b5297`](https://github.com/agritheory/check_run/commit/31b52975839424f9a9bfbded6cc03c241dcb44cd))
-
 
 ## v14.8.1 (2023-09-14)
 
@@ -343,7 +400,6 @@ Co-authored-by: fproldan &lt;fproldan@users.noreply.github.com&gt;
 Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt;
 Co-authored-by: fproldan &lt;fproldan@users.noreply.github.com&gt; ([`78d2666`](https://github.com/agritheory/check_run/commit/78d2666c2c9b92831b90ee1c647737ef79375a44))
 
-
 ## v14.8.0 (2023-09-08)
 
 ### Feature
@@ -367,7 +423,6 @@ feat: add read_only decorator ([`73d459d`](https://github.com/agritheory/check_r
 ---------
 
 Co-authored-by: Heather Kusmierz &lt;heather.kusmierz@gmail.com&gt; ([`5831fb8`](https://github.com/agritheory/check_run/commit/5831fb85f3b08e76f486c3b01fb671b3dba06225))
-
 
 ## v14.7.0 (2023-09-07)
 
@@ -454,7 +509,6 @@ Co-authored-by: Heather Kusmierz &lt;heather.kusmierz@gmail.com&gt; ([`e00e476`]
 According to the NACHA Dev Guide, Originating DFI Identification is supposed to be &#34;The routing number of the DFI originating the entries within the batch.&#34;
 
 Co-authored-by: Trusted Computer &lt;75872475+trustedcomputer@users.noreply.github.com&gt; ([`f16bb24`](https://github.com/agritheory/check_run/commit/f16bb2468231a8221e302109060dee79aa476838))
-
 
 ## v14.6.0 (2023-07-28)
 
@@ -637,7 +691,6 @@ Co-authored-by: agritheory &lt;agritheory@users.noreply.github.com&gt; ([`825bf7
 * feat: fix lookup for non-existient bank account info, improve UX
 
 * fix: don&#39;t raise exception on bank account lookup ([`c4357a8`](https://github.com/agritheory/check_run/commit/c4357a80305b4b5d2137b132553eb38b4bb6e2a7))
-
 
 ## v14.0.0 (2022-12-30)
 
@@ -969,11 +1022,13 @@ changes: spacebar checks/unchecks pay, keys a-z open MOP / starts search ([`1219
 
 * Merge branch &#39;test_and_cleanup&#39; into key-nav ([`a478f7f`](https://github.com/agritheory/check_run/commit/a478f7fe61e01b3386bf866a78742d81458c1c0a))
 
+* Merge branch &#39;version-13&#39; of github.com:agritheory/check_run into test_and_cleanup ([`6fba403`](https://github.com/agritheory/check_run/commit/6fba403ca20fbd56f022e0af8856e09681b19ef2))
+
+* wip: test stubbed and some reactivity improvements ([`d5364dc`](https://github.com/agritheory/check_run/commit/d5364dc17cac516a162f654f1637b2393b731ce1))
+
 * Merge branch &#39;key-nav&#39; of github.com:agritheory/check_run into key-nav ([`33bc96b`](https://github.com/agritheory/check_run/commit/33bc96bee34f91eddd83b530ae638f8a0e3dcde2))
 
 * changes: spacebar checks/unchecks pay, keys a-z open MOP / starts search ([`0873c5d`](https://github.com/agritheory/check_run/commit/0873c5d395c07891a5bffd83734918adeaa44bb1))
-
-* Merge branch &#39;version-13&#39; of github.com:agritheory/check_run into test_and_cleanup ([`6fba403`](https://github.com/agritheory/check_run/commit/6fba403ca20fbd56f022e0af8856e09681b19ef2))
 
 * Merge pull request #3 from agritheory/key-nav
 
@@ -983,19 +1038,17 @@ Key nav ([`0823fc5`](https://github.com/agritheory/check_run/commit/0823fc56926e
 
 * update checkrun total field ([`65e10b8`](https://github.com/agritheory/check_run/commit/65e10b829267784192e815e8d2bc03830b87dcd0))
 
-* wip: test stubbed and some reactivity improvements ([`d5364dc`](https://github.com/agritheory/check_run/commit/d5364dc17cac516a162f654f1637b2393b731ce1))
-
 * Merge pull request #2 from agritheory/version-13-hotfix
 
 Check run render fixes ([`8d740bd`](https://github.com/agritheory/check_run/commit/8d740bdda360bb4d2488810e3845df53e66fb700))
 
 * cleanup: removed default span in check_run_table, removed is_dirty function ([`bc05bde`](https://github.com/agritheory/check_run/commit/bc05bde2fdbe8feb852a8f851bf64ed2897d9d7d))
 
+* fixes: check run table save and render on save ([`0e1c27a`](https://github.com/agritheory/check_run/commit/0e1c27a362c6107d877a270bbe9f0a4e56ca82a8))
+
 * Merge pull request #1 from agritheory/positivepay
 
 feat: add positive pay report ([`df8692b`](https://github.com/agritheory/check_run/commit/df8692b91c45b8d47b2eebbd8519bee1d05314f4))
-
-* fixes: check run table save and render on save ([`0e1c27a`](https://github.com/agritheory/check_run/commit/0e1c27a362c6107d877a270bbe9f0a4e56ca82a8))
 
 * wip: table not rendering on save ([`08d48c7`](https://github.com/agritheory/check_run/commit/08d48c7836a34027fd3027c6c26dc369067be644))
 

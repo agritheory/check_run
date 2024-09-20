@@ -15,7 +15,6 @@ env:
 
 jobs:
   mypy:
-    needs: [ py_json_merge ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -40,7 +39,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   black:
-    needs: [ py_json_merge ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -53,12 +51,11 @@ jobs:
 
       - name: Install Black (Frappe)
         run: pip install git+https://github.com/frappe/black.git
-    
+
       - name: Run Black (Frappe)
         run: black --check .
 
   prettier:
-    needs: [ py_json_merge ]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -76,4 +73,3 @@ jobs:
         run: |
           echo "The following files are not formatted:"
           echo "${{steps.prettier-run.outputs.prettier_output}}" >> $GITHUB_OUTPUT
-
