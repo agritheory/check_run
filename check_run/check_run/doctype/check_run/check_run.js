@@ -9,7 +9,7 @@ frappe.ui.form.on('Check Run', {
 			show_progress_bar(frm, data, 'Processing')
 		})
 		frappe.realtime.on('render_check_progress', data => {
-			show_progress_bar(frm, data, 'Printing')
+			show_progress_bar(frm, data, 'Rendering')
 		})
 	},
 	validate: frm => {
@@ -64,6 +64,17 @@ frappe.ui.form.on('Check Run', {
 			frm.set_df_property('final_check_number', 'read_only', 1)
 		}
 		check_settings(frm)
+		$('[data-original-title="Print"]').hide()
+		if (frappe.model.can_print(null, frm)) {
+			frm.page.add_action_icon(
+				'printer',
+				() => {
+					frappe.set_route('print-check-run', frm.doc.name)
+				},
+				'',
+				__('Print')
+			)
+		}
 	},
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
@@ -283,6 +294,9 @@ function confirm_print(frm) {
 }
 
 function reprint_checks(frm) {
+	if (frm.settings.print_preview == 'Print from Print Preview') {
+		return
+	}
 	frm.set_value('status', 'Submitted')
 	let d = new frappe.ui.Dialog({
 		title: __('Re-Print'),
@@ -315,35 +329,43 @@ function reprint_checks(frm) {
 }
 
 function ach_only(frm) {
-	frappe
-		.xcall('check_run.check_run.doctype.check_run.check_run.ach_only', {
-			docname: frm.doc.name,
-		})
-		.then(r => {
-			if (!r.ach_only) {
-				if (frm.doc.docstatus == 1) {
-					if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
-						frm.add_custom_button(__('Re-Print Checks'), () => {
-							reprint_checks(frm)
+	if (frm.settings.print_preview != 'Print from Print Preview') {
+		frappe
+			.xcall('check_run.check_run.doctype.check_run.check_run.ach_only', {
+				docname: frm.doc.name,
+			})
+			.then(r => {
+				if (!r.ach_only) {
+					if (frm.doc.docstatus == 1) {
+						if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
+							frm.add_custom_button(__('Re-Print Checks'), () => {
+								reprint_checks(frm)
+							})
+						} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
+							render_checks(frm)
+						}
+					}
+					if (frm.doc.status == 'Ready to Print') {
+						frm.add_custom_button(__('Download Checks'), () => {
+							download_checks(frm)
 						})
-					} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
+					} else if (
+						frm.doc.print_count == 0 &&
+						frm.doc.status == 'Submitted' &&
+						frm.doc.__onload.print_preview == 'Automatically Render PDF after Submit'
+					) {
 						render_checks(frm)
 					}
 				}
-				if (frm.doc.status == 'Ready to Print') {
-					frm.add_custom_button(__('Download Checks'), () => {
-						download_checks(frm)
-					})
+				if (!r.print_checks_only) {
+					if (frm.doc.docstatus == 1) {
+						frm.add_custom_button(__('Download NACHA File'), () => {
+							download_nacha(frm)
+						})
+					}
 				}
-			}
-			if (!r.print_checks_only) {
-				if (frm.doc.docstatus == 1) {
-					frm.add_custom_button(__('Download NACHA File'), () => {
-						download_nacha(frm)
-					})
-				}
-			}
-		})
+			})
+	}
 }
 
 function validate_mode_of_payment_mandatory(frm) {

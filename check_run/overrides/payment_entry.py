@@ -15,7 +15,7 @@ from frappe import _
 class CheckRunPaymentEntry(PaymentEntry):
 	def make_gl_entries(self, cancel=0, adv_adj=0):
 		"""
-		HASH: 49e50662b6d5c315fb24366eaeb7505cd4b35947
+		HASH: f6b91969b2d1f86b69ed86f611885f92ba36c077
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: make_gl_entries
@@ -41,7 +41,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def set_status(self):
 		"""
-		HASH: 49e50662b6d5c315fb24366eaeb7505cd4b35947
+		HASH: f6b91969b2d1f86b69ed86f611885f92ba36c077
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: set_status
@@ -60,7 +60,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 	# Bug Fix
 	def get_valid_reference_doctypes(self):
 		"""
-		HASH: 49e50662b6d5c315fb24366eaeb7505cd4b35947
+		HASH: f6b91969b2d1f86b69ed86f611885f92ba36c077
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: get_valid_reference_doctypes
@@ -86,7 +86,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def validate_allocated_amount(self):
 		"""
-		HASH: 49e50662b6d5c315fb24366eaeb7505cd4b35947
+		HASH: f6b91969b2d1f86b69ed86f611885f92ba36c077
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: validate_allocated_amount
@@ -126,7 +126,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def validate_allocated_amount_with_latest_data(self):
 		"""
-		HASH: 49e50662b6d5c315fb24366eaeb7505cd4b35947
+		HASH: f6b91969b2d1f86b69ed86f611885f92ba36c077
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: validate_allocated_amount_with_latest_data

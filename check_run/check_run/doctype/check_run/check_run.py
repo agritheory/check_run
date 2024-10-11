@@ -6,13 +6,15 @@ import timeit
 from itertools import groupby, zip_longest
 from io import StringIO
 from typing_extensions import Self
-
+from frappe.www.printview import validate_print_permission
+from frappe.translate import print_language
 from PyPDF2 import PdfFileWriter
+from bs4 import BeautifulSoup
+
 import frappe
 from frappe.model.document import Document
 from frappe.utils.data import flt
 from frappe.utils.data import nowdate, getdate, now, get_datetime
-from frappe.utils.print_format import read_multi_pdf
 from frappe.permissions import has_permission
 from frappe.utils.file_manager import save_file, remove_all
 from frappe.utils.password import get_decrypted_password
@@ -415,14 +417,18 @@ class CheckRun(Document):
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,
-			"render_check_pdf",
+			"render_check_run",
 			reprint_check_number=reprint_check_number,
 			queue="short",
 			now=True,
 		)
 
 	@frappe.whitelist()
-	def render_check_pdf(self: Self, reprint_check_number: int | None = None) -> None:
+	def render_check_run(
+		self: Self, reprint_check_number: int | None = None, pdf: bool = True
+	) -> None | str:
+		from frappe.utils.print_format import read_multi_pdf  # imported here to prevent circular imports
+
 		self.print_count = self.print_count + 1
 		self.set_status("Submitted")
 		if not frappe.db.exists("File", "Home/Check Run"):
@@ -438,6 +444,7 @@ class CheckRun(Document):
 			self.initial_check_number = int(reprint_check_number)
 		output = PdfFileWriter()
 		se_print_output = PdfFileWriter()
+		html = []
 		transactions = json.loads(self.transactions)
 		check_increment = 0
 		_transactions = []
@@ -455,19 +462,32 @@ class CheckRun(Document):
 				"Payment Entry",
 				pe,
 				settings.secondary_print_format or frappe.get_meta("Payment Entry").default_print_format,
-				as_pdf=True,
-				output=se_print_output,
+				as_pdf=pdf,
+				output=se_print_output if pdf else "",
 				no_letterhead=0,
 			)
 			if docstatus == 1 and frappe.db.get_value("Mode of Payment", mode_of_payment, "type") == "Bank":
-				output = frappe.get_print(
-					"Payment Entry",
-					pe,
-					settings.print_format or frappe.get_meta("Payment Entry").default_print_format,
-					as_pdf=True,
-					output=output,
-					no_letterhead=0,
-				)
+				if pdf:
+					output = frappe.get_print(
+						"Payment Entry",
+						pe,
+						settings.print_format or frappe.get_meta("Payment Entry").default_print_format,
+						as_pdf=True,
+						output=output,
+						no_letterhead=0,
+					)
+				else:
+					_output = frappe.get_print(
+						"Payment Entry",
+						pe,
+						settings.print_format or frappe.get_meta("Payment Entry").default_print_format,
+						as_pdf=False,
+						no_letterhead=0,
+					)
+					soup = BeautifulSoup(_output, "html.parser")
+					soup.find("div", class_="action-banner").decompose()
+					soup.find("div", class_="print-format-gutter").unwrap()
+					html.append(soup.prettify())
 				if initial_check_number != reprint_check_number:
 					frappe.db.set_value(
 						"Payment Entry", pe, "reference_no", self.initial_check_number + check_increment
@@ -500,20 +520,27 @@ class CheckRun(Document):
 		self.db_set("status", "Ready to Print")
 		self.db_set("print_count", self.print_count)
 		frappe.db.set_value("Bank Account", self.bank_account, "check_number", self.final_check_number)
-		save_file(
-			f"{self.name}.pdf", read_multi_pdf(output), "Check Run", self.name, "Home/Check Run", False, 0
-		)
-		save_file(
-			f"Chaque {self.name}.pdf",
-			read_multi_pdf(se_print_output),
-			"Check Run",
-			self.name,
-			"Home/Check Run",
-			False,
-			0,
-		)
-		frappe.db.commit()
-		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
+		if pdf:
+			save_file(
+				f"{self.name}.pdf", read_multi_pdf(output), "Check Run", self.name, "Home/Check Run", False, 0
+			)
+			# TODO: this is raising an issue
+			# save_file(
+			# 	f"{self.name}.pdf",
+			# 	read_multi_pdf(se_print_output),
+			# 	"Check Run",
+			# 	self.name,
+			# 	"Home/Check Run",
+			# 	False,
+			# 	0,
+			# )
+			frappe.db.commit()
+			frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
+			return None
+		else:
+			return '<p style="page-break-after: always;"><hr style="border: 1px dashed gray"></p>'.join(
+				html
+			)
 
 
 @frappe.whitelist()
@@ -937,3 +964,67 @@ def ach_only(docname: str) -> dict:
 def process_check_run(docname: str) -> None:
 	doc = frappe.get_doc("Check Run", docname)
 	doc.process_check_run()
+
+
+@frappe.whitelist(allow_guest=True)
+def download_pdf(
+	doctype,
+	name,
+	formattype=None,
+	print_format=None,
+	doc=None,
+	no_letterhead=0,
+	language=None,
+	letterhead=None,
+	baseurl=None,
+	printcss=None,
+):
+	doc = doc or frappe.get_doc(doctype, name)
+	validate_print_permission(doc)
+	from check_run.www.print_check_run import get_check_run_format
+
+	out = get_check_run_format(
+		doc, name=doc.name, doctype_to_print=formattype, print_format=print_format
+	)
+	data = ""
+	for d in out.get("html"):
+		data += d[0]
+
+	style = out.get("style")
+
+	hide_image = """
+			@media print {
+					@print {
+						margin: 0;
+					}
+					
+					.back_image {
+						background: none !important;
+					}
+				}	
+			"""
+
+	html = """<style type='text/css'>{}</style><link href={}{} rel='stylesheet'>""".format(
+		style, baseurl, printcss
+	)
+
+	html += f"<div class='print-format print-format-preview'>{data}</div>"
+
+	modified_html_string = html.replace("</style>", hide_image + "</style>")
+	html = modified_html_string
+	with print_language(language):
+		pdf_file = frappe.get_print(
+			doctype,
+			name,
+			html=html,
+			doc=doc,
+			as_pdf=True,
+			letterhead=letterhead,
+			no_letterhead=no_letterhead,
+		)
+
+	frappe.local.response.filename = "{name}.pdf".format(
+		name=name.replace(" ", "-").replace("/", "-")
+	)
+	frappe.local.response.filecontent = pdf_file
+	frappe.local.response.type = "pdf"
