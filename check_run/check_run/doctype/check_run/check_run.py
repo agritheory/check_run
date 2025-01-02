@@ -322,7 +322,11 @@ class CheckRun(Document):
 					party = frappe.db.get_value("Journal Entry Account", group[0].name, "party")
 				pe = frappe.new_doc("Payment Entry")
 				pe.payment_type = "Pay"
-				pe.posting_date = nowdate()
+				pe.posting_date = (
+					nowdate()
+					if settings.set_payment_entry_posting_date == "Use Today's Date"
+					else self.posting_date
+				)
 				pe.mode_of_payment = group[0].mode_of_payment
 				pe.company = self.company
 				pe.bank_account = self.bank_account

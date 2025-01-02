@@ -19,6 +19,7 @@
 		"allow_cancellation",
 		"cascade_cancellation",
 		"validate_unique_check_number",
+		"set_payment_entry_posting_date",
 		"column_break_9",
 		"number_of_invoices_per_voucher",
 		"secondary_print_format",
@@ -229,23 +230,28 @@
 			"label": "Validate Unique Check Number"
 		},
 		{
-
 			"fieldname": "secondary_print_format",
 			"fieldtype": "Link",
 			"label": "Secondary Print Format",
 			"options": "Print Format"
 		},
 		{
-
 			"default": "No",
 			"fieldname": "allow_stand_alone_debit_notes",
 			"fieldtype": "Select",
 			"label": "Allow stand-alone debit notes?",
 			"options": "Yes\nNo"
+		},
+		{
+			"default": "Use Today's Date",
+			"fieldname": "set_payment_entry_posting_date",
+			"fieldtype": "Select",
+			"label": "Set Payment Entry Posting Date",
+			"options": "Use Today's Date\nUse Check Run's Posting Date"
 		}
 	],
 	"links": [],
-	"modified": "2024-04-30 04:53:43.492872",
+	"modified": "2025-01-02 15:03:09.396159",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",
