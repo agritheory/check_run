@@ -36,6 +36,8 @@ If the system doesn't find settings for the account combination you're using in 
     - If checked, this will validate if the same vendor is being paid to different addresses and split the payments entries appropriately
 - **Automatically Release On Hold Invoices:**
     - By default, on hold invoices will not show if their 'release date' is not within the Check Run period. The checkbox allows invoices that _are_ on hold to be automatically released and paid in the Check Run.
+- **Set Payment Entry Posting Date:**
+    - By default, Check Run will use today's date to determine the posting on the Payment Entries. By Changing this setting you can backdate or forward-date. The reference date on the Payment Entry always uses the Check Run's posting date. Either of these fields can be utilized in your custom print format(s).
 
 ![Check Run output table showing a row for eight invoices paid (two for AgriTheory, two for Cooperative Ag Finance, and four for Exceptional Grid). The first two Exceptional Grid invoices have Check Reference Number ACC-PAY-2022-00003 and the next set of two invoices have Check Reference Number ACC-PAY-2022-00004. They were split into different vouchers because the setting limited two invoices per voucher.](./assets/VoucherGroup.png)
 
