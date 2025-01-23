@@ -4,12 +4,7 @@
 	"doctype": "Mode of Payment",
 	"property_setters": [
 		{
-			"_assign": null,
-			"_comments": null,
-			"_liked_by": null,
-			"_user_tags": null,
 			"creation": "2022-08-05 13:10:55.278054",
-			"default_value": null,
 			"doc_type": "Mode of Payment",
 			"docstatus": 0,
 			"doctype_or_field": "DocField",
@@ -20,12 +15,8 @@
 			"module": "Check Run",
 			"name": "Mode of Payment-type-options",
 			"owner": "Administrator",
-			"parent": null,
-			"parentfield": null,
-			"parenttype": null,
 			"property": "options",
 			"property_type": "Text",
-			"row_name": null,
 			"value": "Cash\nBank\nGeneral\nPhone\nElectronic"
 		}
 	],

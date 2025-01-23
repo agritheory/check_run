@@ -1,3 +1,6 @@
+# Copyright (c) 2025, AgriTheory and contributors
+# For license information, please see license.txt
+
 from . import __version__ as app_version  # noqa: F401
 
 app_name = "check_run"
@@ -109,6 +112,8 @@ override_doctype_class = {
 
 doc_events = {
 	"Bank": {"validate": ["check_run.overrides.bank.validate"]},
+	"Expense Claim": {"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]},
+	"Journal Entry": {"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]},
 	"Payment Entry": {
 		"validate": [
 			"check_run.overrides.payment_entry.validate_duplicate_check_number",
@@ -124,8 +129,6 @@ doc_events = {
 	"Purchase Invoice": {
 		"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]
 	},
-	"Expense Claim": {"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]},
-	"Journal Entry": {"before_cancel": ["check_run.check_run.disallow_cancellation_if_in_check_run"]},
 }
 
 # Scheduled Tasks
