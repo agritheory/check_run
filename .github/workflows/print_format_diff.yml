@@ -1,4 +1,4 @@
-name: Diff Print Formats
+name: Print Format Diff
 
 on:
   pull_request:
@@ -9,14 +9,14 @@ on:
 jobs:
   diff_print_format:
     runs-on: ubuntu-latest
-    name: Diff Print Formats
+    name: Print Format Diff
     steps:
       - name: Checkout the code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Diff Print Formats
+      - name: Print Format Diff
         uses: diamorafaela/diff-print-format@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
