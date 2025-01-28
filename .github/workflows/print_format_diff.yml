@@ -1,0 +1,22 @@
+name: Print Format Diff
+
+on:
+  pull_request:
+    branches:
+      - version-14
+      - version-15
+
+jobs:
+  diff_print_format:
+    runs-on: ubuntu-latest
+    name: Print Format Diff
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Print Format Diff
+        uses: diamorafaela/diff-print-format@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
