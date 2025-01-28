@@ -59,6 +59,7 @@ def create_test_data():
 			),
 		}
 	)
+	create_company_address(settings)
 	create_bank_and_bank_account(settings)
 	create_payment_terms_templates(settings)
 	create_suppliers(settings)
@@ -71,6 +72,19 @@ def create_test_data():
 		settings.day = settings.day.replace(month=month)
 		create_payroll_journal_entry(settings)
 	create_manual_payment_entry(settings)
+
+
+def create_company_address(settings):
+	company_address = frappe.new_doc("Address")
+	company_address.title = settings.company
+	company_address.address_type = "Office"
+	company_address.address_line1 = "67C Sweeny Street"
+	company_address.city = "Chelsea"
+	company_address.state = "MA"
+	company_address.pincode = "89077"
+	company_address.is_your_company_address = True
+	company_address.append("links", {"link_doctype": "Company", "link_name": settings.company})
+	company_address.save()
 
 
 def create_bank_and_bank_account(settings):
