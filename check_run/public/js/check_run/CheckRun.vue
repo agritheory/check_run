@@ -51,15 +51,19 @@
 					<th v-else class="col col-sm-1">Check Number | Reference</th>
 				</tr>
 			</thead>
-			<tbody>
+			<tbody id="tableTransactions">
 				<template v-for="(item, i) in orderedTransactions">
 					<tr
 						v-if="partyIsInFilter(item.party)"
 						:key="i"
+						:id="i"
 						class="checkrun-row-container"
 						:class="{ selectedRow: selectedRow == i }"
 						tabindex="1"
-						@click="selectedRow = i">
+						@keydown.prevent.esc="handleEsc"
+						@keydown.prevent.space="handleSelectRow(i)"
+						@keydown="handleKeyPress(i, item.name)"
+						@click="handleSelectRow(i)">
 						<td style="text-align: left">{{ item.party_name || item.party }}</td>
 						<td style="text-align: left; white-space: nowrap">
 							<a :href="transactionUrl(item)" target="_blank">
@@ -102,7 +106,9 @@
 							<select
 								v-if="frm.doc.status == 'Draft'"
 								class="form-control form-select form-select-lg mb-3"
-								@change="onMOPChange(frm, $event, item.name)">
+								@change="onMOPChange(frm, $event, item.name)"
+								:ref="el => paymentSelects[item.name] = el"
+								:data-select="item.name">
 								<option v-for="mop in modes_of_payment" :selected="transactions[item.name].mode_of_payment == mop">
 									{{ mop }}
 								</option>
@@ -129,7 +135,7 @@
 	</div>
 </template>
 <script setup>
-import { computed, onMounted, ref, reactive, watch, unref } from 'vue'
+import { computed, onMounted, ref, reactive, watch, unref, nextTick } from 'vue'
 import ModeOfPaymentSummary from './ModeOfPaymentSummary.vue'
 
 frappe.provide('check_run')
@@ -138,8 +144,9 @@ let transactions = reactive(window.check_run.transactions)
 let filters = reactive(window.check_run.filters)
 let show_party_filter = ref(false)
 let selectAll = ref(false)
-let selectedRow = ref()
+let selectedRow = computed(() => unref(window.check_run.selectedRow))
 let location = ref(window.location)
+let paymentSelects = ref({});
 
 let orderedTransactions = computed(() => {
 	let r = unref(
@@ -234,6 +241,33 @@ function paymentEntryUrl(transaction) {
 		return ''
 	}
 	return encodeURI(`${frappe.urllib.get_base_url()}/app/payment-entry/${transaction.payment_entry}`)
+}
+
+function handleEsc(event) {
+	window.check_run.selectedRow.value = -1
+}
+
+function handleSelectRow(row) {
+	if (window.check_run.selectedRow.value === - 1 || row !== window.check_run.selectedRow.value) {
+		window.check_run.selectedRow.value = row
+	} else {
+		window.check_run.selectedRow.value = -1
+	}
+}
+
+function handleKeyPress(row, itemName, event) {
+    if (selectedRow.value === row) {
+        nextTick(() => {
+            const select = paymentSelects.value[itemName];
+            if (select) {
+                select.focus();
+                if (["ArrowUp", "ArrowDown"].includes(event?.key)) {
+                    const event = new Event("mousedown", { bubbles: true });
+                    select.dispatchEvent(event);
+                }
+            }
+        });
+    }
 }
 </script>
 <style scoped>
