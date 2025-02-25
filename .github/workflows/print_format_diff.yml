@@ -5,6 +5,8 @@ on:
     branches:
       - version-14
       - version-15
+    paths:
+      - 'print_format/**/*.json'
 
 jobs:
   diff_print_format:
@@ -17,6 +19,6 @@ jobs:
           fetch-depth: 0
 
       - name: Print Format Diff
-        uses: diamorafaela/diff-print-format@main
+        uses: agritheory/test_utils/actions/diff_print_format@multiple_actions
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

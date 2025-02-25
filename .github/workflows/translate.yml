@@ -1,0 +1,26 @@
+name: Translate Documentation
+
+on:
+  pull_request:
+    branches:
+      - version-14
+      - version-15
+    paths:
+      - 'docs/*/en/*.md'
+
+jobs:
+  translate_docs:
+    runs-on: ubuntu-latest
+    name: Translate Documentation
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Translate Documentation
+        uses: agritheory/test_utils/actions/translate_docs@multiple_actions
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_REF: ${{ github.ref }}
