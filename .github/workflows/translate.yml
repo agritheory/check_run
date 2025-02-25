@@ -1,4 +1,4 @@
-name: Translate Documentation
+name: Translate Documentation (Test Utils)
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ jobs:
     name: Translate Documentation
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Translate Documentation
         uses: agritheory/test_utils/actions/translate_docs@multiple_actions
