@@ -455,23 +455,25 @@ class CheckRun(Document):
 			mode_of_payment, docstatus = frappe.db.get_value(
 				"Payment Entry", pe, ["mode_of_payment", "docstatus"]
 			) or (None, None)
-			se_print_output = frappe.get_print(
-				"Payment Entry",
-				pe,
-				settings.secondary_print_format or frappe.get_meta("Payment Entry").default_print_format,
-				as_pdf=True,
-				output=se_print_output,
-				no_letterhead=0,
-			)
-			if docstatus == 1 and frappe.db.get_value("Mode of Payment", mode_of_payment, "type") == "Bank":
-				output = frappe.get_print(
+			if mode_of_payment == "Check":
+				se_print_output = frappe.get_print(
 					"Payment Entry",
 					pe,
-					settings.print_format or frappe.get_meta("Payment Entry").default_print_format,
+					settings.secondary_print_format or frappe.get_meta("Payment Entry").default_print_format,
 					as_pdf=True,
-					output=output,
+					output=se_print_output,
 					no_letterhead=0,
 				)
+			if docstatus == 1 and frappe.db.get_value("Mode of Payment", mode_of_payment, "type") == "Bank":
+				if mode_of_payment == "Check":
+					output = frappe.get_print(
+						"Payment Entry",
+						pe,
+						settings.print_format or frappe.get_meta("Payment Entry").default_print_format,
+						as_pdf=True,
+						output=output,
+						no_letterhead=0,
+					)
 				if initial_check_number != reprint_check_number:
 					frappe.db.set_value(
 						"Payment Entry", pe, "reference_no", self.initial_check_number + check_increment
