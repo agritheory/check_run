@@ -1,6 +1,9 @@
-import json
+# Copyright (c) 2025, AgriTheory and contributors
+# For license information, please see license.txt
+
 import datetime
 import pytest
+from PyPDF2 import PdfReader
 
 import frappe
 
@@ -136,3 +139,20 @@ def test_return_offset_other_amounts(cr):
 
 	pe = frappe.get_doc("Payment Entry", {"party": party, "check_run": cr.name})
 	assert total == pe.paid_amount == 9000.00
+
+
+def test_pdf_length(cr):
+	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
+	for row in cr.transactions:
+		if row["mode_of_payment"] == "Check":
+			row["pay"] = 1
+		else:
+			row["pay"] = 0
+	cr.transactions = frappe.as_json(cr.transactions)
+	cr.flags.in_test = True
+	cr.save()
+	cr._process_check_run()
+	file = cr.render_check_pdf()
+	reader = PdfReader(file.get_full_path())
+	number_of_pages = len(reader.pages)
+	assert number_of_pages > 1
