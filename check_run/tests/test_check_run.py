@@ -2,9 +2,10 @@
 # For license information, please see license.txt
 
 import datetime
-import pytest
-from PyPDF2 import PdfReader
+import re
 
+import pytest
+import pdfplumber
 import frappe
 
 from check_run.check_run.doctype.check_run.check_run import (
@@ -141,7 +142,7 @@ def test_return_offset_other_amounts(cr):
 	assert total == pe.paid_amount == 9000.00
 
 
-def test_pdf_length(cr):
+def test_pdf_length_and_mode_of_payment(cr):
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
 	for row in cr.transactions:
 		if row["mode_of_payment"] == "Check":
@@ -153,6 +154,10 @@ def test_pdf_length(cr):
 	cr.save()
 	cr._process_check_run()
 	file = cr.render_check_pdf()
-	reader = PdfReader(file.get_full_path())
-	number_of_pages = len(reader.pages)
-	assert number_of_pages > 1
+	print(file.get_full_path())
+	with pdfplumber.open(file.get_full_path()) as pdf:
+		number_of_pages = len(pdf.pages)
+		assert number_of_pages > 1
+		payment_mode_pattern = re.compile(r"Mode of Payment:\s*(.*?)$", re.MULTILINE)
+		for i in range(number_of_pages):
+			page_text = pdf.pages[i].extract_text()
