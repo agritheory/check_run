@@ -11,7 +11,8 @@ dependencies = [
     "atnacha @ git+https://github.com/AgriTheory/atnacha.git@main#egg=atnacha",
     "mypy", 
     "pytest",
-    "pdfplumber"
+    "pdfplumber",
+    "pytest-order"
 ]
 
 [build-system]

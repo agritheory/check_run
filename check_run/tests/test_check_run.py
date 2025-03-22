@@ -42,6 +42,7 @@ def cr():  # return draft check run
 	return cr
 
 
+@pytest.mark.order(10)
 def test_get_entries(cr):
 	crs = get_check_run_settings(cr)
 	assert frappe.db.exists("Check Run Settings", crs)
@@ -55,6 +56,7 @@ def test_get_entries(cr):
 	assert len([doc.get("name") == f"ACC-PINV-{year}-00001 " for doc in cr.transactions]) > 1
 
 
+@pytest.mark.order(11)
 def test_process_check_run_on_hold_invoice_error(cr):
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
 	# try to pay invoice on hold to raise error
@@ -72,6 +74,7 @@ def test_process_check_run_on_hold_invoice_error(cr):
 		cr.process_check_run()
 
 
+@pytest.mark.order(12)
 def test_process_check_run_on_hold_invoice_auto_release(cr):
 	# Test Settings auto-release of on-hold invoices
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
@@ -93,6 +96,7 @@ def test_process_check_run_on_hold_invoice_auto_release(cr):
 		pytest.fail("Error raised on Check Run process when should have passed.")
 
 
+@pytest.mark.order(13)
 def test_return_excluded_in_check_run(cr):
 	# Test for ValidationError when Check Run only includes a return transaction
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
@@ -101,6 +105,7 @@ def test_return_excluded_in_check_run(cr):
 			raise ValueError("Default Settings should exclude this invoice from appearing")
 
 
+@pytest.mark.order(14)
 def test_return_included_in_check_run_error(cr):
 	# Test for ValidationError when Check Run includes only a return transaction
 	_transactions = get_entries(cr).get("transactions")
@@ -123,6 +128,7 @@ def test_return_included_in_check_run_error(cr):
 		cr.process_check_run()
 
 
+@pytest.mark.order(15)
 def test_return_offset_other_amounts(cr):
 	# Test for offset when return applied to other invoices and net amount to pay is > 0
 	party = "Cooperative Ag Finance"
@@ -142,6 +148,7 @@ def test_return_offset_other_amounts(cr):
 	assert total == pe.paid_amount == 9000.00
 
 
+@pytest.mark.order(30)
 def test_pdf_length_and_mode_of_payment(cr):
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
 	for row in cr.transactions:
@@ -154,7 +161,6 @@ def test_pdf_length_and_mode_of_payment(cr):
 	cr.save()
 	cr._process_check_run()
 	file = cr.render_check_pdf()
-	print(file.get_full_path())
 	with pdfplumber.open(file.get_full_path()) as pdf:
 		number_of_pages = len(pdf.pages)
 		assert number_of_pages > 1
