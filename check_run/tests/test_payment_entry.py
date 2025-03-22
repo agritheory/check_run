@@ -11,6 +11,8 @@ from check_run.check_run.doctype.check_run.check_run import (
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 
 
+from check_run.tests.test_check_run import cr  # noqa
+
 year = datetime.date.today().year
 
 
