@@ -371,21 +371,21 @@ function validate_mode_of_payment_mandatory(frm) {
 }
 
 function render_checks(frm, reprint_check_number = undefined) {
-	frappe
-		.call({
-			method: 'increment_print_count',
-			doc: frm.doc,
-			args: { reprint_check_number: reprint_check_number },
-		})
-		.done(() => {
-			frm.reload_doc()
-			frm.add_custom_button('Re-Print Checks', () => {
-				reprint_checks(frm)
-			})
-		})
-		.fail(r => {
-			frm.reload_doc()
-		})
+	// frappe
+	// 	.call({
+	// 		method: 'increment_print_count',
+	// 		doc: frm.doc,
+	// 		args: { reprint_check_number: reprint_check_number },
+	// 	})
+	// 	.done(() => {
+	// 		frm.reload_doc()
+	// 		frm.add_custom_button('Re-Print Checks', () => {
+	// 			reprint_checks(frm)
+	// 		})
+	// 	})
+	// 	.fail(r => {
+	// 		frm.reload_doc()
+	// 	})
 }
 
 function download_checks(frm) {
@@ -398,10 +398,28 @@ function download_checks(frm) {
 }
 
 function download_nacha(frm) {
-	window.open(`/api/method/check_run.check_run.doctype.check_run.check_run.download_nacha?docname=${frm.doc.name}`)
-	window.setTimeout(() => {
-		frm.reload_doc()
-	}, 1000)
+	frappe
+		.xcall('check_run.check_run.doctype.check_run.check_run.validate_for_nacha_file_generation', {
+			docname: frm.doc.name,
+		})
+		.then(r => {
+			if (r) {
+				if (r && r.length > 0) {
+					let error_message = '<ul>'
+					r.forEach(msg => {
+						error_message += `<li>${msg}</li>`
+					})
+					error_message += '</ul>'
+					frappe.throw(error_message)
+				}
+				window.open(
+					`/api/method/check_run.check_run.doctype.check_run.check_run.download_nacha?docname=${frm.doc.name}`
+				)
+				window.setTimeout(() => {
+					frm.reload_doc()
+				}, 1000)
+			}
+		})
 }
 
 function settings_button(frm) {

@@ -10,6 +10,7 @@ from typing_extensions import Self
 from PyPDF2 import PdfFileWriter
 import frappe
 from frappe.model.document import Document
+from frappe.utils import get_link_to_form
 from frappe.utils.data import flt
 from frappe.utils.data import nowdate, getdate, now, get_datetime
 from frappe.utils.print_format import read_multi_pdf
@@ -227,7 +228,7 @@ class CheckRun(Document):
 		frappe.db.sql("RELEASE SAVEPOINT process_check_run")
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
-	def build_nacha_file(self: Self, settings: CheckRunSettings) -> str:
+	def get_ach_payment_entries(self: Self) -> list[PaymentEntry]:
 		electronic_mop = frappe.get_all(
 			"Mode of Payment", {"type": "Electronic", "enabled": 1}, "name", pluck="name"
 		)
@@ -238,8 +239,7 @@ class CheckRun(Document):
 				if e.get("mode_of_payment") in electronic_mop
 			}
 		)
-		payment_entries = [frappe.get_doc("Payment Entry", pe) for pe in ach_payment_entries]
-		return build_nacha_file_from_payment_entries(self, payment_entries, settings)
+		return [frappe.get_doc("Payment Entry", pe) for pe in ach_payment_entries]
 
 	@frappe.whitelist()
 	@frappe.read_only()
@@ -790,13 +790,70 @@ def download_checks(docname: str) -> str:
 
 
 @frappe.whitelist()
-def download_nacha(docname: str) -> None:
+def validate_for_nacha_file_generation(docname: str) -> list[str]:
+	doc = frappe.get_doc("Check Run", docname)
+	exceptions = []
+	company_bank = frappe.db.get_value("Bank Account", doc.bank_account, "bank")
+
+	if not company_bank:
+		company_link = get_link_to_form("Company", doc.company)
+		exceptions.append(f"Company Bank missing for {company_link}")
+
+	if company_bank:
+		company_bank_aba_number = frappe.db.get_value("Bank", company_bank, "aba_number")
+		company_bank_account_no = frappe.db.get_value(
+			"Bank Account", doc.bank_account, "bank_account_no"
+		)
+		company_ach_id = frappe.db.get_value("Bank Account", doc.bank_account, "company_ach_id")
+
+		company_bank_link = get_link_to_form("Bank", company_bank)
+		bank_account_link = get_link_to_form("Bank Account", doc.bank_account)
+
+		if not company_bank_aba_number:
+			exceptions.append(f"Company Bank ABA Number missing for {company_bank_link}")
+		if not company_bank_account_no:
+			exceptions.append(f"Company Bank Account Number missing for {bank_account_link}")
+		if not company_ach_id:
+			exceptions.append(f"Company Bank ACH ID missing for {bank_account_link}")
+
+	payment_entries = doc.get_ach_payment_entries()
+	for pe in payment_entries:
+		party_link = get_link_to_form(pe.party_type, pe.party, label=pe.party_name)
+
+		party_bank_account = get_decrypted_password(
+			pe.party_type, pe.party, fieldname="bank_account", raise_exception=False
+		)
+		if not party_bank_account:
+			exceptions.append(f"{pe.party_type} Bank Account missing for {party_link}")
+
+		party_bank = frappe.db.get_value(pe.party_type, pe.party, "bank")
+		if not party_bank:
+			exceptions.append(f"{pe.party_type} Bank missing for {party_link}")
+
+		if party_bank:
+			party_bank_routing_number = frappe.db.get_value("Bank", party_bank, "aba_number")
+			if not party_bank_routing_number:
+				exceptions.append(f"{pe.party_type} Bank Routing Number missing for {party_link}")
+
+	return exceptions
+
+
+@frappe.whitelist()
+def download_nacha(docname: str, validate: bool = False) -> None:
 	has_permission(
 		"Payment Entry", ptype="print", verbose=False, user=frappe.session.user, raise_exception=True
 	)
 	doc = frappe.get_doc("Check Run", docname)
+
+	if validate:
+		exceptions = validate_for_nacha_file_generation(doc.name)
+		if exceptions:
+			frappe.throw("<br>".join(exceptions), title="Validation Errors")
+
 	settings = get_check_run_settings(doc)
-	ach_file = doc.build_nacha_file(settings)
+	payment_entries = doc.get_ach_payment_entries()
+	ach_file = build_nacha_file_from_payment_entries(doc, payment_entries, settings)
+
 	if settings.custom_post_processing_hook:
 		ach_file = frappe.call(settings.custom_post_processing_hook, doc, settings, ach_file)
 	else:
@@ -823,35 +880,17 @@ def build_nacha_file_from_payment_entries(
 	doc: CheckRun, payment_entries: list[PaymentEntry], settings: CheckRunSettings
 ) -> NACHAFile:
 	ach_entries = []
-	exceptions = []
 	company_bank = frappe.db.get_value("Bank Account", doc.bank_account, "bank")
-	if not company_bank:
-		exceptions.append(f"Company Bank missing for {doc.company}")
-	if company_bank:
-		company_bank_aba_number = frappe.db.get_value("Bank", company_bank, "aba_number")
-		company_bank_account_no = frappe.db.get_value(
-			"Bank Account", doc.bank_account, "bank_account_no"
-		)
-		company_ach_id = frappe.db.get_value("Bank Account", doc.bank_account, "company_ach_id")
-	if company_bank and not company_bank_aba_number:
-		exceptions.append(f"Company Bank ABA Number missing for {doc.bank_account}")
-	if company_bank and not company_bank_account_no:
-		exceptions.append(f"Company Bank Account Number missing for {doc.bank_account}")
-	if company_bank and not company_ach_id:
-		exceptions.append(f"Company Bank ACH ID missing for {doc.bank_account}")
+	company_bank_aba_number = frappe.db.get_value("Bank", company_bank, "aba_number")
+	company_ach_id = frappe.db.get_value("Bank Account", doc.bank_account, "company_ach_id")
+
 	for pe in payment_entries:
 		party_bank_account = get_decrypted_password(
 			pe.party_type, pe.party, fieldname="bank_account", raise_exception=False
 		)
-		if not party_bank_account:
-			exceptions.append(f"{pe.party_type} Bank Account missing for {pe.party_name}")
 		party_bank = frappe.db.get_value(pe.party_type, pe.party, "bank")
-		if not party_bank:
-			exceptions.append(f"{pe.party_type} Bank missing for {pe.party_name}")
-		if party_bank:
-			party_bank_routing_number = frappe.db.get_value("Bank", party_bank, "aba_number")
-			if not party_bank_routing_number:
-				exceptions.append(f"{pe.party_type} Bank Routing Number missing for {pe.party_name}")
+		party_bank_routing_number = frappe.db.get_value("Bank", party_bank, "aba_number")
+
 		ach_entry = ACHEntry(
 			transaction_code=22,  # checking account
 			receiving_dfi_identification=party_bank_routing_number,
@@ -864,8 +903,6 @@ def build_nacha_file_from_payment_entries(
 		)
 		ach_entries.append(ach_entry)
 
-	if exceptions:
-		frappe.throw("<br>".join(e for e in exceptions))
 	company_discretionary_data = (
 		doc.get("company_discretionary_data")
 		if doc.get("company_discretionary_data")
