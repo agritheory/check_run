@@ -189,21 +189,19 @@ class CheckRun(Document):
 			if t.get("pay") and not self.not_outstanding_or_cancelled(t)
 		]
 		if not len(transactions):
-			frappe.msgprint(
-				"Please check; maybe you have not selected any document to pay, or the selected document has already been paid.<br><br>Kindly refresh the page."
-			)
-			return
-		# if len(transactions) < 1:
-		# 	frappe.throw(frappe._("You must select at least one Invoice to pay."))
+			frappe.throw(frappe._("You must select at least one document to pay"))
 		self.print_count = 0
 		if self.ach_only().ach_only:
 			self.initial_check_number = ""  # type: ignore
 			self.final_check_number = ""
-		frappe.enqueue_doc(
-			self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600, now=True
-		)
+		if frappe.flags.in_test:
+			self._process_check_run()
+		else:
+			frappe.enqueue_doc(
+				self.doctype, self.name, "_process_check_run", queue="short", timeout=3600, now=True
+			)
 
-	def _process_check_run(self: Self, save: bool = False) -> None:
+	def _process_check_run(self: Self) -> None:
 		frappe.defaults.set_global_default("check_run_submitting", self.name)
 		frappe.db.sql("SAVEPOINT process_check_run")
 		try:
@@ -441,7 +439,7 @@ class CheckRun(Document):
 		if reprint_check_number and reprint_check_number != "undefined":
 			self.initial_check_number = int(reprint_check_number)
 		output = PdfFileWriter()
-		se_print_output = PdfFileWriter()
+		secondary_print_output = PdfFileWriter()
 		transactions = json.loads(self.transactions)
 		check_increment = 0
 		_transactions = []
@@ -455,23 +453,25 @@ class CheckRun(Document):
 			mode_of_payment, docstatus = frappe.db.get_value(
 				"Payment Entry", pe, ["mode_of_payment", "docstatus"]
 			) or (None, None)
-			se_print_output = frappe.get_print(
-				"Payment Entry",
-				pe,
-				settings.secondary_print_format or frappe.get_meta("Payment Entry").default_print_format,
-				as_pdf=True,
-				output=se_print_output,
-				no_letterhead=0,
-			)
-			if docstatus == 1 and frappe.db.get_value("Mode of Payment", mode_of_payment, "type") == "Bank":
-				output = frappe.get_print(
+			if mode_of_payment == "Check":
+				secondary_print_output = frappe.get_print(
 					"Payment Entry",
 					pe,
-					settings.print_format or frappe.get_meta("Payment Entry").default_print_format,
+					settings.secondary_print_format or frappe.get_meta("Payment Entry").default_print_format,
 					as_pdf=True,
-					output=output,
+					output=secondary_print_output,
 					no_letterhead=0,
 				)
+			if docstatus == 1 and frappe.db.get_value("Mode of Payment", mode_of_payment, "type") == "Bank":
+				if mode_of_payment == "Check":
+					output = frappe.get_print(
+						"Payment Entry",
+						pe,
+						settings.print_format or frappe.get_meta("Payment Entry").default_print_format,
+						as_pdf=True,
+						output=output,
+						no_letterhead=0,
+					)
 				if initial_check_number != reprint_check_number:
 					frappe.db.set_value(
 						"Payment Entry", pe, "reference_no", self.initial_check_number + check_increment
@@ -504,20 +504,22 @@ class CheckRun(Document):
 		self.db_set("status", "Ready to Print")
 		self.db_set("print_count", self.print_count)
 		frappe.db.set_value("Bank Account", self.bank_account, "check_number", self.final_check_number)
-		save_file(
+		file_path = save_file(
 			f"{self.name}.pdf", read_multi_pdf(output), "Check Run", self.name, "Home/Check Run", False, 0
 		)
-		save_file(
-			f"Chaque {self.name}.pdf",
-			read_multi_pdf(se_print_output),
-			"Check Run",
-			self.name,
-			"Home/Check Run",
-			False,
-			0,
-		)
+		if settings.secondary_print_format:
+			save_file(
+				f"Supplementary {self.name}.pdf",
+				read_multi_pdf(secondary_print_output),
+				"Check Run",
+				self.name,
+				"Home/Check Run",
+				False,
+				0,
+			)
 		frappe.db.commit()
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
+		return file_path
 
 
 @frappe.whitelist()
