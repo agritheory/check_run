@@ -371,21 +371,21 @@ function validate_mode_of_payment_mandatory(frm) {
 }
 
 function render_checks(frm, reprint_check_number = undefined) {
-	// frappe
-	// 	.call({
-	// 		method: 'increment_print_count',
-	// 		doc: frm.doc,
-	// 		args: { reprint_check_number: reprint_check_number },
-	// 	})
-	// 	.done(() => {
-	// 		frm.reload_doc()
-	// 		frm.add_custom_button('Re-Print Checks', () => {
-	// 			reprint_checks(frm)
-	// 		})
-	// 	})
-	// 	.fail(r => {
-	// 		frm.reload_doc()
-	// 	})
+	frappe
+		.call({
+			method: 'increment_print_count',
+			doc: frm.doc,
+			args: { reprint_check_number: reprint_check_number },
+		})
+		.done(() => {
+			frm.reload_doc()
+			frm.add_custom_button('Re-Print Checks', () => {
+				reprint_checks(frm)
+			})
+		})
+		.fail(r => {
+			frm.reload_doc()
+		})
 }
 
 function download_checks(frm) {
