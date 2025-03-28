@@ -105,13 +105,13 @@ frappe.ui.form.on('Check Run', {
 		$(document).on('keydown', function (event) {
 			switch (event.key) {
 				case 'ArrowDown':
-					handleArrowDown(event, frm);
-					break;
+					handleArrowDown(event, frm)
+					break
 				case 'ArrowUp':
-					handleArrowUp(event, frm);
-					break;
+					handleArrowUp(event, frm)
+					break
 			}
-		});
+		})
 	},
 	pay_to_account: frm => {
 		get_entries(frm)
@@ -434,7 +434,7 @@ function check_settings(frm) {
 					() => {
 						frappe.set_route('Form', 'Check Run Settings', r)
 					},
-					() => { } //stay on this page
+					() => {} //stay on this page
 				)
 			} else {
 				frm.doc.__onload.settings_missing = false
@@ -450,7 +450,7 @@ function handleArrowDown(event, frm) {
 	if (!row || row == document.getElementById('tableTransactions').lastElementChild) {
 		row = document.getElementById('tableTransactions').firstElementChild
 	} else {
-		row = check_run.focusRow.nextElementSibling;
+		row = check_run.focusRow.nextElementSibling
 	}
 	row.focus()
 	check_run.focusRow = row
@@ -463,7 +463,7 @@ function handleArrowUp(event, frm) {
 	if (!row || row == document.getElementById('tableTransactions').firstElementChild) {
 		row = document.getElementById('tableTransactions').lastElementChild
 	} else {
-		row = check_run.focusRow.previousElementSibling;
+		row = check_run.focusRow.previousElementSibling
 	}
 	row.focus()
 	check_run.focusRow = row

@@ -107,7 +107,7 @@
 								v-if="frm.doc.status == 'Draft'"
 								class="form-control form-select form-select-lg mb-3"
 								@change="onMOPChange(frm, $event, item.name)"
-								:ref="el => paymentSelects[item.name] = el"
+								:ref="el => (paymentSelects[item.name] = el)"
 								:data-select="item.name">
 								<option v-for="mop in modes_of_payment" :selected="transactions[item.name].mode_of_payment == mop">
 									{{ mop }}
@@ -146,7 +146,7 @@ let show_party_filter = ref(false)
 let selectAll = ref(false)
 let selectedRow = computed(() => unref(window.check_run.selectedRow))
 let location = ref(window.location)
-let paymentSelects = ref({});
+let paymentSelects = ref({})
 
 let orderedTransactions = computed(() => {
 	let r = unref(
@@ -248,7 +248,7 @@ function handleEsc(event) {
 }
 
 function handleSelectRow(row) {
-	if (window.check_run.selectedRow.value === - 1 || row !== window.check_run.selectedRow.value) {
+	if (window.check_run.selectedRow.value === -1 || row !== window.check_run.selectedRow.value) {
 		window.check_run.selectedRow.value = row
 	} else {
 		window.check_run.selectedRow.value = -1
@@ -256,18 +256,18 @@ function handleSelectRow(row) {
 }
 
 function handleKeyPress(row, itemName, event) {
-    if (selectedRow.value === row) {
-        nextTick(() => {
-            const select = paymentSelects.value[itemName];
-            if (select) {
-                select.focus();
-                if (["ArrowUp", "ArrowDown"].includes(event?.key)) {
-                    const event = new Event("mousedown", { bubbles: true });
-                    select.dispatchEvent(event);
-                }
-            }
-        });
-    }
+	if (selectedRow.value === row) {
+		nextTick(() => {
+			const select = paymentSelects.value[itemName]
+			if (select) {
+				select.focus()
+				if (['ArrowUp', 'ArrowDown'].includes(event?.key)) {
+					const event = new Event('mousedown', { bubbles: true })
+					select.dispatchEvent(event)
+				}
+			}
+		})
+	}
 }
 </script>
 <style scoped>
