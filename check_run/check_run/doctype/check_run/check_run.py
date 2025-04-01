@@ -851,7 +851,11 @@ def build_nacha_file_from_payment_entries(
 		standard_class_code=settings.ach_standard_class_code,
 		company_entry_description=ach_description[:10] or "",
 		company_descriptive_date=None,
-		effective_entry_date=doc.posting_date,
+		effective_entry_date=(
+			getdate()
+			if settings.set_payment_entry_posting_date == "Use Today's Date"
+			else getdate(doc.posting_date)
+		),
 		settlement_date=None,
 		originator_status_code=1,
 		originating_dfi_id=company_bank_aba_number,
