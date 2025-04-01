@@ -1,6 +1,18 @@
 # CHANGELOG
 
 
+## v15.2.1 (2025-04-01)
+
+### Bug Fixes
+
+- Respect settings date config (#298) ([#299](https://github.com/agritheory/check_run/pull/299),
+  [`fcb2ab5`](https://github.com/agritheory/check_run/commit/fcb2ab574fa35e4a3fa507186f17112d258e9404))
+
+(cherry picked from commit 8edbbffd1a8787102a30bce37ae9917c62c5f5d7)
+
+Co-authored-by: Tyler Matteson <support@agritheory.dev>
+
+
 ## v15.2.0 (2025-01-28)
 
 ### Continuous Integration
@@ -8,9 +20,8 @@
 - Backport config (#271) ([#272](https://github.com/agritheory/check_run/pull/272),
   [`db40e9f`](https://github.com/agritheory/check_run/commit/db40e9f69444da2857be322a82851210c7a23e1f))
 
-Co-authored-by: Tyler Matteson <support@agritheory.dev>
-
-(cherry picked from commit 438efdea82cc67cbeeb5df59c237e0450721d263)
+Co-authored-by: Tyler Matteson <support@agritheory.dev> (cherry picked from commit
+  438efdea82cc67cbeeb5df59c237e0450721d263)
 
 Co-authored-by: Myuddin Khatri <53251406+MyuddinKhatri@users.noreply.github.com>
 
