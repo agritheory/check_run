@@ -19,6 +19,7 @@
 		"allow_cancellation",
 		"cascade_cancellation",
 		"validate_unique_check_number",
+		"set_payment_entry_posting_date",
 		"column_break_9",
 		"number_of_invoices_per_voucher",
 		"split_by_address",
@@ -241,10 +242,17 @@
 			"fieldtype": "Link",
 			"label": "Role Allowed to Download ACH File Multiple Times",
 			"options": "Role"
+		},
+		{
+			"default": "Use Today's Date",
+			"fieldname": "set_payment_entry_posting_date",
+			"fieldtype": "Select",
+			"label": "Set Payment Entry Posting Date",
+			"options": "Use Today's Date\nUse Check Run's Posting Date"
 		}
 	],
 	"links": [],
-	"modified": "2024-04-29 08:51:46.252826",
+	"modified": "2025-04-01 14:11:22.341967",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",
