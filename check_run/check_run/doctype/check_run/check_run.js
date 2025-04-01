@@ -100,6 +100,9 @@ frappe.ui.form.on('Check Run', {
 		if (frm.doc.__onload.settings) {
 			frm.settings = frm.doc.__onload.settings
 			frm.pay_to_account_currency = frm.doc.__onload.pay_to_account_currency
+			if (frm.settings.set_payment_entry_posting_date == "Use Today's Date") {
+				frm.set_df_property('posting_date', 'read_only', 1)
+			}
 		}
 	},
 	pay_to_account: frm => {
