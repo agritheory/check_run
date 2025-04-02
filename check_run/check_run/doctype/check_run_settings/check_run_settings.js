@@ -27,5 +27,11 @@ frappe.ui.form.on('Check Run Settings', {
 				},
 			}
 		})
+		frm.set_query('debtors_address', function () {
+			return {
+				query: 'frappe.contacts.doctype.address.address.address_query',
+				filters: { link_doctype: 'Company', link_name: frm.doc.company },
+			}
+		})
 	},
 })

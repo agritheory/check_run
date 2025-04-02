@@ -39,7 +39,13 @@
 		"immediate_origin",
 		"company_discretionary_data",
 		"custom_post_processing_hook",
-		"role_allowed_to_download_ach_file_multiple_times"
+		"role_allowed_to_download_ach_file_multiple_times",
+		"sepa_payment_settings_section",
+		"initiating_party_org_id",
+		"debtor_org_id",
+		"column_break_oqnv",
+		"debtors_address",
+		"sepa_authorized_role"
 	],
 	"fields": [
 		{
@@ -53,6 +59,22 @@
 			"fieldtype": "Link",
 			"label": "Bank Account",
 			"options": "Bank Account"
+		},
+		{
+			"fieldname": "column_break_3",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "pay_to_account",
+			"fieldtype": "Link",
+			"label": "Payable Account",
+			"options": "Account"
+		},
+		{
+			"fieldname": "print_format",
+			"fieldtype": "Link",
+			"label": "Print Format",
+			"options": "Print Format"
 		},
 		{
 			"fieldname": "section_break_4",
@@ -78,28 +100,17 @@
 		},
 		{
 			"default": "0",
-			"description": "Payment Entries will be unlinked when Check Run is cancelled",
-			"fieldname": "allow_cancellation",
-			"fieldtype": "Check",
-			"label": "Allow Cancellation"
-		},
-		{
-			"fieldname": "column_break_9",
-			"fieldtype": "Column Break"
-		},
-		{
-			"default": "ach",
-			"description": "Common file extensions are 'ach', 'txt' and 'dat'. Your bank may require one of these.",
-			"fieldname": "ach_file_extension",
-			"fieldtype": "Data",
-			"label": "ACH File Extension"
-		},
-		{
-			"default": "0",
 			"description": "Pre-Check all payables that have a due date greater than the Check Run's posting date",
 			"fieldname": "pre_check_overdue_items",
 			"fieldtype": "Check",
 			"label": "Pre-Check Overdue Items"
+		},
+		{
+			"default": "0",
+			"description": "Payment Entries will be unlinked when Check Run is cancelled",
+			"fieldname": "allow_cancellation",
+			"fieldtype": "Check",
+			"label": "Allow Cancellation"
 		},
 		{
 			"default": "0",
@@ -109,6 +120,23 @@
 			"label": "Cascade Cancellation"
 		},
 		{
+			"default": "0",
+			"fieldname": "validate_unique_check_number",
+			"fieldtype": "Check",
+			"label": "Validate Unique Check Number"
+		},
+		{
+			"default": "No",
+			"fieldname": "allow_stand_alone_debit_notes",
+			"fieldtype": "Select",
+			"label": "Allow stand-alone debit notes?",
+			"options": "Yes\nNo"
+		},
+		{
+			"fieldname": "column_break_9",
+			"fieldtype": "Column Break"
+		},
+		{
 			"description": "Defaults to 5 if no value is provided",
 			"fieldname": "number_of_invoices_per_voucher",
 			"fieldtype": "Int",
@@ -116,14 +144,62 @@
 			"non_negative": 1
 		},
 		{
-			"fieldname": "column_break_3",
+			"default": "0",
+			"fieldname": "split_by_address",
+			"fieldtype": "Check",
+			"label": "Split Invoices by Address"
+		},
+		{
+			"default": "0",
+			"fieldname": "automatically_release_on_hold_invoices",
+			"fieldtype": "Check",
+			"label": "Automatically Release On Hold Invoices"
+		},
+		{
+			"default": "1000",
+			"description": "File preview is enabled up to this number of transactions",
+			"fieldname": "file_preview_threshold",
+			"fieldtype": "Int",
+			"label": "File Preview Threshold"
+		},
+		{
+			"fieldname": "default_modes_of_payment_section_section",
+			"fieldtype": "Section Break",
+			"label": "Default Modes of Payment Section"
+		},
+		{
+			"fieldname": "purchase_invoice",
+			"fieldtype": "Link",
+			"label": "Purchase Invoice",
+			"options": "Mode of Payment"
+		},
+		{
+			"fieldname": "journal_entry",
+			"fieldtype": "Link",
+			"label": "Journal Entry",
+			"options": "Mode of Payment"
+		},
+		{
+			"fieldname": "column_break_21",
 			"fieldtype": "Column Break"
 		},
 		{
-			"fieldname": "pay_to_account",
+			"fieldname": "expense_claim",
 			"fieldtype": "Link",
-			"label": "Payable Account",
-			"options": "Account"
+			"label": "Expense Claim",
+			"options": "Mode of Payment"
+		},
+		{
+			"fieldname": "ach_settings_section",
+			"fieldtype": "Section Break",
+			"label": "ACH Settings"
+		},
+		{
+			"default": "ach",
+			"description": "Common file extensions are 'ach', 'txt' and 'dat'. Your bank may require one of these.",
+			"fieldname": "ach_file_extension",
+			"fieldtype": "Data",
+			"label": "ACH File Extension"
 		},
 		{
 			"fieldname": "ach_service_class_code",
@@ -145,31 +221,8 @@
 			"length": 10
 		},
 		{
-			"fieldname": "print_format",
-			"fieldtype": "Link",
-			"label": "Print Format",
-			"options": "Print Format"
-		},
-		{
-			"default": "0",
-			"fieldname": "split_by_address",
-			"fieldtype": "Check",
-			"label": "Split Invoices by Address"
-		},
-		{
-			"fieldname": "ach_settings_section",
-			"fieldtype": "Section Break",
-			"label": "ACH Settings"
-		},
-		{
-			"fieldname": "column_break_21",
+			"fieldname": "column_break_27",
 			"fieldtype": "Column Break"
-		},
-		{
-			"default": "0",
-			"fieldname": "automatically_release_on_hold_invoices",
-			"fieldtype": "Check",
-			"label": "Automatically Release On Hold Invoices"
 		},
 		{
 			"fieldname": "immediate_origin",
@@ -189,62 +242,47 @@
 			"read_only": 1
 		},
 		{
-			"fieldname": "default_modes_of_payment_section_section",
-			"fieldtype": "Section Break",
-			"label": "Default Modes of Payment Section"
-		},
-		{
-			"fieldname": "purchase_invoice",
-			"fieldtype": "Link",
-			"label": "Purchase Invoice",
-			"options": "Mode of Payment"
-		},
-		{
-			"fieldname": "journal_entry",
-			"fieldtype": "Link",
-			"label": "Journal Entry",
-			"options": "Mode of Payment"
-		},
-		{
-			"fieldname": "expense_claim",
-			"fieldtype": "Link",
-			"label": "Expense Claim",
-			"options": "Mode of Payment"
-		},
-		{
-			"fieldname": "column_break_27",
-			"fieldtype": "Column Break"
-		},
-		{
-			"default": "1000",
-			"description": "File preview is enabled up to this number of transactions",
-			"fieldname": "file_preview_threshold",
-			"fieldtype": "Int",
-			"label": "File Preview Threshold"
-		},
-		{
-			"default": "0",
-			"fieldname": "validate_unique_check_number",
-			"fieldtype": "Check",
-			"label": "Validate Unique Check Number"
-		},
-		{
-			"default": "No",
-			"fieldname": "allow_stand_alone_debit_notes",
-			"fieldtype": "Select",
-			"label": "Allow stand-alone debit notes?",
-			"options": "Yes\nNo"
-		},
-		{
 			"description": "Users with this role are allowed to download ACH file multiple times. Users without this role are allowed to download it only once.",
 			"fieldname": "role_allowed_to_download_ach_file_multiple_times",
 			"fieldtype": "Link",
 			"label": "Role Allowed to Download ACH File Multiple Times",
 			"options": "Role"
+		},
+		{
+			"fieldname": "sepa_payment_settings_section",
+			"fieldtype": "Section Break",
+			"label": "SEPA Payment Settings"
+		},
+		{
+			"fieldname": "initiating_party_org_id",
+			"fieldtype": "Data",
+			"label": "Initiating Party Org Id"
+		},
+		{
+			"fieldname": "debtor_org_id",
+			"fieldtype": "Data",
+			"label": "Debtor Org Id"
+		},
+		{
+			"fieldname": "column_break_oqnv",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "debtors_address",
+			"fieldtype": "Link",
+			"label": "Debtor's Address",
+			"options": "Address"
+		},
+		{
+			"description": "Users with this role are allowed to download SEPA XML file multiple times. Users without this role are allowed to download it only once.",
+			"fieldname": "sepa_authorized_role",
+			"fieldtype": "Link",
+			"label": "Role Allowed to Download SEPA XML File Multiple Times",
+			"options": "Role"
 		}
 	],
 	"links": [],
-	"modified": "2024-04-29 08:51:46.252826",
+	"modified": "2025-01-21 04:33:25.766823",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",
