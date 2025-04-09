@@ -46,14 +46,17 @@
 		{
 			"fieldname": "company",
 			"fieldtype": "Link",
+			"in_list_view": 1,
 			"label": "Company",
-			"options": "Company"
+			"options": "Company",
+			"reqd": 1
 		},
 		{
 			"fieldname": "bank_account",
 			"fieldtype": "Link",
 			"label": "Bank Account",
-			"options": "Bank Account"
+			"options": "Bank Account",
+			"reqd": 1
 		},
 		{
 			"fieldname": "section_break_4",
@@ -124,7 +127,8 @@
 			"fieldname": "pay_to_account",
 			"fieldtype": "Link",
 			"label": "Payable Account",
-			"options": "Account"
+			"options": "Account",
+			"reqd": 1
 		},
 		{
 			"fieldname": "ach_service_class_code",
@@ -251,7 +255,7 @@
 		}
 	],
 	"links": [],
-	"modified": "2025-01-02 15:03:09.396159",
+	"modified": "2025-04-01 17:09:56.663560",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",
