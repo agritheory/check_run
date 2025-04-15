@@ -126,7 +126,9 @@ frappe.ui.form.on('Check Run', {
 			frm.disable_save()
 			frm.disable_form()
 		} else if (frm.doc.status == 'Draft' && !(frm.doc.__onload && frm.doc.__onload.check_run_submitting)) {
-			frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
+			if (frappe.perm.has_perm('Check Run', 0, 'submit')) {
+				frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
+			}
 		}
 	},
 })
@@ -327,31 +329,39 @@ function ach_only(frm) {
 			if (!r.ach_only) {
 				if (frm.doc.docstatus == 1) {
 					if (frm.doc.print_count > 0 && frm.doc.status != 'Ready to Print') {
-						frm.add_custom_button(__('Re-Print Checks'), () => {
-							reprint_checks(frm)
-						})
+						if (frappe.perm.has_perm('Check Run', 0, 'print')) {
+							frm.add_custom_button(__('Re-Print Checks'), () => {
+								reprint_checks(frm)
+							})
+						}
 					} else if (frm.doc.print_count == 0 && frm.doc.status == 'Submitted') {
-						render_checks(frm)
+						if (frappe.perm.has_perm('Check Run', 0, 'print')) {
+							render_checks(frm)
+						}
 					}
 				}
 				if (frm.doc.status == 'Ready to Print') {
-					frm.add_custom_button(__('Download Checks'), () => {
-						download_checks(frm)
-					})
+					if (frappe.perm.has_perm('Check Run', 0, 'print')) {
+						frm.add_custom_button(__('Download Checks'), () => {
+							download_checks(frm)
+						})
+					}
 				}
 			}
 			if (!r.print_checks_only) {
 				if (frm.doc.docstatus == 1 && frm.doc.ach_file_generated == 1) {
-					frappe
-						.xcall('check_run.check_run.doctype.check_run.check_run.get_authorized_role_for_ach', { doc: frm.doc })
-						.then(r => {
-							if (frappe.user.has_role(r)) {
-								add_download_nacha_button(frm)
-							}
-						})
-				}
-				if (frm.doc.docstatus == 1 && frm.doc.ach_file_generated == 0) {
-					add_download_nacha_button(frm)
+					if (frappe.perm.has_perm('Check Run', 0, 'print')) {
+						frappe
+							.xcall('check_run.check_run.doctype.check_run.check_run.get_authorized_role_for_ach', { doc: frm.doc })
+							.then(r => {
+								if (frappe.user.has_role(r)) {
+									add_download_nacha_button(frm)
+								}
+							})
+					}
+					if (frm.doc.docstatus == 1 && frm.doc.ach_file_generated == 0) {
+						add_download_nacha_button(frm)
+					}
 				}
 			}
 		})
@@ -425,11 +435,15 @@ function download_nacha(frm) {
 }
 
 function settings_button(frm) {
-	frm.add_custom_button('Modify Settings', () => {
-		frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', { doc: frm.doc }).then(r => {
-			frappe.set_route('Form', 'Check Run Settings', r.name)
+	if (frappe.perm.has_perm('Check Run Settings', 0, 'write')) {
+		frm.add_custom_button('Modify Settings', () => {
+			frappe
+				.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', { doc: frm.doc })
+				.then(r => {
+					frappe.set_route('Form', 'Check Run Settings', r.name)
+				})
 		})
-	})
+	}
 }
 
 function check_settings(frm) {
