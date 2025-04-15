@@ -699,15 +699,12 @@ def create_payroll_journal_entry(settings):
 	)
 	je.save()
 	je.submit()
-	print(je.posting_date, je.due_date)
 
 
 """
 Set in check run settings
 check_run.test_setup.example_post_processing_hook
 """
-
-
 def example_post_processing_hook(check_run, settings, nacha) -> str:
 	# 	check_run: "CheckRun", settings: "CheckRun Settings", nacha: "NACHAFile" # noqa: F722
 	b = "$$AAPAACH0094[TEST[NL$$\n"
