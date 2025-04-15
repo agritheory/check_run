@@ -1,19 +1,22 @@
+# Copyright (c) 2025, AgriTheory and contributors
+# For license information, please see license.txt
+
 import datetime
 import pytest
 import frappe
 
 from check_run.check_run.doctype.check_run.check_run import (
-	get_check_run_settings,
 	get_entries,
-	check_for_draft_check_run,
 )
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
-from check_run.tests.test_check_run import cr
 
+
+from check_run.tests.test_check_run import cr  # noqa
 
 year = datetime.date.today().year
 
 
+@pytest.mark.order(20)
 def test_partial_payment_payment_entry_with_terms():
 	pi_name = frappe.get_all(
 		"Purchase Invoice",
@@ -49,6 +52,7 @@ def test_partial_payment_payment_entry_with_terms():
 	assert pi.outstanding_amount == 0.0
 
 
+@pytest.mark.order(21)
 def test_payment_payment_entry_of_multiple_terms():
 	pi_name = frappe.get_all(
 		"Purchase Invoice",
@@ -78,6 +82,7 @@ def test_payment_payment_entry_of_multiple_terms():
 	assert pi.payment_schedule[0].outstanding == 1666.67
 
 
+@pytest.mark.order(22)
 def test_partial_payment_payment_entry_without_terms():
 	pi_name = frappe.get_all(
 		"Purchase Invoice",
@@ -140,6 +145,7 @@ def test_partial_payment_payment_entry_without_terms():
 	assert pi.outstanding_amount == 0.00
 
 
+@pytest.mark.order(23)
 def test_outstanding_amount_in_check_run(cr):
 	pi_name = frappe.get_all(
 		"Purchase Invoice",

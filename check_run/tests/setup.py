@@ -1,3 +1,6 @@
+# Copyright (c) 2025, AgriTheory and contributors
+# For license information, please see license.txt
+
 import datetime
 import types
 
@@ -153,6 +156,7 @@ def create_bank_and_bank_account(settings):
 
 
 def setup_accounts():
+	frappe.flags.in_test = True
 	frappe.rename_doc(
 		"Account", "1000 - Application of Funds (Assets) - CFC", "1000 - Assets - CFC", force=True
 	)

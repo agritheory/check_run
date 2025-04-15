@@ -10,6 +10,7 @@ from typing_extensions import Self
 from PyPDF2 import PdfFileWriter
 import frappe
 from frappe.model.document import Document
+from frappe.utils import get_link_to_form
 from frappe.utils.data import flt
 from frappe.utils.data import nowdate, getdate, now, get_datetime
 from frappe.utils.print_format import read_multi_pdf
@@ -189,21 +190,19 @@ class CheckRun(Document):
 			if t.get("pay") and not self.not_outstanding_or_cancelled(t)
 		]
 		if not len(transactions):
-			frappe.msgprint(
-				"Please check; maybe you have not selected any document to pay, or the selected document has already been paid.<br><br>Kindly refresh the page."
-			)
-			return
-		# if len(transactions) < 1:
-		# 	frappe.throw(frappe._("You must select at least one Invoice to pay."))
+			frappe.throw(frappe._("You must select at least one document to pay"))
 		self.print_count = 0
 		if self.ach_only().ach_only:
 			self.initial_check_number = ""  # type: ignore
 			self.final_check_number = ""
-		frappe.enqueue_doc(
-			self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600, now=True
-		)
+		if frappe.flags.in_test:
+			self._process_check_run()
+		else:
+			frappe.enqueue_doc(
+				self.doctype, self.name, "_process_check_run", queue="short", timeout=3600, now=True
+			)
 
-	def _process_check_run(self: Self, save: bool = False) -> None:
+	def _process_check_run(self: Self) -> None:
 		frappe.defaults.set_global_default("check_run_submitting", self.name)
 		frappe.db.sql("SAVEPOINT process_check_run")
 		try:
@@ -229,7 +228,7 @@ class CheckRun(Document):
 		frappe.db.sql("RELEASE SAVEPOINT process_check_run")
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
-	def build_nacha_file(self: Self, settings: CheckRunSettings) -> str:
+	def get_ach_payment_entries(self: Self) -> list[PaymentEntry]:
 		electronic_mop = frappe.get_all(
 			"Mode of Payment", {"type": "Electronic", "enabled": 1}, "name", pluck="name"
 		)
@@ -240,8 +239,7 @@ class CheckRun(Document):
 				if e.get("mode_of_payment") in electronic_mop
 			}
 		)
-		payment_entries = [frappe.get_doc("Payment Entry", pe) for pe in ach_payment_entries]
-		return build_nacha_file_from_payment_entries(self, payment_entries, settings)
+		return [frappe.get_doc("Payment Entry", pe) for pe in ach_payment_entries]
 
 	@frappe.whitelist()
 	@frappe.read_only()
@@ -441,7 +439,7 @@ class CheckRun(Document):
 		if reprint_check_number and reprint_check_number != "undefined":
 			self.initial_check_number = int(reprint_check_number)
 		output = PdfFileWriter()
-		se_print_output = PdfFileWriter()
+		secondary_print_output = PdfFileWriter()
 		transactions = json.loads(self.transactions)
 		check_increment = 0
 		_transactions = []
@@ -455,23 +453,25 @@ class CheckRun(Document):
 			mode_of_payment, docstatus = frappe.db.get_value(
 				"Payment Entry", pe, ["mode_of_payment", "docstatus"]
 			) or (None, None)
-			se_print_output = frappe.get_print(
-				"Payment Entry",
-				pe,
-				settings.secondary_print_format or frappe.get_meta("Payment Entry").default_print_format,
-				as_pdf=True,
-				output=se_print_output,
-				no_letterhead=0,
-			)
-			if docstatus == 1 and frappe.db.get_value("Mode of Payment", mode_of_payment, "type") == "Bank":
-				output = frappe.get_print(
+			if mode_of_payment == "Check":
+				secondary_print_output = frappe.get_print(
 					"Payment Entry",
 					pe,
-					settings.print_format or frappe.get_meta("Payment Entry").default_print_format,
+					settings.secondary_print_format or frappe.get_meta("Payment Entry").default_print_format,
 					as_pdf=True,
-					output=output,
+					output=secondary_print_output,
 					no_letterhead=0,
 				)
+			if docstatus == 1 and frappe.db.get_value("Mode of Payment", mode_of_payment, "type") == "Bank":
+				if mode_of_payment == "Check":
+					output = frappe.get_print(
+						"Payment Entry",
+						pe,
+						settings.print_format or frappe.get_meta("Payment Entry").default_print_format,
+						as_pdf=True,
+						output=output,
+						no_letterhead=0,
+					)
 				if initial_check_number != reprint_check_number:
 					frappe.db.set_value(
 						"Payment Entry", pe, "reference_no", self.initial_check_number + check_increment
@@ -504,20 +504,22 @@ class CheckRun(Document):
 		self.db_set("status", "Ready to Print")
 		self.db_set("print_count", self.print_count)
 		frappe.db.set_value("Bank Account", self.bank_account, "check_number", self.final_check_number)
-		save_file(
+		file_path = save_file(
 			f"{self.name}.pdf", read_multi_pdf(output), "Check Run", self.name, "Home/Check Run", False, 0
 		)
-		save_file(
-			f"Chaque {self.name}.pdf",
-			read_multi_pdf(se_print_output),
-			"Check Run",
-			self.name,
-			"Home/Check Run",
-			False,
-			0,
-		)
+		if settings.secondary_print_format:
+			save_file(
+				f"Supplementary {self.name}.pdf",
+				read_multi_pdf(secondary_print_output),
+				"Check Run",
+				self.name,
+				"Home/Check Run",
+				False,
+				0,
+			)
 		frappe.db.commit()
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
+		return file_path
 
 
 @frappe.whitelist()
@@ -788,13 +790,70 @@ def download_checks(docname: str) -> str:
 
 
 @frappe.whitelist()
-def download_nacha(docname: str) -> None:
+def validate_for_nacha_file_generation(docname: str) -> list[str]:
+	doc = frappe.get_doc("Check Run", docname)
+	exceptions = []
+	company_bank = frappe.db.get_value("Bank Account", doc.bank_account, "bank")
+
+	if not company_bank:
+		company_link = get_link_to_form("Company", doc.company)
+		exceptions.append(f"Company Bank missing for {company_link}")
+
+	if company_bank:
+		company_bank_aba_number = frappe.db.get_value("Bank", company_bank, "aba_number")
+		company_bank_account_no = frappe.db.get_value(
+			"Bank Account", doc.bank_account, "bank_account_no"
+		)
+		company_ach_id = frappe.db.get_value("Bank Account", doc.bank_account, "company_ach_id")
+
+		company_bank_link = get_link_to_form("Bank", company_bank)
+		bank_account_link = get_link_to_form("Bank Account", doc.bank_account)
+
+		if not company_bank_aba_number:
+			exceptions.append(f"Company Bank ABA Number missing for {company_bank_link}")
+		if not company_bank_account_no:
+			exceptions.append(f"Company Bank Account Number missing for {bank_account_link}")
+		if not company_ach_id:
+			exceptions.append(f"Company Bank ACH ID missing for {bank_account_link}")
+
+	payment_entries = doc.get_ach_payment_entries()
+	for pe in payment_entries:
+		party_link = get_link_to_form(pe.party_type, pe.party, label=pe.party_name)
+
+		party_bank_account = get_decrypted_password(
+			pe.party_type, pe.party, fieldname="bank_account", raise_exception=False
+		)
+		if not party_bank_account:
+			exceptions.append(f"{pe.party_type} Bank Account missing for {party_link}")
+
+		party_bank = frappe.db.get_value(pe.party_type, pe.party, "bank")
+		if not party_bank:
+			exceptions.append(f"{pe.party_type} Bank missing for {party_link}")
+
+		if party_bank:
+			party_bank_routing_number = frappe.db.get_value("Bank", party_bank, "aba_number")
+			if not party_bank_routing_number:
+				exceptions.append(f"{pe.party_type} Bank Routing Number missing for {party_link}")
+
+	return exceptions
+
+
+@frappe.whitelist()
+def download_nacha(docname: str, validate: bool = False) -> None:
 	has_permission(
 		"Payment Entry", ptype="print", verbose=False, user=frappe.session.user, raise_exception=True
 	)
 	doc = frappe.get_doc("Check Run", docname)
+
+	if validate:
+		exceptions = validate_for_nacha_file_generation(doc.name)
+		if exceptions:
+			frappe.throw("<br>".join(exceptions), title="Validation Errors")
+
 	settings = get_check_run_settings(doc)
-	ach_file = doc.build_nacha_file(settings)
+	payment_entries = doc.get_ach_payment_entries()
+	ach_file = build_nacha_file_from_payment_entries(doc, payment_entries, settings)
+
 	if settings.custom_post_processing_hook:
 		ach_file = frappe.call(settings.custom_post_processing_hook, doc, settings, ach_file)
 	else:
@@ -821,35 +880,17 @@ def build_nacha_file_from_payment_entries(
 	doc: CheckRun, payment_entries: list[PaymentEntry], settings: CheckRunSettings
 ) -> NACHAFile:
 	ach_entries = []
-	exceptions = []
 	company_bank = frappe.db.get_value("Bank Account", doc.bank_account, "bank")
-	if not company_bank:
-		exceptions.append(f"Company Bank missing for {doc.company}")
-	if company_bank:
-		company_bank_aba_number = frappe.db.get_value("Bank", company_bank, "aba_number")
-		company_bank_account_no = frappe.db.get_value(
-			"Bank Account", doc.bank_account, "bank_account_no"
-		)
-		company_ach_id = frappe.db.get_value("Bank Account", doc.bank_account, "company_ach_id")
-	if company_bank and not company_bank_aba_number:
-		exceptions.append(f"Company Bank ABA Number missing for {doc.bank_account}")
-	if company_bank and not company_bank_account_no:
-		exceptions.append(f"Company Bank Account Number missing for {doc.bank_account}")
-	if company_bank and not company_ach_id:
-		exceptions.append(f"Company Bank ACH ID missing for {doc.bank_account}")
+	company_bank_aba_number = frappe.db.get_value("Bank", company_bank, "aba_number")
+	company_ach_id = frappe.db.get_value("Bank Account", doc.bank_account, "company_ach_id")
+
 	for pe in payment_entries:
 		party_bank_account = get_decrypted_password(
 			pe.party_type, pe.party, fieldname="bank_account", raise_exception=False
 		)
-		if not party_bank_account:
-			exceptions.append(f"{pe.party_type} Bank Account missing for {pe.party_name}")
 		party_bank = frappe.db.get_value(pe.party_type, pe.party, "bank")
-		if not party_bank:
-			exceptions.append(f"{pe.party_type} Bank missing for {pe.party_name}")
-		if party_bank:
-			party_bank_routing_number = frappe.db.get_value("Bank", party_bank, "aba_number")
-			if not party_bank_routing_number:
-				exceptions.append(f"{pe.party_type} Bank Routing Number missing for {pe.party_name}")
+		party_bank_routing_number = frappe.db.get_value("Bank", party_bank, "aba_number")
+
 		ach_entry = ACHEntry(
 			transaction_code=22,  # checking account
 			receiving_dfi_identification=party_bank_routing_number,
@@ -862,8 +903,6 @@ def build_nacha_file_from_payment_entries(
 		)
 		ach_entries.append(ach_entry)
 
-	if exceptions:
-		frappe.throw("<br>".join(e for e in exceptions))
 	company_discretionary_data = (
 		doc.get("company_discretionary_data")
 		if doc.get("company_discretionary_data")
@@ -878,7 +917,11 @@ def build_nacha_file_from_payment_entries(
 		standard_class_code=settings.ach_standard_class_code,
 		company_entry_description=ach_description[:10] or "",
 		company_descriptive_date=None,
-		effective_entry_date=doc.posting_date,
+		effective_entry_date=(
+			getdate()
+			if settings.set_payment_entry_posting_date == "Use Today's Date"
+			else getdate(doc.posting_date)
+		),
 		settlement_date=None,
 		originator_status_code=1,
 		originating_dfi_id=company_bank_aba_number,

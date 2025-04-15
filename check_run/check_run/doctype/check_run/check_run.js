@@ -100,6 +100,9 @@ frappe.ui.form.on('Check Run', {
 		if (frm.doc.__onload.settings) {
 			frm.settings = frm.doc.__onload.settings
 			frm.pay_to_account_currency = frm.doc.__onload.pay_to_account_currency
+			if (frm.settings.set_payment_entry_posting_date == "Use Today's Date") {
+				frm.set_df_property('posting_date', 'read_only', 1)
+			}
 		}
 
 		$(document).on('keydown', function (event) {
@@ -409,10 +412,28 @@ function download_checks(frm) {
 }
 
 function download_nacha(frm) {
-	window.open(`/api/method/check_run.check_run.doctype.check_run.check_run.download_nacha?docname=${frm.doc.name}`)
-	window.setTimeout(() => {
-		frm.reload_doc()
-	}, 1000)
+	frappe
+		.xcall('check_run.check_run.doctype.check_run.check_run.validate_for_nacha_file_generation', {
+			docname: frm.doc.name,
+		})
+		.then(r => {
+			if (r) {
+				if (r && r.length > 0) {
+					let error_message = '<ul>'
+					r.forEach(msg => {
+						error_message += `<li>${msg}</li>`
+					})
+					error_message += '</ul>'
+					frappe.throw(error_message)
+				}
+				window.open(
+					`/api/method/check_run.check_run.doctype.check_run.check_run.download_nacha?docname=${frm.doc.name}`
+				)
+				window.setTimeout(() => {
+					frm.reload_doc()
+				}, 1000)
+			}
+		})
 }
 
 function settings_button(frm) {
