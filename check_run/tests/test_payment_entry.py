@@ -4,12 +4,7 @@ import frappe
 import pytest
 from erpnext.accounts.doctype.payment_entry.payment_entry import get_payment_entry
 
-from check_run.check_run.doctype.check_run.check_run import (
-	check_for_draft_check_run,
-	get_check_run_settings,
-	get_entries,
-)
-from check_run.tests.test_check_run import cr
+from check_run.check_run.doctype.check_run.check_run import get_entries
 
 year = datetime.date.today().year
 
