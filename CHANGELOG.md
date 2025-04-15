@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v15.3.0 (2025-04-15)
+
+### Features
+
+- Make Posting Date read only if Set Payment Entry Posting Date == Use Todays Date" (#303)
+  ([#309](https://github.com/agritheory/check_run/pull/309),
+  [`88c0863`](https://github.com/agritheory/check_run/commit/88c0863ceaa5f43924bb4d17b0e8e960c98e988a))
+
+(cherry picked from commit 61a43b32978927982369fa88afc85abc249ac910)
+
+Co-authored-by: Francisco Roldán <franciscoproldan@gmail.com>
+
+
 ## v15.2.1 (2025-04-01)
 
 ### Bug Fixes
