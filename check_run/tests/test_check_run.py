@@ -148,6 +148,56 @@ def test_return_offset_other_amounts(cr):
 	assert total == pe.paid_amount == 9000.00
 
 
+@pytest.mark.order(16)
+def test_default_posting_date_config(cr):
+	party = "HIJ Telecom, Inc"
+	crs = get_check_run_settings(cr)
+	assert crs.set_payment_entry_posting_date == "Use Today's Date"
+
+	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
+	# Pay one row for party
+	for row in cr.transactions:
+		if row.get("party") == party:
+			row["pay"] = True
+			break
+	cr.transactions = frappe.as_json(cr.transactions)
+	cr.flags.in_test = True
+	cr.save()
+	cr.process_check_run()
+
+	pe = frappe.get_doc("Payment Entry", {"party": party, "check_run": cr.name})
+	assert pe.posting_date == frappe.utils.getdate()
+
+
+@pytest.mark.order(17)
+def test_use_cr_posting_date_config(cr):
+	party = "HIJ Telecom, Inc"
+	crs = get_check_run_settings(cr)
+	assert crs.set_payment_entry_posting_date == "Use Today's Date"
+
+	crs.set_payment_entry_posting_date = "Use Check Run's Posting Date"
+	crs.save()
+	assert crs.set_payment_entry_posting_date == "Use Check Run's Posting Date"
+
+	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
+	# Pay one row for party
+	for row in cr.transactions:
+		if row.get("party") == party:
+			row["pay"] = True
+			break
+	cr.transactions = frappe.as_json(cr.transactions)
+	cr.flags.in_test = True
+	cr.save()
+	cr.process_check_run()
+
+	pe = frappe.get_doc("Payment Entry", {"party": party, "check_run": cr.name})
+	assert pe.posting_date == cr.posting_date
+
+	crs.set_payment_entry_posting_date = "Use Today's Date"
+	crs.save()
+	assert crs.set_payment_entry_posting_date == "Use Today's Date"
+
+
 @pytest.mark.order(30)
 def test_pdf_length_and_mode_of_payment(cr):
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
