@@ -1,6 +1,31 @@
 # CHANGELOG
 
 
+## v15.3.1 (2025-04-15)
+
+### Bug Fixes
+
+- Remove unnecessary self typing ([#296](https://github.com/agritheory/check_run/pull/296),
+  [`c5ca969`](https://github.com/agritheory/check_run/commit/c5ca96919a6131b9e86631f49abc6d2b1ffc61ff))
+
+Co-authored-by: Rohan Bansal <rohan@agritheory.dev>
+
+Co-authored-by: Tyler Matteson <support@agritheory.dev>
+
+
+## v15.3.0 (2025-04-15)
+
+### Features
+
+- Make Posting Date read only if Set Payment Entry Posting Date == Use Todays Date" (#303)
+  ([#309](https://github.com/agritheory/check_run/pull/309),
+  [`88c0863`](https://github.com/agritheory/check_run/commit/88c0863ceaa5f43924bb4d17b0e8e960c98e988a))
+
+(cherry picked from commit 61a43b32978927982369fa88afc85abc249ac910)
+
+Co-authored-by: Francisco Roldán <franciscoproldan@gmail.com>
+
+
 ## v15.2.1 (2025-04-01)
 
 ### Bug Fixes
