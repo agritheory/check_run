@@ -20,10 +20,7 @@ from frappe.utils.data import flt, get_datetime, getdate, now, nowdate
 from frappe.utils.file_manager import remove_all, save_file
 from frappe.utils.password import get_decrypted_password
 from frappe.utils.print_format import read_multi_pdf
-
-# from PyPDF2 import PdfFileWriter
 from pypdf import PdfWriter
-from typing_extensions import Self
 
 from check_run.check_run.doctype.check_run_settings.check_run_settings import (
 	CheckRunSettings,
@@ -33,7 +30,7 @@ from check_run.check_run.doctype.check_run_settings.check_run_settings import (
 
 class CheckRun(Document):
 	@frappe.read_only()
-	def onload(self: Self) -> None:
+	def onload(self) -> None:
 		if self.is_new():
 			return
 		settings = get_check_run_settings(self)
@@ -55,7 +52,7 @@ class CheckRun(Document):
 			)
 			self.set_onload("pay_to_account_currency", pay_to_account_currency)
 
-	def validate(self: Self) -> None:
+	def validate(self) -> None:
 		gl_account = frappe.get_value("Bank Account", self.bank_account, "account")
 		if not gl_account:
 			frappe.throw(frappe._("This Bank Account is not associated with a General Ledger Account."))
@@ -69,7 +66,7 @@ class CheckRun(Document):
 			if self.status == "Draft":  # type: ignore # str or None
 				self.filter_transactions()
 
-	def on_cancel(self: Self) -> None:
+	def on_cancel(self) -> None:
 		settings = get_check_run_settings(self)
 		if not settings.allow_cancellation:
 			frappe.throw(frappe._("The settings for this Check Run do not allow cancellation"))
@@ -84,11 +81,11 @@ class CheckRun(Document):
 			for pe in pes:
 				frappe.db.set_value("Payment Entry", pe, "check_run", "")
 
-	def on_update_after_submit(self: Self) -> None:
+	def on_update_after_submit(self) -> None:
 		# required to fire on_update_after_submit hook
 		pass
 
-	def set_status(self: Self, status: str | None = None) -> None:
+	def set_status(self, status: str | None = None) -> None:
 		if status:
 			self.db_set("status", status)
 			return
@@ -101,24 +98,24 @@ class CheckRun(Document):
 		elif self.docstatus == 1:
 			self.status = "Submitted"
 
-	def set_last_check_number(self: Self) -> None:
+	def set_last_check_number(self) -> None:
 		if self.ach_only().ach_only:
 			return
 		check_number = frappe.get_value("Bank Account", self.bank_account, "check_number")
 		self.initial_check_number = int(check_number or 0) + 1
 
-	def set_default_payable_account(self: Self) -> None:
+	def set_default_payable_account(self) -> None:
 		if not self.pay_to_account:  # type: ignore # str or None
 			self.pay_to_account = frappe.get_value("Company", self.company, "default_payable_account")
 
-	def set_default_dates(self: Self) -> None:
+	def set_default_dates(self) -> None:
 		if not self.posting_date:  # type: ignore # datetime or None
 			self.posting_date = getdate()
 		if not self.end_date:  # type: ignore # datetime or None
 			self.end_date = getdate()
 
 	@frappe.read_only()
-	def filter_transactions(self: Self) -> None:
+	def filter_transactions(self) -> None:
 		if not self.get("transactions"):
 			return
 		_t = json.loads(self.get("transactions"))
@@ -135,7 +132,7 @@ class CheckRun(Document):
 				)
 
 	@frappe.read_only()
-	def not_outstanding_or_cancelled(self: Self, transaction: dict) -> bool:
+	def not_outstanding_or_cancelled(self, transaction: dict) -> bool:
 		filters = {
 			"name": transaction["name"]
 			if transaction["doctype"] != "Journal Entry"
@@ -171,7 +168,7 @@ class CheckRun(Document):
 		return False
 
 	@frappe.whitelist()
-	def process_check_run(self: Self) -> None:
+	def process_check_run(self) -> None:
 		check_run_submitting = frappe.defaults.get_global_default("check_run_submitting")
 		if check_run_submitting:
 			frappe.throw(
@@ -203,7 +200,7 @@ class CheckRun(Document):
 			self.doctype, self.name, "_process_check_run", save=True, queue="short", timeout=3600, now=True
 		)
 
-	def _process_check_run(self: Self, save: bool = False) -> None:
+	def _process_check_run(self, save: bool = False) -> None:
 		frappe.defaults.set_global_default("check_run_submitting", self.name)
 		frappe.db.sql("SAVEPOINT process_check_run")
 		try:
@@ -229,7 +226,7 @@ class CheckRun(Document):
 		frappe.db.sql("RELEASE SAVEPOINT process_check_run")
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
-	def build_nacha_file(self: Self, settings: CheckRunSettings) -> str:
+	def build_nacha_file(self, settings: CheckRunSettings) -> str:
 		electronic_mop = frappe.get_all(
 			"Mode of Payment", {"type": "Electronic", "enabled": 1}, "name", pluck="name"
 		)
@@ -245,7 +242,7 @@ class CheckRun(Document):
 
 	@frappe.whitelist()
 	@frappe.read_only()
-	def ach_only(self: Self) -> bool:
+	def ach_only(self) -> bool:
 		transactions = json.loads(self.transactions) if self.transactions else []
 		ach_only = frappe._dict({"ach_only": True, "print_checks_only": True})
 		if not self.transactions:
@@ -270,7 +267,7 @@ class CheckRun(Document):
 			self.last_eta = eta
 		return self.last_eta
 
-	def create_payment_entries(self: Self, transactions: list[frappe._dict]) -> list[frappe._dict]:
+	def create_payment_entries(self, transactions: list[frappe._dict]) -> list[frappe._dict]:
 		settings = get_check_run_settings(self)
 		split = 5
 		if settings and settings.number_of_invoices_per_voucher:
@@ -410,7 +407,7 @@ class CheckRun(Document):
 		return _transactions
 
 	@frappe.whitelist()
-	def increment_print_count(self: Self, reprint_check_number: int | None = None) -> None:
+	def increment_print_count(self, reprint_check_number: int | None = None) -> None:
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,
@@ -421,7 +418,7 @@ class CheckRun(Document):
 		)
 
 	@frappe.whitelist()
-	def render_check_pdf(self: Self, reprint_check_number: int | None = None) -> None:
+	def render_check_pdf(self, reprint_check_number: int | None = None) -> None:
 		self.print_count = self.print_count + 1
 		self.set_status("Submitted")
 		if not frappe.db.exists("File", "Home/Check Run"):
@@ -435,7 +432,6 @@ class CheckRun(Document):
 		initial_check_number = int(self.initial_check_number)
 		if reprint_check_number and reprint_check_number != "undefined":
 			self.initial_check_number = int(reprint_check_number)
-		# output = PdfFileWriter()
 		output = PdfWriter()
 		transactions = json.loads(self.transactions)
 		check_increment = 0
