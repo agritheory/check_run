@@ -1,6 +1,18 @@
 # CHANGELOG
 
 
+## v15.3.1 (2025-04-15)
+
+### Bug Fixes
+
+- Remove unnecessary self typing ([#296](https://github.com/agritheory/check_run/pull/296),
+  [`c5ca969`](https://github.com/agritheory/check_run/commit/c5ca96919a6131b9e86631f49abc6d2b1ffc61ff))
+
+Co-authored-by: Rohan Bansal <rohan@agritheory.dev>
+
+Co-authored-by: Tyler Matteson <support@agritheory.dev>
+
+
 ## v15.3.0 (2025-04-15)
 
 ### Features
