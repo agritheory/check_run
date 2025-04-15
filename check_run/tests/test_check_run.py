@@ -1,5 +1,7 @@
+# Copyright (c) 2025, AgriTheory and contributors
+# For license information, please see license.txt
+
 import datetime
-import json
 
 import frappe
 import pytest
@@ -38,6 +40,7 @@ def cr():  # return draft check run
 	return cr
 
 
+@pytest.mark.order(10)
 def test_get_entries(cr):
 	crs = get_check_run_settings(cr)
 	assert frappe.db.exists("Check Run Settings", crs)
@@ -51,6 +54,7 @@ def test_get_entries(cr):
 	assert len([doc.get("name") == f"ACC-PINV-{year}-00001 " for doc in cr.transactions]) > 1
 
 
+@pytest.mark.order(11)
 def test_process_check_run_on_hold_invoice_error(cr):
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
 	# try to pay invoice on hold to raise error
@@ -68,6 +72,7 @@ def test_process_check_run_on_hold_invoice_error(cr):
 		cr.process_check_run()
 
 
+@pytest.mark.order(12)
 def test_process_check_run_on_hold_invoice_auto_release(cr):
 	# Test Settings auto-release of on-hold invoices
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
@@ -89,7 +94,18 @@ def test_process_check_run_on_hold_invoice_auto_release(cr):
 		pytest.fail("Error raised on Check Run process when should have passed.")
 
 
+@pytest.mark.order(13)
+def test_return_excluded_in_check_run(cr):
+	# Test for ValidationError when Check Run only includes a return transaction
+	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
+	for row in cr.transactions:
+		if row.get("party") == "Cooperative Ag Finance" and row.get("amount") < 0:
+			raise ValueError("Default Settings should exclude this invoice from appearing")
+
+
+@pytest.mark.order(14)
 def test_return_included_in_check_run_error(cr):
+	# Test for ValidationError when Check Run includes only a return transaction
 	_transactions = get_entries(cr).get("transactions")
 	settings = get_check_run_settings(cr)
 	assert settings.allow_stand_alone_debit_notes == "No"
@@ -110,10 +126,11 @@ def test_return_included_in_check_run_error(cr):
 		cr.process_check_run()
 
 
+@pytest.mark.order(15)
 def test_return_offset_other_amounts(cr):
+	# Test for offset when return applied to other invoices and net amount to pay is > 0
 	party = "Cooperative Ag Finance"
 
-	# Test for offset when return applied to other invoices and net amount to pay is > 0
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
 	total = 0.0
 	for row in cr.transactions:
@@ -126,4 +143,54 @@ def test_return_offset_other_amounts(cr):
 	cr.process_check_run()
 
 	pe = frappe.get_doc("Payment Entry", {"party": party, "check_run": cr.name})
-	assert total == pe.paid_amount
+	assert total == pe.paid_amount == 9000.00
+
+
+@pytest.mark.order(16)
+def test_default_posting_date_config(cr):
+	party = "HIJ Telecom, Inc"
+	crs = get_check_run_settings(cr)
+	assert crs.set_payment_entry_posting_date == "Use Today's Date"
+
+	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
+	# Pay one row for party
+	for row in cr.transactions:
+		if row.get("party") == party:
+			row["pay"] = True
+			break
+	cr.transactions = frappe.as_json(cr.transactions)
+	cr.flags.in_test = True
+	cr.save()
+	cr.process_check_run()
+
+	pe = frappe.get_doc("Payment Entry", {"party": party, "check_run": cr.name})
+	assert pe.posting_date == frappe.utils.getdate()
+
+
+@pytest.mark.order(17)
+def test_use_cr_posting_date_config(cr):
+	party = "HIJ Telecom, Inc"
+	crs = get_check_run_settings(cr)
+	assert crs.set_payment_entry_posting_date == "Use Today's Date"
+
+	crs.set_payment_entry_posting_date = "Use Check Run's Posting Date"
+	crs.save()
+	assert crs.set_payment_entry_posting_date == "Use Check Run's Posting Date"
+
+	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
+	# Pay one row for party
+	for row in cr.transactions:
+		if row.get("party") == party:
+			row["pay"] = True
+			break
+	cr.transactions = frappe.as_json(cr.transactions)
+	cr.flags.in_test = True
+	cr.save()
+	cr.process_check_run()
+
+	pe = frappe.get_doc("Payment Entry", {"party": party, "check_run": cr.name})
+	assert pe.posting_date == cr.posting_date
+
+	crs.set_payment_entry_posting_date = "Use Today's Date"
+	crs.save()
+	assert crs.set_payment_entry_posting_date == "Use Today's Date"
