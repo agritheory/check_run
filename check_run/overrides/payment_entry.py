@@ -4,6 +4,7 @@
 import frappe
 from erpnext.accounts.doctype.payment_entry.payment_entry import (
 	PaymentEntry,
+	add_regional_gl_entries,
 	get_outstanding_reference_documents,
 )
 from erpnext.accounts.general_ledger import make_gl_entries, process_gl_map
@@ -15,14 +16,16 @@ from frappe.utils.data import getdate
 class CheckRunPaymentEntry(PaymentEntry):
 	def make_gl_entries(self, cancel=0, adv_adj=0):
 		"""
-		HASH: 51d8a7a0c1726130518e44b47cce387e90c2a6c7
+		HASH: 86853224c3df3089c78b09916c1d26a63bd9751e
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: make_gl_entries
-		"""
 
+		This method overrides both build_gl_map and make_gl_entries
+		"""
 		if self.payment_type in ("Receive", "Pay") and not self.get("party_account_field"):
 			self.setup_party_account_field()
+		self.set_transaction_currency_and_rate()
 
 		if self.status == "Voided":
 			original_posting_date = self.posting_date
@@ -33,6 +36,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 		self.add_bank_gl_entries(gl_entries)
 		self.add_deductions_gl_entries(gl_entries)
 		self.add_tax_gl_entries(gl_entries)
+		add_regional_gl_entries(gl_entries, self)
 
 		gl_entries = process_gl_map(gl_entries)
 		make_gl_entries(gl_entries, cancel=cancel, adv_adj=adv_adj)
@@ -42,12 +46,11 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def set_status(self):
 		"""
-		HASH: 51d8a7a0c1726130518e44b47cce387e90c2a6c7
+		HASH: 86853224c3df3089c78b09916c1d26a63bd9751e
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: set_status
 		"""
-
 		if self.status == "Voided":
 			pass
 		elif self.docstatus == 2:
@@ -62,12 +65,11 @@ class CheckRunPaymentEntry(PaymentEntry):
 	# Bug Fix
 	def get_valid_reference_doctypes(self):
 		"""
-		HASH: 51d8a7a0c1726130518e44b47cce387e90c2a6c7
+		HASH: 86853224c3df3089c78b09916c1d26a63bd9751e
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: get_valid_reference_doctypes
 		"""
-
 		if self.party_type == "Customer":
 			return ("Sales Order", "Sales Invoice", "Journal Entry", "Dunning")
 		elif self.party_type == "Supplier":
@@ -89,12 +91,11 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def validate_allocated_amount(self):
 		"""
-		HASH: 51d8a7a0c1726130518e44b47cce387e90c2a6c7
+		HASH: 86853224c3df3089c78b09916c1d26a63bd9751e
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: validate_allocated_amount
 		"""
-
 		if self.payment_type == "Internal Transfer":
 			return
 
@@ -130,12 +131,11 @@ class CheckRunPaymentEntry(PaymentEntry):
 
 	def validate_allocated_amount_with_latest_data(self):
 		"""
-		HASH: 51d8a7a0c1726130518e44b47cce387e90c2a6c7
+		HASH: 86853224c3df3089c78b09916c1d26a63bd9751e
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/payment_entry/payment_entry.py
 		METHOD: validate_allocated_amount_with_latest_data
 		"""
-
 		if self.references:
 			unique_vouchers = {(x.reference_doctype, x.reference_name) for x in self.references}
 			vouchers = [frappe._dict({"voucher_type": x[0], "voucher_no": x[1]}) for x in unique_vouchers]

@@ -9,9 +9,8 @@ repos:
       - id: trailing-whitespace
         files: 'check_run.*'
         exclude: '.*json$|.*txt$|.*csv|.*md|.*svg'
-      - id: check-yaml
       - id: no-commit-to-branch
-        args: ['--branch', 'develop']
+        args: ['--branch', 'version-15']
       - id: check-merge-conflict
       - id: check-ast
       - id: check-json
@@ -29,17 +28,31 @@ repos:
     rev: 951ccf4d5bb0d692b457a5ebc4215d755618eb68
     hooks:
       - id: black
+        args: ['--line-length', '99']
 
   - repo: https://github.com/PyCQA/isort
     rev: 6.0.1
     hooks:
       - id: isort
 
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v2.3.1
+    hooks:
+      - id: autoflake
+        args: [--remove-all-unused-imports, --in-place]
+
   - repo: https://github.com/PyCQA/flake8
     rev: 7.1.2
     hooks:
       - id: flake8
         additional_dependencies: ['flake8-bugbear']
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.3.0
+    hooks:
+      - id: codespell
+        additional_dependencies:
+          - tomli
 
   - repo: https://github.com/agritheory/test_utils
     rev: v0.17.0
@@ -63,8 +76,8 @@ repos:
     hooks:
       - id: prettier
         name: prettier
-        entry: npx prettier . --write --ignore-path .prettierignore
-        language: node
+        entry: npx prettier -w . --config .prettierrc.js --ignore-path .prettierignore
+        language: system
 
 ci:
   autoupdate_schedule: weekly

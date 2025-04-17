@@ -23,6 +23,7 @@ version = "15.0.0"
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 atnacha = { git = "https://github.com/AgriTheory/atnacha.git" }
+pdfplumber = "^0.11.6"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.15.0"
