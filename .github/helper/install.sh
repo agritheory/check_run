@@ -14,7 +14,7 @@ fi
 cd ~ || exit
 
 pip install --upgrade pip
-pip install frappe-bench
+pip install frappe-bench pytest pytest-cov
 
 mysql --host 127.0.0.1 --port 3306 -u root -e "SET GLOBAL character_set_server = 'utf8mb4'"
 mysql --host 127.0.0.1 --port 3306 -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
