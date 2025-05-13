@@ -873,6 +873,9 @@ def download_nacha(docname: str, validate: bool = False) -> None:
 	comment.content = f"{frappe.session.user} created a NACHA file on {now()}"
 	comment.flags.ignore_permissions = True
 	comment.save()
+	for party, _pes in groupby(payment_entries, lambda x: x.get("party")):
+		pes = list(_pes)
+		frappe.db.set_value(pes[0].party_type, party, "ach_last_used", getdate())
 	frappe.db.commit()
 
 
