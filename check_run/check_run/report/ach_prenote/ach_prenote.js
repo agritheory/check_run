@@ -33,17 +33,7 @@ frappe.query_reports['ACH Prenote'] = {
 		)
 	},
 	saveButton: null,
-	refresh: reportview => {
-		changedItems = {}
-		frappe.query_report.datatable.options.columns[5].editable = true
-		this.get_datatable_options(frappe.query_report.datatable.options)
-	},
-	on_report_render: reportview => {
-		reportview.datatable.options.columns[5].editable = true
-		reportview.render_datatable()
-	},
 	get_datatable_options(options) {
-		options.columns[5].editable = true
 		return Object.assign(options, {
 			getEditor: this.get_editing_object.bind(this),
 		})
