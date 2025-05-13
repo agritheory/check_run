@@ -111,6 +111,7 @@ frappe.query_reports['ACH Prenote'] = {
 						frappe.query_report.page.set_indicator('', '')
 						// this.get_datatable_options(frappe.query_report.datatable.options)
 						reportview.refresh()
+						frappe.query_report.page.set_indicator('', '')
 						frappe.show_alert(__('Updated Validated Dates'), 5)
 					})
 			},
