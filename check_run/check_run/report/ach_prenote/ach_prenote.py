@@ -65,6 +65,7 @@ def get_columns(filters):
 			"fieldname": "account_details_validated",
 			"fieldtype": "Date",
 			"width": "200px",
+			"editable": True,
 		},
 	]
 
