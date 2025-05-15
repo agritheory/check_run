@@ -60,10 +60,9 @@
 						class="checkrun-row-container"
 						:class="{ selectedRow: selectedRow == i }"
 						tabindex="1"
-						@keydown.prevent.esc="handleEsc"
-						@keydown.prevent.space="handleSelectRow(i)"
-						@keydown="handleKeyPress(i, item.name)"
-						@click="handleSelectRow(i)">
+						@keydown.prevent.esc="handleEsc(item)"
+						@keydown.prevent.space="handleSelectRow(i, item)"
+						@keydown="handleKeyPress(i, item.name)">
 						<td style="text-align: left">{{ item.party_name || item.party }}</td>
 						<td style="text-align: left; white-space: nowrap">
 							<a :href="transactionUrl(item)" target="_blank">
@@ -243,16 +242,20 @@ function paymentEntryUrl(transaction) {
 	return encodeURI(`${frappe.urllib.get_base_url()}/app/payment-entry/${transaction.payment_entry}`)
 }
 
-function handleEsc(event) {
+function handleEsc(item) {
 	window.check_run.selectedRow.value = -1
+	togglePayUnselect(item)
 }
 
-function handleSelectRow(row) {
+function handleSelectRow(row, item) {
 	if (window.check_run.selectedRow.value === -1 || row !== window.check_run.selectedRow.value) {
 		window.check_run.selectedRow.value = row
+		togglePaySelect(item)
 	} else {
 		window.check_run.selectedRow.value = -1
+		togglePayUnselect(item)
 	}
+	check_run.total(frm);
 }
 
 function handleKeyPress(row, itemName, event) {
@@ -268,6 +271,20 @@ function handleKeyPress(row, itemName, event) {
 			}
 		})
 	}
+}
+
+function togglePaySelect(item) {
+	const rowName = item.name;
+	transactions[rowName].pay = true;
+
+	if (!transactions[rowName].mode_of_payment) 
+		frappe.show_alert(__('Please add a Mode of Payment for this row'));
+}
+
+function togglePayUnselect(item) {
+	const rowName = item.name;
+	if (!transactions[rowName].mode_of_payment)
+		transactions[rowName].pay = false;
 }
 </script>
 <style scoped>
@@ -297,5 +314,12 @@ function handleKeyPress(row, itemName, event) {
 
 .table tr {
 	height: 50px;
+}
+
+.table tr:focus-visible {
+	color: var(--text-color);
+    border-color: var(--gray-500);
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(104, 113, 120, 0.25);
 }
 </style>
