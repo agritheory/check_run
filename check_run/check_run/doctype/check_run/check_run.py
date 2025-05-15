@@ -982,5 +982,8 @@ def ach_only(docname: str) -> dict:
 
 @frappe.whitelist()
 def process_check_run(docname: str) -> None:
+	has_permission(
+		"Check Run", ptype="submit", verbose=False, user=frappe.session.user, raise_exception=True
+	)
 	doc = frappe.get_doc("Check Run", docname)
 	doc.process_check_run()
