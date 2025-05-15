@@ -8,6 +8,7 @@
 	"field_order": [
 		"company",
 		"bank_account",
+		"approver_role",
 		"column_break_3",
 		"pay_to_account",
 		"print_format",
@@ -252,10 +253,16 @@
 			"fieldtype": "Select",
 			"label": "Set Payment Entry Posting Date",
 			"options": "Use Today's Date\nUse Check Run's Posting Date"
+		},
+		{
+			"fieldname": "approver_role",
+			"fieldtype": "Link",
+			"label": "Approver Role",
+			"options": "Role"
 		}
 	],
 	"links": [],
-	"modified": "2025-04-01 17:09:56.663560",
+	"modified": "2025-05-15 11:47:48.719496",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",

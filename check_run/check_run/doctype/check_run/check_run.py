@@ -56,6 +56,11 @@ class CheckRun(Document):
 			)
 			self.set_onload("pay_to_account_currency", pay_to_account_currency)
 
+		self.set_onload("approval_role", settings.approver_role)
+		self.set_onload(
+			"is_approver_user", settings.approver_role in frappe.get_roles(frappe.session.user)
+		)
+
 	def validate(self: Self) -> None:
 		gl_account = frappe.get_value("Bank Account", self.bank_account, "account")
 		if not gl_account:
@@ -67,7 +72,7 @@ class CheckRun(Document):
 				self.set_default_payable_account()
 				self.set_default_dates()
 		else:
-			if self.status == "Draft":  # type: ignore # str or None
+			if self.status in ("Draft", "Pending Approval"):  # type: ignore # str or None
 				self.filter_transactions()
 
 	def on_cancel(self: Self) -> None:

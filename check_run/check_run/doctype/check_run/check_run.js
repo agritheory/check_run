@@ -77,6 +77,9 @@ frappe.ui.form.on('Check Run', {
 			frm.page.set_indicator(__('Submitting'), 'orange')
 			frm.disable_form()
 			cur_frm.$check_run.$children[0].state.status = 'Submitting'
+		} else if (frm.doc.status == 'Pending Approval') {
+			frm.page.set_indicator(__('Pending Approval'), 'grey')
+			frm.disable_form()
 		} else if (frm.doc.__onload && frm.doc.__onload.check_run_submitting) {
 			frm.set_intro(
 				__(
@@ -118,10 +121,36 @@ frappe.ui.form.on('Check Run', {
 		frm.disable_form()
 		frappe.xcall('check_run.check_run.doctype.check_run.check_run.process_check_run', { docname: frm.doc.name })
 	},
+	send_for_approval: frm => {
+		frm.layout.show_message('')
+		frm.set_value('status', 'Pending Approval')
+		frm.page.set_indicator(__('Pending Approval'), 'grey')
+		frm.save().then(() => {
+			frm.disable_form()
+		})
+	},
+	approve: frm => {},
+	revert_to_draft: frm => {
+		frm.layout.show_message('')
+		frm.set_value('status', 'Draft')
+		frm.page.set_indicator(__('Draft'), 'red')
+		frm.save()
+	},
 	update_primary_action: frm => {
 		frm.disable_save()
 		if (frm.is_dirty()) {
 			frm.enable_save()
+		} else if (frm.doc.status == 'Draft') {
+			frm.page.set_primary_action(__('Send for Approval'), () => frm.trigger('send_for_approval'))
+		} else if (frm.doc.status == 'Pending Approval') {
+			frm.disable_save()
+			frm.disable_form()
+			if (frm.doc.__onload.is_approver_user) {
+				frm.page.set_primary_action(__('Approve'), () => frm.trigger('approve'))
+				// TODO: also revert to draft
+			} else {
+				frm.page.set_primary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
+			}
 		} else if ((frm.doc.__onload && frm.doc.__onload.check_run_submitting) || frm.doc.status == 'Submitting') {
 			frm.disable_save()
 			frm.disable_form()
