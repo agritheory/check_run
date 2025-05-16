@@ -699,7 +699,6 @@ def create_payroll_journal_entry(settings):
 	)
 	je.save()
 	je.submit()
-	print(je.posting_date, je.due_date)
 
 
 """

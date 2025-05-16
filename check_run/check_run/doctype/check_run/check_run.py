@@ -675,7 +675,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 		.where(journal_entries.docstatus == 1)
 		.where(je_accounts.account == pay_to_account)
 		.where(journal_entries.due_date <= end_date)
-		.where((journal_entries.name).notin(sub_q))
+		.where((journal_entries.name).notin(sub_q))  # codespell:ignore
 	)
 
 	if not settings:
@@ -915,9 +915,7 @@ def ach_only(docname: str) -> dict:
 
 @frappe.whitelist()
 def process_check_run(docname: str) -> None:
-	has_permission(
-		"Check Run", ptype="submit", verbose=False, user=frappe.session.user, raise_exception=True
-	)
+	has_permission("Check Run", ptype="submit", user=frappe.session.user, raise_exception=True)
 	doc = frappe.get_doc("Check Run", docname)
 	doc.process_check_run()
 
