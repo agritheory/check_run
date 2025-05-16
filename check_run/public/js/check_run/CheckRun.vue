@@ -226,6 +226,7 @@ function update_sort(key_name) {
 }
 
 function onMOPChange(frm, event, rowName) {
+	window.check_run.selectedRow.value = -1
 	transactions[rowName].mode_of_payment = modes_of_payment.value[event.target.selectedIndex]
 	frm.dirty()
 	frm.page.set_indicator('Unsaved', 'orange')
@@ -248,9 +249,8 @@ function handleEsc(item) {
 }
 
 function handleSelectRow(row, item) {
-	if (window.check_run.selectedRow.value === -1 || row !== window.check_run.selectedRow.value) {
-		window.check_run.selectedRow.value = row
-		togglePaySelect(item)
+	if (window.check_run.selectedRow.value === -1 || row !== window.check_run.selectedRow.value) {		
+		togglePaySelect(item, row)
 	} else {
 		window.check_run.selectedRow.value = -1
 		togglePayUnselect(item)
@@ -273,12 +273,18 @@ function handleKeyPress(row, itemName, event) {
 	}
 }
 
-function togglePaySelect(item) {
+function togglePaySelect(item, row) {
 	const rowName = item.name;
-	transactions[rowName].pay = true;
+	if (transactions[rowName].pay) {
+		transactions[rowName].pay = false;
+		return;
+	}
 
-	if (!transactions[rowName].mode_of_payment) 
+	transactions[rowName].pay = true;
+	if (!transactions[rowName].mode_of_payment || transactions[rowName].mode_of_payment === 'None') {
+		window.check_run.selectedRow.value = row
 		frappe.show_alert(__('Please add a Mode of Payment for this row'));
+	}
 }
 
 function togglePayUnselect(item) {
