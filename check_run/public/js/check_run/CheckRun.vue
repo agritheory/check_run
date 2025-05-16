@@ -51,15 +51,18 @@
 					<th v-else class="col col-sm-1">Check Number | Reference</th>
 				</tr>
 			</thead>
-			<tbody>
+			<tbody id="tableTransactions">
 				<template v-for="(item, i) in orderedTransactions">
 					<tr
 						v-if="partyIsInFilter(item.party)"
 						:key="i"
+						:id="i"
 						class="checkrun-row-container"
 						:class="{ selectedRow: selectedRow == i }"
 						tabindex="1"
-						@click="selectedRow = i">
+						@keydown.prevent.esc="handleEsc(item)"
+						@keydown.prevent.space="handleSelectRow(i, item)"
+						@keydown="handleKeyPress(i, item.name)">
 						<td style="text-align: left">{{ item.party_name || item.party }}</td>
 						<td style="text-align: left; white-space: nowrap">
 							<a :href="transactionUrl(item)" target="_blank">
@@ -102,7 +105,9 @@
 							<select
 								v-if="frm.doc.status == 'Draft'"
 								class="form-control form-select form-select-lg mb-3"
-								@change="onMOPChange(frm, $event, item.name)">
+								@change="onMOPChange(frm, $event, item.name)"
+								:ref="el => (paymentSelects[item.name] = el)"
+								:data-select="item.name">
 								<option v-for="mop in modes_of_payment" :selected="transactions[item.name].mode_of_payment == mop">
 									{{ mop }}
 								</option>
@@ -129,7 +134,7 @@
 	</div>
 </template>
 <script setup>
-import { computed, onMounted, ref, reactive, watch, unref } from 'vue'
+import { computed, onMounted, ref, reactive, watch, unref, nextTick } from 'vue'
 import ModeOfPaymentSummary from './ModeOfPaymentSummary.vue'
 
 frappe.provide('check_run')
@@ -138,8 +143,9 @@ let transactions = reactive(window.check_run.transactions)
 let filters = reactive(window.check_run.filters)
 let show_party_filter = ref(false)
 let selectAll = ref(false)
-let selectedRow = ref()
+let selectedRow = computed(() => unref(window.check_run.selectedRow))
 let location = ref(window.location)
+let paymentSelects = ref({})
 
 let orderedTransactions = computed(() => {
 	let r = unref(
@@ -220,6 +226,7 @@ function update_sort(key_name) {
 }
 
 function onMOPChange(frm, event, rowName) {
+	window.check_run.selectedRow.value = -1
 	transactions[rowName].mode_of_payment = modes_of_payment.value[event.target.selectedIndex]
 	frm.dirty()
 	frm.page.set_indicator('Unsaved', 'orange')
@@ -234,6 +241,56 @@ function paymentEntryUrl(transaction) {
 		return ''
 	}
 	return encodeURI(`${frappe.urllib.get_base_url()}/app/payment-entry/${transaction.payment_entry}`)
+}
+
+function handleEsc(item) {
+	window.check_run.selectedRow.value = -1
+	togglePayUnselect(item)
+}
+
+function handleSelectRow(row, item) {
+	if (window.check_run.selectedRow.value === -1 || row !== window.check_run.selectedRow.value) {		
+		togglePaySelect(item, row)
+	} else {
+		window.check_run.selectedRow.value = -1
+		togglePayUnselect(item)
+	}
+	check_run.total(frm);
+}
+
+function handleKeyPress(row, itemName, event) {
+	if (selectedRow.value === row) {
+		nextTick(() => {
+			const select = paymentSelects.value[itemName]
+			if (select) {
+				select.focus()
+				if (['ArrowUp', 'ArrowDown'].includes(event?.key)) {
+					const event = new Event('mousedown', { bubbles: true })
+					select.dispatchEvent(event)
+				}
+			}
+		})
+	}
+}
+
+function togglePaySelect(item, row) {
+	const rowName = item.name;
+	if (transactions[rowName].pay) {
+		transactions[rowName].pay = false;
+		return;
+	}
+
+	transactions[rowName].pay = true;
+	if (!transactions[rowName].mode_of_payment || transactions[rowName].mode_of_payment === 'None') {
+		window.check_run.selectedRow.value = row
+		frappe.show_alert(__('Please add a Mode of Payment for this row'));
+	}
+}
+
+function togglePayUnselect(item) {
+	const rowName = item.name;
+	if (!transactions[rowName].mode_of_payment)
+		transactions[rowName].pay = false;
 }
 </script>
 <style scoped>
@@ -263,5 +320,12 @@ function paymentEntryUrl(transaction) {
 
 .table tr {
 	height: 50px;
+}
+
+.table tr:focus-visible {
+	color: var(--text-color);
+    border-color: var(--gray-500);
+    outline: 0;
+    box-shadow: 0 0 0 2px rgba(104, 113, 120, 0.25);
 }
 </style>

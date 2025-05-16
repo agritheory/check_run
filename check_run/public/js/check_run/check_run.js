@@ -4,6 +4,7 @@ import { createApp, reactive, ref, unref } from 'vue'
 frappe.provide('check_run')
 
 check_run.transactions = reactive({})
+check_run.selectedRow = ref(-1)
 check_run.modes_of_payment = ref([])
 check_run.filters = reactive({
 	key: 'posting_date',

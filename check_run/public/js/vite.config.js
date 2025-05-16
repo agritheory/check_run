@@ -9,13 +9,18 @@ export default defineConfig({
 		lib: {
 			entry: path.resolve(__dirname, './check_run/check_run.js'),
 			name: 'check_run',
-			fileName: format => `check_run.js`, // creates module only output
+			fileName: () => `check_run.js`, // creates module only output
 		},
 		outDir: './check_run/public/dist/js',
 		root: './',
 		target: 'es2015',
 		emptyOutDir: false,
 		minify: false,
+		rollupOptions: {
+			output: {
+				chunkFileNames: 'chunks/[name].[hash].js',
+			},
+		},
 	},
 	optimizeDeps: {},
 	define: {
