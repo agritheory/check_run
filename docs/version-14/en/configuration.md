@@ -1,3 +1,6 @@
+<!-- Copyright (c) 2025, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Configuration
 
 ## Banks and Bank Accounts
@@ -49,3 +52,5 @@ Similarly, the `Employee` doctype includes new `Mode of Payment`, `Bank`, and `B
 
 ![Employee doctype detail showing the expanded Salary Details section with new fields for Mode of Payment, Bank, and Bank Account.](./assets/ConfigEmployee.png)
 
+## Permissions
+It is a frequent control in larger organizations that the person who processes payables is not the same person who prints and/or signs checks. Check Run facilitates this by requiring that user have "Submit" permissions to execute "Process Check Run" and "Print" permissions to download Checks or ACH files.
