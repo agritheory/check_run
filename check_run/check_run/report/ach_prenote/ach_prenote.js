@@ -150,8 +150,6 @@ function generate_ach_prenote() {
 			primary_action: () => {
 				let values = dialog.get_values()
 				dialog.hide()
-
-				// First, validate or prepare the data
 				frappe
 					.xcall('check_run.check_run.report.ach_prenote.ach_prenote.prepare_ach_prenote', {
 						check_run_settings: values.check_run_settings,
@@ -161,13 +159,11 @@ function generate_ach_prenote() {
 					})
 					.then(r => {
 						if (r && r.success) {
-							// Second, open a new window with the download URL
-							// Include a unique identifier returned from the first call if needed
 							let params = new URLSearchParams({
 								check_run_settings: values.check_run_settings,
 								ach_amount: values.ach_amount,
 								date: values.date,
-								request_id: r.request_id || '', // If you need to track the specific request
+								request_id: r.request_id || '',
 							}).toString()
 
 							window.open(
@@ -176,15 +172,12 @@ function generate_ach_prenote() {
 
 							setTimeout(() => {
 								resolve()
+								frappe.query_report.refresh_report()
 							}, 1000)
 						} else {
 							frappe.msgprint(__('Error preparing ACH prenote file'))
 							resolve()
 						}
-					})
-					.catch(err => {
-						frappe.msgprint(__('Error: ') + err)
-						resolve()
 					})
 			},
 			primary_action_label: __('Generate File'),

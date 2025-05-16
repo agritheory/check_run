@@ -55,10 +55,16 @@ def get_columns(filters):
 			"width": "150px",
 		},
 		{
+			"label": frappe._("ACH Prenote Date"),
+			"fieldname": "ach_prenote_date",
+			"fieldtype": "Date",
+			"width": "150px",
+		},
+		{
 			"label": frappe._("Last Used Date"),
 			"fieldname": "ach_last_used",
 			"fieldtype": "Date",
-			"width": "200px",
+			"width": "150px",
 		},
 		{
 			"label": frappe._("Validated Date"),
@@ -80,6 +86,7 @@ def get_data(filters):
 			Supplier.account_details_validated,
 			Supplier.bank,
 			Supplier.ach_account_type,
+			Supplier.ach_prenote_date,
 			(Supplier.supplier_name).as_("party_name"),
 			(Supplier.name).as_("party"),
 			ConstantColumn("Supplier").as_("party_type"),
@@ -106,6 +113,7 @@ def get_data(filters):
 			Employee.account_details_validated,
 			Employee.bank,
 			Employee.ach_account_type,
+			Employee.ach_prenote_date,
 			(Employee.employee_name).as_("party_name"),
 			(Employee.name).as_("party"),
 			ConstantColumn("Employee").as_("party_type"),
@@ -153,25 +161,6 @@ def update_validated_dates(data):
 		)
 
 
-@frappe.whitelist()
-def generate_ach_prenote(check_run_settings, ach_amount, date, data):
-	data = json.loads(data) if isinstance(data, str) else data
-	date = getdate(date)
-	ach_amount = flt(ach_amount, 2)
-	has_permission(
-		"Payment Entry", ptype="print", verbose=False, user=frappe.session.user, raise_exception=True
-	)
-	settings = frappe.get_doc("Check Run Settings", check_run_settings)
-	ach_file = build_nacha_file(ach_amount, date, data, settings)
-	ach_file = ach_file()
-	ach_file = StringIO(ach_file)
-	ach_file.seek(0)
-	file_ext = settings.ach_file_extension if settings and settings.ach_file_extension else "ach"
-	frappe.local.response.filename = f"ach_prenote.{file_ext}"
-	frappe.local.response.type = "download"
-	frappe.local.response.filecontent = ach_file.read()
-
-
 def build_nacha_file(ach_amount, date, data, settings: CheckRunSettings) -> NACHAFile:
 	ach_entries = []
 	company_bank = frappe.db.get_value("Bank Account", settings.bank_account, "bank")
@@ -185,7 +174,8 @@ def build_nacha_file(ach_amount, date, data, settings: CheckRunSettings) -> NACH
 		)
 		party_bank = frappe.db.get_value(row.party_type, row.party, "bank")
 		party_bank_routing_number = frappe.db.get_value("Bank", party_bank, "aba_number")
-
+		print(row.party_type, row.party, "ach_prenote_date", getdate())
+		frappe.db.set_value(str(row.party_type), str(row.party), "ach_prenote_date", str(getdate()))
 		ach_entry = ACHEntry(
 			transaction_code=23,  # checking prenote
 			receiving_dfi_identification=party_bank_routing_number,
@@ -233,7 +223,6 @@ def build_nacha_file(ach_amount, date, data, settings: CheckRunSettings) -> NACH
 
 @frappe.whitelist()
 def prepare_ach_prenote(check_run_settings, ach_amount, date, data):
-	"""Validate and prepare data for ACH prenote generation"""
 	try:
 		data = json.loads(data) if isinstance(data, str) else data
 		errors = []
@@ -263,7 +252,6 @@ def prepare_ach_prenote(check_run_settings, ach_amount, date, data):
 
 @frappe.whitelist()
 def download_ach_prenote():
-	"""Generate and download ACH prenote file"""
 	try:
 		check_run_settings = frappe.form_dict.get("check_run_settings")
 		ach_amount = frappe.form_dict.get("ach_amount")
@@ -277,10 +265,8 @@ def download_ach_prenote():
 				ach_amount = cached_data.get("ach_amount")
 				date = cached_data.get("date")
 				data = cached_data.get("data")
-			else:
-				frappe.throw("Download session expired. Please try again.")
 		else:
-			data = frappe.get_all("Your Document Type", filters={"your_filter": "value"}, fields=["*"])
+			frappe.throw("Download session expired. Please try again.")
 
 		date = getdate(date)
 		ach_amount = flt(ach_amount, 2)
@@ -303,7 +289,7 @@ def download_ach_prenote():
 
 		if request_id:
 			frappe.cache().delete_key(f"ach_prenote_data_{request_id}")
-
+		frappe.db.commit()
 	except Exception as e:
 		frappe.log_error(f"Error generating ACH prenote file: {str(e)}", "ACH Prenote Generation")
 		frappe.throw(str(e))
