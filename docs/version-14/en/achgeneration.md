@@ -51,7 +51,7 @@ For suppliers receiving payments (credits), you would typically use code **23** 
 When generating an ACH prenote file, you'll be prompted for the following information:
 
 - **Check Run Settings**: Select the appropriate settings profile for your bank
-- **ACH Amount**: Enter the test amount (typically $0.50, but may vary by bank)
+- **ACH Amount**: Enter the test amount, your bank should give you advice on the correct amount
 - **Date**: The effective date for the prenote transactions
 
 After submitting this information, the system will generate and download an ACH prenote file that you can submit to your bank.
