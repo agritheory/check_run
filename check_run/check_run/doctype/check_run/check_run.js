@@ -104,6 +104,17 @@ frappe.ui.form.on('Check Run', {
 				frm.set_df_property('posting_date', 'read_only', 1)
 			}
 		}
+
+		$(document).on('keydown', function (event) {
+			switch (event.key) {
+				case 'ArrowDown':
+					handleArrowDown(event, frm)
+					break
+				case 'ArrowUp':
+					handleArrowUp(event, frm)
+					break
+			}
+		})
 	},
 	pay_to_account: frm => {
 		get_entries(frm)
@@ -464,4 +475,30 @@ function check_settings(frm) {
 			}
 		})
 	}
+}
+
+function handleArrowDown(event, frm) {
+	if (window.check_run.selectedRow.value !== -1) return
+	event.preventDefault()
+	let row = check_run.focusRow || null
+	if (!row || row == document.getElementById('tableTransactions').lastElementChild) {
+		row = document.getElementById('tableTransactions').firstElementChild
+	} else {
+		row = check_run.focusRow.nextElementSibling
+	}
+	row.focus()
+	check_run.focusRow = row
+}
+
+function handleArrowUp(event, frm) {
+	if (window.check_run.selectedRow.value !== -1) return
+	event.preventDefault()
+	let row = check_run.focusRow || null
+	if (!row || row == document.getElementById('tableTransactions').firstElementChild) {
+		row = document.getElementById('tableTransactions').lastElementChild
+	} else {
+		row = check_run.focusRow.previousElementSibling
+	}
+	row.focus()
+	check_run.focusRow = row
 }
