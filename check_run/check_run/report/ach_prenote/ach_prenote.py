@@ -102,9 +102,9 @@ def get_data(filters):
 		)
 	)
 	if filters.ach_account_type == "Checking":
-		supplier_query.where(Supplier.ach_account_type == "Checking")
+		supplier_query = supplier_query.where(Supplier.ach_account_type == "Checking")
 	elif filters.ach_account_type == "Savings":
-		supplier_query.where(Supplier.ach_account_type == "Savings")
+		supplier_query = supplier_query.where(Supplier.ach_account_type == "Savings")
 	suppliers = supplier_query.run(as_dict=True)
 	employee_query = (
 		frappe.qb.from_(Employee)
@@ -129,9 +129,9 @@ def get_data(filters):
 		)
 	)
 	if filters.ach_account_type == "Checking":
-		employee_query.where(Employee.ach_account_type == "Checking")
+		employee_query = employee_query.where(Employee.ach_account_type == "Checking")
 	elif filters.ach_account_type == "Savings":
-		employee_query.where(Employee.ach_account_type == "Savings")
+		employee_query = employee_query.where(Employee.ach_account_type == "Savings")
 	employees = employee_query.run(as_dict=True)
 
 	results = sorted(
