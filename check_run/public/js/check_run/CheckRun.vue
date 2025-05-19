@@ -249,7 +249,7 @@ function handleEsc(item) {
 }
 
 function handleSelectRow(row, item) {
-	if (window.check_run.selectedRow.value === -1 || row !== window.check_run.selectedRow.value) {		
+	if (window.check_run.selectedRow.value === -1 || row !== window.check_run.selectedRow.value) {
 		togglePaySelect(item, row)
 	} else {
 		window.check_run.selectedRow.value = -1
