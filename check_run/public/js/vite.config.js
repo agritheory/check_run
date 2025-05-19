@@ -6,21 +6,18 @@ import path from 'path'
 export default defineConfig({
 	plugins: [vue()],
 	build: {
-		lib: {
-			entry: path.resolve(__dirname, './check_run/check_run.js'),
-			name: 'check_run',
-			fileName: () => `check_run.js`, // creates module only output
-		},
-		outDir: './check_run/public/dist/js',
-		root: './',
-		target: 'es2015',
+		outDir: './check_run/public/',
 		emptyOutDir: false,
-		minify: false,
 		rollupOptions: {
+			input: {
+				'check_run': path.resolve(__dirname, './check_run/check_run.js'),
+			},
 			output: {
-				chunkFileNames: 'chunks/[name].[hash].js',
+				entryFileNames: 'js/compiled/[name].js', // No hash
+				assetFileNames: 'dist/js/style.css',
 			},
 		},
+		minify: false,
 	},
 	optimizeDeps: {},
 	define: {
