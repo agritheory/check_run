@@ -156,16 +156,15 @@ frappe.ui.form.on('Check Run', {
 			} else {
 				frm.page.set_secondary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
 			}
-		} else if (frm.doc.status == 'Approved') {
-			if (frm.doc.__onload.is_approver_user) {
-				frm.page.set_secondary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
-			}
 		} else if ((frm.doc.__onload && frm.doc.__onload.check_run_submitting) || frm.doc.status == 'Submitting') {
 			frm.disable_save()
 			frm.disable_form()
-		} else if (frm.doc.status == 'Draft' && !(frm.doc.__onload && frm.doc.__onload.check_run_submitting)) {
+		} else if (frm.doc.status == 'Approved' && !(frm.doc.__onload && frm.doc.__onload.check_run_submitting)) {
 			if (frappe.perm.has_perm('Check Run', 0, 'submit')) {
 				frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
+			}
+			if (frm.doc.__onload.is_approver_user) {
+				frm.page.set_secondary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
 			}
 		}
 	},

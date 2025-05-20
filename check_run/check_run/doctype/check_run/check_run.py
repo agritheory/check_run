@@ -72,7 +72,7 @@ class CheckRun(Document):
 				self.set_default_payable_account()
 				self.set_default_dates()
 		else:
-			if self.status in ("Draft", "Pending Approval"):  # type: ignore # str or None
+			if self.status in ("Draft", "Pending Approval", "Approved"):  # type: ignore # str or None
 				self.filter_transactions()
 
 	def on_cancel(self: Self) -> None:
