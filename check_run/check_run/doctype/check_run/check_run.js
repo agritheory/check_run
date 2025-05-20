@@ -129,7 +129,12 @@ frappe.ui.form.on('Check Run', {
 			frm.disable_form()
 		})
 	},
-	approve: frm => {},
+	approve: frm => {
+		frm.layout.show_message('')
+		frm.set_value('status', 'Approved')
+		frm.page.set_indicator(__('Approved'), 'green')
+		frm.save()
+	},
 	revert_to_draft: frm => {
 		frm.layout.show_message('')
 		frm.set_value('status', 'Draft')
@@ -147,9 +152,13 @@ frappe.ui.form.on('Check Run', {
 			frm.disable_form()
 			if (frm.doc.__onload.is_approver_user) {
 				frm.page.set_primary_action(__('Approve'), () => frm.trigger('approve'))
-				// TODO: also revert to draft
+				frm.page.set_secondary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
 			} else {
-				frm.page.set_primary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
+				frm.page.set_secondary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
+			}
+		} else if (frm.doc.status == 'Approved') {
+			if (frm.doc.__onload.is_approver_user) {
+				frm.page.set_secondary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
 			}
 		} else if ((frm.doc.__onload && frm.doc.__onload.check_run_submitting) || frm.doc.status == 'Submitting') {
 			frm.disable_save()
