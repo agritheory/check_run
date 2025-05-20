@@ -523,7 +523,7 @@ class CheckRun(Document):
 				0,
 			)
 		frappe.db.commit()
-		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
+		# frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 		return file_path
 
 
@@ -578,6 +578,8 @@ def get_entries(doc: CheckRun | str) -> dict:
 		settings = None
 	if frappe.db.exists("Check Run", doc.name):
 		db_doc = frappe.get_doc("Check Run", doc.name)
+		if get_datetime(doc.modified) < db_doc.modified:
+			doc.reload()
 		if doc.end_date == db_doc.end_date and db_doc.transactions:
 			if db_doc.docstatus == 0:
 				outstanding_transaction = []
@@ -878,6 +880,9 @@ def download_nacha(docname: str, validate: bool = False) -> None:
 	comment.content = f"{frappe.session.user} created a NACHA file on {now()}"
 	comment.flags.ignore_permissions = True
 	comment.save()
+	for party, _pes in groupby(payment_entries, lambda x: x.get("party")):
+		pes = list(_pes)
+		frappe.db.set_value(pes[0].party_type, party, "ach_last_used", getdate())
 	frappe.db.commit()
 
 
