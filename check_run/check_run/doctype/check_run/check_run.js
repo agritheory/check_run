@@ -115,6 +115,7 @@ frappe.ui.form.on('Check Run', {
 		get_balance(frm)
 	},
 	process_check_run: frm => {
+		frm.page.clear_secondary_action()
 		frm.layout.show_message('')
 		frm.doc.status = 'Submitting'
 		frm.page.set_indicator(__('Submitting'), 'orange')
@@ -166,7 +167,7 @@ frappe.ui.form.on('Check Run', {
 		) {
 			if (frappe.perm.has_perm('Check Run', 0, 'submit')) {
 				frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
-			} 
+			}
 			if (frm.doc.__onload.is_approver_user && !(frm.doc.__onload && frm.doc.__onload.check_run_submitting)) {
 				frm.page.set_secondary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
 			}
