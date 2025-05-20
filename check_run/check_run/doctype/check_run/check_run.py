@@ -518,7 +518,7 @@ class CheckRun(Document):
 				0,
 			)
 		frappe.db.commit()
-		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
+		# frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 		return file_path
 
 
@@ -573,6 +573,8 @@ def get_entries(doc: CheckRun | str) -> dict:
 		settings = None
 	if frappe.db.exists("Check Run", doc.name):
 		db_doc = frappe.get_doc("Check Run", doc.name)
+		if get_datetime(doc.modified) < db_doc.modified:
+			doc.reload()
 		if doc.end_date == db_doc.end_date and db_doc.transactions:
 			if db_doc.docstatus == 0:
 				outstanding_transaction = []
