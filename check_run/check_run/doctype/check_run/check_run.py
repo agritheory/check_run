@@ -56,7 +56,7 @@ class CheckRun(Document):
 			)
 			self.set_onload("pay_to_account_currency", pay_to_account_currency)
 
-		self.set_onload("approval_role", settings.approver_role)
+		self.set_onload("approver_role", settings.approver_role)
 		self.set_onload(
 			"is_approver_user", settings.approver_role in frappe.get_roles(frappe.session.user)
 		)
