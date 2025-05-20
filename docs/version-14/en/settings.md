@@ -1,3 +1,6 @@
+<!-- Copyright (c) 2025, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Check Run Settings
 
 A `Check Run Setting` entry determines the behavior in a Check Run for a specific bank account/payable account combination. You will need to confirm separate settings for every bank account-payable account combination that you plan to use in a Check Run.
@@ -7,6 +10,22 @@ A `Check Run Setting` entry determines the behavior in a Check Run for a specifi
 If the system doesn't find settings for the account combination you're using in an initiated Check Run, it will automatically take you to the settings page to confirm the options. Alternatively, you can access the setting list directly by searching for "Check Run Settings List" in the AwesomeBar and clicking the `Add Check Run Settings` button.
 
 ![Screen shot showing the top portion of default settings for one Bank Account and Payable Account combination. A description of each setting and its default value is listed below.](./assets/Settings_Main.png)
+
+- **Approver Role:**
+    - If Check Runs require approvals of another User, their Role should be noted here.
+
+```mermaid
+graph TD
+  A[Draft] -- Send for Approval --> B[Pending Approval]
+  A -- Save --> A
+  B -- Approve --> C[Approved]
+  B -- Revert to draft --> A
+  C -- Revert to Draft --> A
+  C -- Process Check Run --> D[Submitting]
+  D -- On Error --> A
+  D --> E[Submitted]
+  D --> F[Ready to Print]
+```
 
 - **Include Purchase Invoices:**
     - Selected by default
@@ -32,6 +51,8 @@ If the system doesn't find settings for the account combination you're using in 
     - This setting is an upper limit for the number of invoices per party to group into each voucher to that party
     - The screen shot below shows the output of a submitted Check Run where the Number of Invoices per Voucher setting was set to 2. Out of the four invoices paid to Exceptional Grid, they are grouped so two are paid under one voucher, then the other two are paid under a different voucher
     - This can also be set per-Supplier in the "Number  of Invoices Per Check Voucher" field. Per-supplier configuration overrides the number in Check Run Settings
+- **Secondary Print Format:**
+    - Allows for payments with more than the configured split number to cascade onto a separate print format that details that all the linked documents.
 - **Split Invoices By Address:**
     - If checked, this will validate if the same vendor is being paid to different addresses and split the payments entries appropriately
 - **Automatically Release On Hold Invoices:**
