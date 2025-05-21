@@ -77,6 +77,9 @@ frappe.ui.form.on('Check Run', {
 			frm.page.set_indicator(__('Submitting'), 'orange')
 			frm.disable_form()
 			cur_frm.$check_run.$children[0].state.status = 'Submitting'
+		} else if (frm.doc.status == 'Pending Approval') {
+			frm.page.set_indicator(__('Pending Approval'), 'grey')
+			frm.disable_form()
 		} else if (frm.doc.__onload && frm.doc.__onload.check_run_submitting) {
 			frm.set_intro(
 				__(
@@ -104,6 +107,17 @@ frappe.ui.form.on('Check Run', {
 				frm.set_df_property('posting_date', 'read_only', 1)
 			}
 		}
+
+		$(document).on('keydown', function (event) {
+			switch (event.key) {
+				case 'ArrowDown':
+					handleArrowDown(event, frm)
+					break
+				case 'ArrowUp':
+					handleArrowUp(event, frm)
+					break
+			}
+		})
 	},
 	pay_to_account: frm => {
 		get_entries(frm)
@@ -112,22 +126,61 @@ frappe.ui.form.on('Check Run', {
 		get_balance(frm)
 	},
 	process_check_run: frm => {
+		frm.page.clear_secondary_action()
 		frm.layout.show_message('')
 		frm.doc.status = 'Submitting'
 		frm.page.set_indicator(__('Submitting'), 'orange')
 		frm.disable_form()
 		frappe.xcall('check_run.check_run.doctype.check_run.check_run.process_check_run', { docname: frm.doc.name })
 	},
+	send_for_approval: frm => {
+		frm.layout.show_message('')
+		frm.set_value('status', 'Pending Approval')
+		frm.page.set_indicator(__('Pending Approval'), 'grey')
+		frm.save().then(() => {
+			frm.disable_form()
+		})
+	},
+	approve: frm => {
+		frm.layout.show_message('')
+		frm.set_value('status', 'Approved')
+		frm.page.set_indicator(__('Approved'), 'green')
+		frm.save()
+	},
+	revert_to_draft: frm => {
+		frm.layout.show_message('')
+		frm.set_value('status', 'Draft')
+		frm.page.set_indicator(__('Draft'), 'red')
+		frm.save()
+	},
 	update_primary_action: frm => {
 		frm.disable_save()
 		if (frm.is_dirty()) {
 			frm.enable_save()
+		} else if (frm.doc.status == 'Draft' && frm.doc.__onload && frm.doc.__onload.approver_role) {
+			frm.page.set_primary_action(__('Send for Approval'), () => frm.trigger('send_for_approval'))
+		} else if (frm.doc.status == 'Pending Approval') {
+			frm.disable_save()
+			frm.disable_form()
+			if (frm.doc.__onload.is_approver_user) {
+				frm.page.set_primary_action(__('Approve'), () => frm.trigger('approve'))
+				frm.page.set_secondary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
+			} else {
+				frm.page.set_secondary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
+			}
 		} else if ((frm.doc.__onload && frm.doc.__onload.check_run_submitting) || frm.doc.status == 'Submitting') {
 			frm.disable_save()
 			frm.disable_form()
-		} else if (frm.doc.status == 'Draft' && !(frm.doc.__onload && frm.doc.__onload.check_run_submitting)) {
+		} else if (
+			((frm.doc.__onload && frm.doc.__onload.approver_role && frm.doc.status == 'Approved') ||
+				(frm.doc.__onload && !frm.doc.__onload.approver_role && frm.doc.status == 'Draft')) &&
+			!(frm.doc.__onload && frm.doc.__onload.check_run_submitting)
+		) {
 			if (frappe.perm.has_perm('Check Run', 0, 'submit')) {
 				frm.page.set_primary_action(__('Process Check Run'), () => frm.trigger('process_check_run'))
+			}
+			if (frm.doc.__onload.is_approver_user && !(frm.doc.__onload && frm.doc.__onload.check_run_submitting)) {
+				frm.page.set_secondary_action(__('Revert to Draft'), () => frm.trigger('revert_to_draft'))
 			}
 		}
 	},
@@ -465,4 +518,30 @@ function check_settings(frm) {
 			}
 		})
 	}
+}
+
+function handleArrowDown(event, frm) {
+	if (window.check_run.selectedRow.value !== -1) return
+	event.preventDefault()
+	let row = check_run.focusRow || null
+	if (!row || row == document.getElementById('tableTransactions').lastElementChild) {
+		row = document.getElementById('tableTransactions').firstElementChild
+	} else {
+		row = check_run.focusRow.nextElementSibling
+	}
+	row.focus()
+	check_run.focusRow = row
+}
+
+function handleArrowUp(event, frm) {
+	if (window.check_run.selectedRow.value !== -1) return
+	event.preventDefault()
+	let row = check_run.focusRow || null
+	if (!row || row == document.getElementById('tableTransactions').firstElementChild) {
+		row = document.getElementById('tableTransactions').lastElementChild
+	} else {
+		row = check_run.focusRow.previousElementSibling
+	}
+	row.focus()
+	check_run.focusRow = row
 }

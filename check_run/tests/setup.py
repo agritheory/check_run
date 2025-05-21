@@ -265,6 +265,7 @@ def create_suppliers(settings):
 		if biz.supplier_default_mode_of_payment == "ACH/EFT":
 			biz.bank = "Local Bank"
 			biz.bank_account = "123456789"
+			biz.ach_account_type = "Checking"
 		biz.currency = "USD"
 		biz.default_price_list = "Standard Buying"
 		biz.payment_terms = supplier[4]
@@ -540,6 +541,7 @@ def create_employees(settings):
 		if emp.mode_of_payment == "ACH/EFT":
 			emp.bank = "Local Bank"
 			emp.bank_account = f"{employee_number}12345"
+			emp.ach_account_type = "Checking"
 		emp.save()
 
 

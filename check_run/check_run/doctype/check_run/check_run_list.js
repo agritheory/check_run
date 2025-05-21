@@ -7,6 +7,8 @@ frappe.listview_settings['Check Run'] = {
 			__(doc.status),
 			{
 				Draft: 'red',
+				'Pending Approval': 'grey',
+				Approved: 'green',
 				Submitting: 'orange',
 				Submitted: 'blue',
 				'Ready to Print': 'purple',
