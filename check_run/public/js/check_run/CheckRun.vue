@@ -40,7 +40,10 @@
 							>Due Date &#11021;</span
 						>
 					</th>
-					<th v-if="frm.doc.status == 'Draft'" class="col col-sm-1" style="text-align: left">
+					<th
+						v-if="['Draft', 'Pending Approval', 'Approved'].includes(frm.doc.status)"
+						class="col col-sm-1"
+						style="text-align: left">
 						<input
 							type="checkbox"
 							autocomplete="off"
@@ -116,13 +119,14 @@
 						</td>
 						<td>{{ format_currency(item.amount, frm.pay_to_account_currency, 2) }}</td>
 						<td>{{ datetime.str_to_user(item.due_date) }}</td>
-						<td v-if="frm.doc.status == 'Draft'" style="text-align: left">
+						<td v-if="['Draft', 'Pending Approval', 'Approved'].includes(frm.doc.status)" style="text-align: left">
 							<input
 								type="checkbox"
 								class="input-with-feedback checkrun-check-box"
 								data-fieldtype="Check"
 								@change="onPayChange($event, item.name)"
-								:checked="transactions[item.name].pay" />Pay
+								:checked="transactions[item.name].pay"
+								:disabled="['Pending Approval', 'Approved'].includes(frm.doc.status)" />Pay
 						</td>
 						<td v-else>
 							<a target="_blank" :href="paymentEntryUrl(item)"> {{ item.payment_entry }}</a>

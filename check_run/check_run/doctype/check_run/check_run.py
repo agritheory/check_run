@@ -52,6 +52,11 @@ class CheckRun(Document):
 			)
 			self.set_onload("pay_to_account_currency", pay_to_account_currency)
 
+		self.set_onload("approver_role", settings.approver_role)
+		self.set_onload(
+			"is_approver_user", settings.approver_role in frappe.get_roles(frappe.session.user)
+		)
+
 	def validate(self) -> None:
 		gl_account = frappe.get_value("Bank Account", self.bank_account, "account")
 		if not gl_account:
@@ -63,7 +68,7 @@ class CheckRun(Document):
 				self.set_default_payable_account()
 				self.set_default_dates()
 		else:
-			if self.status == "Draft":  # type: ignore # str or None
+			if self.status in ("Draft", "Pending Approval", "Approved"):  # type: ignore # str or None
 				self.filter_transactions()
 
 	def on_cancel(self) -> None:
@@ -530,10 +535,10 @@ def confirm_print(docname: str) -> None:
 @frappe.whitelist()
 @frappe.read_only()
 def get_entries(doc: CheckRun | str) -> dict:
-	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc  # type: ignore
 	if isinstance(doc.end_date, str):
-		doc.end_date = getdate(doc.end_date)
-		doc.posting_date = getdate(doc.posting_date)
+		doc.end_date = getdate(doc.end_date)  # type: ignore
+		doc.posting_date = getdate(doc.posting_date)  # type: ignore
 	modes_of_payment = [""] + frappe.get_all("Mode of Payment", order_by="name", pluck="name")
 	if frappe.db.exists(
 		"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
@@ -543,9 +548,12 @@ def get_entries(doc: CheckRun | str) -> dict:
 		)
 	else:
 		settings = None
+	db_doc = None
 	if frappe.db.exists("Check Run", doc.name):
 		db_doc = frappe.get_doc("Check Run", doc.name)
-		if doc.end_date == db_doc.end_date and db_doc.transactions:
+		if not doc.modified or get_datetime(doc.modified) < db_doc.modified:
+			doc = db_doc
+		if doc.end_date == db_doc.end_date and db_doc.transactions:  # type: ignore
 			if db_doc.docstatus == 0:
 				outstanding_transaction = []
 				for row in json.loads(db_doc.transactions):
@@ -555,9 +563,9 @@ def get_entries(doc: CheckRun | str) -> dict:
 				outstanding_transaction = json.loads(db_doc.transactions)
 			return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
 
-	company = doc.company
-	pay_to_account = doc.pay_to_account
-	end_date = doc.end_date
+	company = doc.company  # type: ignore
+	pay_to_account = doc.pay_to_account  # type: ignore
+	end_date = doc.end_date  # type: ignore
 
 	# Build purchase invoices query
 	payment_schedule = frappe.qb.DocType("Payment Schedule")
@@ -717,7 +725,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			]
 
 		if settings and settings.pre_check_overdue_items:
-			if transaction.due_date < doc.posting_date:
+			if transaction.due_date < doc.posting_date:  # type: ignore
 				transaction.pay = 1
 		if transaction.doctype == "Journal Entry":
 			if transaction.party_type == "Supplier":
@@ -734,9 +742,13 @@ def get_entries(doc: CheckRun | str) -> dict:
 	# Process Unpaid Transaction
 	# start
 	outstanding_transaction = []
-	db_doc = frappe.get_doc("Check Run", doc.name)
+	if not isinstance(doc, CheckRun):
+		if db_doc:
+			doc = db_doc
+		else:
+			doc = frappe.get_doc("Check Run")
 	for row in transactions:
-		if not db_doc.not_outstanding_or_cancelled(row):
+		if not doc.not_outstanding_or_cancelled(row):  # type: ignore
 			outstanding_transaction.append(row)
 	# end
 	return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
