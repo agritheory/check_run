@@ -144,7 +144,7 @@
 			"fieldname": "status",
 			"fieldtype": "Select",
 			"hidden": 1,
-			"options": "Draft\nSubmitting\nSubmitted\nReady to Print\nConfirm Print\nPrinted"
+			"options": "Draft\nPending Approval\nApproved\nSubmitting\nSubmitted\nReady to Print\nConfirm Print\nPrinted"
 		},
 		{
 			"fieldname": "check_run_table",
@@ -160,10 +160,11 @@
 	],
 	"is_submittable": 1,
 	"links": [],
-	"modified": "2023-03-10 12:28:36.910004",
+	"modified": "2025-05-20 09:04:24.629145",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run",
+	"naming_rule": "Expression (old style)",
 	"owner": "Administrator",
 	"permissions": [
 		{
@@ -190,6 +191,7 @@
 	"quick_entry": 1,
 	"sort_field": "modified",
 	"sort_order": "DESC",
+	"states": [],
 	"track_changes": 1,
 	"track_seen": 1,
 	"track_views": 1

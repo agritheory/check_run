@@ -8,6 +8,7 @@
 	"field_order": [
 		"company",
 		"bank_account",
+		"approver_role",
 		"column_break_3",
 		"pay_to_account",
 		"print_format",
@@ -259,6 +260,12 @@
 			"fieldname": "allow_only_verified_accounts_in_nacha_generation",
 			"fieldtype": "Check",
 			"label": "Allow only verified accounts in NACHA generation"
+		},
+		{
+			"fieldname": "approver_role",
+			"fieldtype": "Link",
+			"label": "Approver Role",
+			"options": "Role"
 		}
 	],
 	"links": [],
