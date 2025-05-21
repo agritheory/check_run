@@ -52,8 +52,6 @@ bench start &> bench_run_logs.txt &
 CI=Yes &
 bench --site test_site reinstall --yes --admin-password admin
 
-bench setup requirements --dev
-
 echo "BENCH VERSION NUMBERS:"
 bench version
 echo "SITE LIST-APPS:"
