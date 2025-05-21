@@ -146,6 +146,28 @@ function generate_ach_prenote() {
 					default: moment().date(0).format(),
 					reqd: 1,
 				},
+				{
+					fieldtype: 'Select',
+					label: __('Code'),
+					fieldname: 'code',
+					reqd: 1,
+					options: [
+						'Checking Credit Live',
+						'Checking Credit Prenote',
+						'Checking Credit Child Support prenote',
+						'Checking Debit Live',
+						'Checking Debit Prenote',
+						'Checking Debit Child Support prenote',
+						'Savings Credit Live',
+						'Savings Credit Prenote',
+						'Savings Credit Child Support prenote',
+						'Savings Debit Live',
+						'Savings Debit Prenote',
+						'Savings Debit Child Support prenote',
+						'Loan Credit Live',
+						'Loan Credit Prenote',
+					],
+				},
 			],
 			primary_action: () => {
 				let values = dialog.get_values()
@@ -155,6 +177,7 @@ function generate_ach_prenote() {
 						check_run_settings: values.check_run_settings,
 						ach_amount: values.ach_amount,
 						date: values.date,
+						code: values.code,
 						data: frappe.query_report.data,
 					})
 					.then(r => {
@@ -163,6 +186,7 @@ function generate_ach_prenote() {
 								check_run_settings: values.check_run_settings,
 								ach_amount: values.ach_amount,
 								date: values.date,
+								code: values.code,
 								request_id: r.request_id || '',
 							}).toString()
 
