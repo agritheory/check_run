@@ -256,12 +256,6 @@
 			"options": "Use Today's Date\nUse Check Run's Posting Date"
 		},
 		{
-			"default": "0",
-			"fieldname": "allow_only_verified_accounts_in_nacha_generation",
-			"fieldtype": "Check",
-			"label": "Allow only verified accounts in NACHA generation"
-		},
-		{
 			"fieldname": "approver_role",
 			"fieldtype": "Link",
 			"label": "Approver Role",
@@ -275,7 +269,7 @@
 		}
 	],
 	"links": [],
-	"modified": "2025-05-20 16:27:30.997685",
+	"modified": "2025-05-15 11:47:48.719496",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",
