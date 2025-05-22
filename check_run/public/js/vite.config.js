@@ -16,6 +16,7 @@ export default defineConfig({
 			output: {
 				entryFileNames: 'check_run_vue.bundle.[hash].js',
 				assetFileNames: 'style.css',
+				format: 'iife',
 			},
 		},
 		minify: false,
