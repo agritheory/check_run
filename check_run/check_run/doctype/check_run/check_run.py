@@ -239,12 +239,12 @@ class CheckRun(Document):
 		)
 		ach_payment_entries = list(
 			{
-				e.get("payment_entry")
+				frappe.get_doc("Payment Entry", e.get("payment_entry"))
 				for e in json.loads(self.transactions)
 				if e.get("mode_of_payment") in electronic_mop
 			}
 		)
-		return [frappe.get_doc("Payment Entry", pe) for pe in ach_payment_entries]
+		return [pe for pe in ach_payment_entries if pe.docstatus == 1]
 
 	@frappe.whitelist()
 	@frappe.read_only()
@@ -458,7 +458,7 @@ class CheckRun(Document):
 			mode_of_payment, docstatus = frappe.db.get_value(
 				"Payment Entry", pe, ["mode_of_payment", "docstatus"]
 			) or (None, None)
-			if mode_of_payment == "Check":
+			if docstatus == 1 and mode_of_payment == "Check":
 				secondary_print_output = frappe.get_print(
 					"Payment Entry",
 					pe,
@@ -767,13 +767,13 @@ def get_entries(doc: CheckRun | str) -> dict:
 					frappe.get_value("Employee", transaction.party, "mode_of_payment") or settings.journal_entry
 				)
 	# Process Unpaid Transaction
-	# start
 	outstanding_transaction = []
 	if not isinstance(doc, CheckRun):
 		if db_doc:
 			doc = db_doc
 		else:
 			doc = frappe.get_doc("Check Run")
+	doc.reload()  # type: ignore
 	for row in transactions:
 		if not doc.not_outstanding_or_cancelled(row):  # type: ignore
 			outstanding_transaction.append(row)

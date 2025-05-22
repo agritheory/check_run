@@ -1,6 +1,8 @@
 # Copyright (c) 2023, AgriTheory and contributors
 # For license information, please see license.txt
 
+import json
+
 import frappe
 from frappe.utils import get_link_to_form, flt
 from erpnext.accounts.general_ledger import make_gl_entries, process_gl_map
@@ -327,3 +329,17 @@ def update_outstanding_amount(doc: PaymentEntry, method: str | None = None):
 					frappe.db.set_value("Payment Schedule", term.name, "outstanding", reverse)
 					if paid_amount >= doc.paid_amount:
 						break
+
+
+@frappe.whitelist()
+def remove_from_check_run(check_run, payment_entry):
+	cr = frappe.get_doc("Check Run", check_run)
+	transactions = json.loads(cr.transactions) if cr.transactions else []
+	new_transactions = []
+	for transaction in transactions:
+		if transaction.get("payment_entry") != payment_entry:
+			new_transactions.append(transaction)
+	cr.db_set("transactions", json.dumps(new_transactions))
+	frappe.db.set_value("Payment Entry", payment_entry, "check_run", "")
+	frappe.msgprint(_("Removed from Check Run"), alert=True)
+	return "removed"
