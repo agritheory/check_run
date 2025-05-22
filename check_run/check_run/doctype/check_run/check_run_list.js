@@ -1,3 +1,6 @@
+// Copyright (c) 2025, AgriTheory and contributors
+// For license information, please see license.txt
+
 frappe.listview_settings['Check Run'] = {
 	add_fields: ['status'],
 	hide_name_column: true,
@@ -7,6 +10,8 @@ frappe.listview_settings['Check Run'] = {
 			__(doc.status),
 			{
 				Draft: 'red',
+				'Pending Approval': 'grey',
+				Approved: 'green',
 				Submitting: 'orange',
 				Submitted: 'blue',
 				'Ready to Print': 'purple',

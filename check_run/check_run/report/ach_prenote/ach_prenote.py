@@ -161,7 +161,7 @@ def update_validated_dates(data):
 		)
 
 
-def build_nacha_file(ach_amount, date, data, settings: CheckRunSettings) -> NACHAFile:
+def build_nacha_file(ach_amount, date, code, data, settings: CheckRunSettings) -> NACHAFile:
 	ach_entries = []
 	company_bank = frappe.db.get_value("Bank Account", settings.bank_account, "bank")
 	company_bank_aba_number = frappe.db.get_value("Bank", company_bank, "aba_number")
@@ -177,7 +177,7 @@ def build_nacha_file(ach_amount, date, data, settings: CheckRunSettings) -> NACH
 		print(row.party_type, row.party, "ach_prenote_date", getdate())
 		frappe.db.set_value(str(row.party_type), str(row.party), "ach_prenote_date", str(getdate()))
 		ach_entry = ACHEntry(
-			transaction_code=23,  # checking prenote
+			transaction_code=codes[code],
 			receiving_dfi_identification=party_bank_routing_number,
 			dfi_account_number=party_bank_account,
 			amount=int(ach_amount * 100),
@@ -222,7 +222,7 @@ def build_nacha_file(ach_amount, date, data, settings: CheckRunSettings) -> NACH
 
 
 @frappe.whitelist()
-def prepare_ach_prenote(check_run_settings, ach_amount, date, data):
+def prepare_ach_prenote(check_run_settings, ach_amount, date, code, data):
 	try:
 		data = json.loads(data) if isinstance(data, str) else data
 		errors = []
@@ -239,6 +239,7 @@ def prepare_ach_prenote(check_run_settings, ach_amount, date, data):
 				"check_run_settings": check_run_settings,
 				"ach_amount": ach_amount,
 				"date": date,
+				"code": code,
 				"data": data,
 			},
 			expires_in_sec=300,  # Cache for 5 minutes
@@ -256,6 +257,7 @@ def download_ach_prenote():
 		check_run_settings = frappe.form_dict.get("check_run_settings")
 		ach_amount = frappe.form_dict.get("ach_amount")
 		date = frappe.form_dict.get("date")
+		code = frappe.form_dict.get("code")
 		request_id = frappe.form_dict.get("request_id")
 
 		if request_id:
@@ -276,7 +278,7 @@ def download_ach_prenote():
 		)
 
 		settings = frappe.get_doc("Check Run Settings", check_run_settings)
-		ach_file = build_nacha_file(ach_amount, date, data, settings)
+		ach_file = build_nacha_file(ach_amount, date, code, data, settings)
 		ach_file = ach_file()
 		ach_file = StringIO(ach_file)
 		ach_file.seek(0)
@@ -293,3 +295,21 @@ def download_ach_prenote():
 	except Exception as e:
 		frappe.log_error(f"Error generating ACH prenote file: {str(e)}", "ACH Prenote Generation")
 		frappe.throw(str(e))
+
+
+codes = {
+	"Checking Credit Live": 22,
+	"Checking Credit Prenote": 23,
+	"Checking Credit Child Support prenote": 24,
+	"Checking Debit Live": 27,
+	"Checking Debit Prenote": 28,
+	"Checking Debit Child Support prenote": 29,
+	"Savings Credit Live": 32,
+	"Savings Credit Prenote": 33,
+	"Savings Credit Child Support prenote": 34,
+	"Savings Debit Live": 37,
+	"Savings Debit Prenote": 38,
+	"Savings Debit Child Support prenote": 39,
+	"Loan Credit Live": 52,
+	"Loan Credit Prenote": 53,
+}

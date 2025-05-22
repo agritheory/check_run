@@ -1,3 +1,6 @@
+// Copyright (c) 2025, AgriTheory and contributors
+// For license information, please see license.txt
+
 frappe.ui.form.on('Employee', {
 	onload_post_render: frm => {
 		frm.fields_dict.bank_account.$wrapper
@@ -12,6 +15,16 @@ frappe.ui.form.on('Employee', {
 	},
 	mode_of_payment: frm => {
 		set_required_banking_fields(frm)
+	},
+	bank: frm => {
+		frm.set_value('ach_prenote_date', '')
+		frm.set_value('account_details_validated', '')
+		frm.set_value('ach_last_used', '')
+	},
+	bank_account: frm => {
+		frm.set_value('ach_prenote_date', '')
+		frm.set_value('account_details_validated', '')
+		frm.set_value('ach_last_used', '')
 	},
 })
 
@@ -30,6 +43,7 @@ function show_bank_account_number(frm) {
 }
 
 function set_required_banking_fields(frm) {
+	frm.fields_dict.bank_account.disable_password_checks()
 	if (!frm.doc.mode_of_payment) {
 		return
 	}
