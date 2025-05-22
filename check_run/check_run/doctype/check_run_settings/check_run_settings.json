@@ -19,6 +19,7 @@
 		"pre_check_overdue_items",
 		"allow_cancellation",
 		"cascade_cancellation",
+		"allow_removal",
 		"validate_unique_check_number",
 		"set_payment_entry_posting_date",
 		"column_break_9",
@@ -266,10 +267,16 @@
 			"fieldname": "allow_only_verified_accounts_in_nacha_generation",
 			"fieldtype": "Check",
 			"label": "Allow only verified accounts in NACHA generation"
+		},
+		{
+			"default": "0",
+			"fieldname": "allow_removal",
+			"fieldtype": "Check",
+			"label": "Allow removal of Payment Entries from Check Run after processing"
 		}
 	],
 	"links": [],
-	"modified": "2025-05-15 11:47:48.719496",
+	"modified": "2025-05-22 16:59:01.070059",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",

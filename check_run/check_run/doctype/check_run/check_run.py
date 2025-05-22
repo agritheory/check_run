@@ -766,18 +766,17 @@ def get_entries(doc: CheckRun | str) -> dict:
 				transaction.mode_of_payment = (
 					frappe.get_value("Employee", transaction.party, "mode_of_payment") or settings.journal_entry
 				)
-	# Process Unpaid Transaction
+
 	outstanding_transaction = []
 	if not isinstance(doc, CheckRun):
 		if db_doc:
 			doc = db_doc
 		else:
-			doc = frappe.get_doc("Check Run")
-	doc.reload()  # type: ignore
+			doc = frappe.get_doc("Check Run", doc.name)  # type: ignore
 	for row in transactions:
 		if not doc.not_outstanding_or_cancelled(row):  # type: ignore
 			outstanding_transaction.append(row)
-	# end
+
 	return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
 
 
