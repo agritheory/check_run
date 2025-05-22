@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 from . import __version__ as app_version  # noqa: F401
+from .vite_asset import get_vite_js_bundle
 
 app_name = "check_run"
 app_title = "Check Run"
@@ -22,6 +23,7 @@ docs_languages = ["es"]
 app_include_css = ["/assets/check_run/dist/js/style.css", "/assets/check_run/css/file_preview.css"]
 app_include_js = [
 	"check_run.bundle.js",
+	get_vite_js_bundle(),
 ]
 
 # include js, css files in header of web template

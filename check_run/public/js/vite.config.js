@@ -6,15 +6,16 @@ import path from 'path'
 export default defineConfig({
 	plugins: [vue()],
 	build: {
-		outDir: './check_run/public/',
+		outDir: './check_run/public/dist/js',
 		emptyOutDir: false,
+		manifest: true,
 		rollupOptions: {
 			input: {
 				'check_run': path.resolve(__dirname, './check_run/check_run.js'),
 			},
 			output: {
-				entryFileNames: 'js/compiled/[name].js', // No hash
-				assetFileNames: 'dist/js/style.css',
+				entryFileNames: 'check_run_vue.bundle.[hash].js',
+				assetFileNames: 'style.css',
 			},
 		},
 		minify: false,
