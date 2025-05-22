@@ -11,7 +11,7 @@ export default defineConfig({
 		manifest: true,
 		rollupOptions: {
 			input: {
-				'check_run': path.resolve(__dirname, './check_run/check_run.js'),
+				check_run: path.resolve(__dirname, './check_run/check_run.js'),
 			},
 			output: {
 				entryFileNames: 'check_run_vue.bundle.[hash].js',
