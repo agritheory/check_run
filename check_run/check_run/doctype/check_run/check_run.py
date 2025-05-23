@@ -905,7 +905,6 @@ def build_nacha_file_from_payment_entries(
 		)
 		party_bank = frappe.db.get_value(pe.party_type, pe.party, "bank")
 		party_bank_routing_number = frappe.db.get_value("Bank", party_bank, "aba_number")
-
 		ach_entry = ACHEntry(
 			transaction_code=22,  # checking account
 			receiving_dfi_identification=party_bank_routing_number,
@@ -916,7 +915,11 @@ def build_nacha_file_from_payment_entries(
 			discretionary_data="",
 			addenda_record_indicator=0,
 		)
-		ach_entries.append(ach_entry)
+		if settings.allow_only_verified_accounts_in_nacha_generation:
+			if frappe.get_value(pe.party_type, pe.party, "account_details_validated"):
+				ach_entries.append(ach_entry)
+		else:
+			ach_entries.append(ach_entry)
 
 	company_discretionary_data = (
 		doc.get("company_discretionary_data")

@@ -34,6 +34,7 @@
 		"column_break_21",
 		"expense_claim",
 		"ach_settings_section",
+		"allow_only_verified_accounts_in_nacha_generation",
 		"ach_file_extension",
 		"ach_service_class_code",
 		"ach_standard_class_code",
@@ -259,6 +260,12 @@
 			"fieldtype": "Link",
 			"label": "Approver Role",
 			"options": "Role"
+		},
+		{
+		"default": "0",
+		"fieldname": "allow_only_verified_accounts_in_nacha_generation",
+		"fieldtype": "Check",
+		"label": "Allow only verified accounts in NACHA generation"
 		}
 	],
 	"links": [],
