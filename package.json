@@ -16,7 +16,7 @@
 		"access": "restricted"
 	},
 	"scripts": {
-		"build": "vite build --config=./check_run/public/js/vite.config.js",
+		"build": "bash build_all.sh",
 		"dev": "vite build --watch --config=./check_run/public/js/vite.config.js"
 	}
 }

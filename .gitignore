@@ -31,7 +31,6 @@ __pycache__/
 # build/
 develop-eggs/
 dist/
-compiled/
 downloads/
 eggs/
 .eggs/
@@ -44,6 +43,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+check_run_vue.bundle.js
 MANIFEST
 
 # PyInstaller
