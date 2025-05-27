@@ -68,7 +68,7 @@ frappe.ui.form.Attachments.prototype.add_attachment = attachment => {
 
 frappe.ui.addFilePreviewWrapper = () => {
 	$('#pdf-preview-wrapper').remove()
-	frm = cur_frm;
+	frm = cur_frm
 	let target_div = $(`[id='page-${frm.doctype}']`)
 	if (target_div) {
 		let page_body = target_div.find('.page-body')
