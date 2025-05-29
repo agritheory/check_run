@@ -15,9 +15,6 @@ function frappeAssetsPlugin() {
 					if (chunk.type === 'chunk' && chunk.isEntry) {
 						assetsJson[`${chunk.name}.bundle.js`] = `/assets/check_run/dist/js/${filename}`
 					}
-					if (chunk.type === 'asset' && filename.endsWith('.css')) {
-						assetsJson['check_run.bundle.css'] = `/assets/check_run/dist/js/${filename}`
-					}
 				}
 				writeFileSync(assetsJsonPath, JSON.stringify(assetsJson, null, 4))
 				console.log('Updated assets.json with new bundle paths')
