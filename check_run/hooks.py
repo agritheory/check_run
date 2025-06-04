@@ -195,4 +195,9 @@ doc_events = {
 # For example: Role, Gender, etc.
 # translated_search_doctypes = []
 
-jinja = {"methods": ["frappe.contacts.doctype.address.address.get_default_address"]}
+jinja = {
+	"methods": [
+		"frappe.contacts.doctype.address.address.get_default_address",
+		"check_run.overrides.payment_entry.get_image_base64_data",
+	]
+}
