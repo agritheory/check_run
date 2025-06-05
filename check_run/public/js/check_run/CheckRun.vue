@@ -5,18 +5,23 @@
 			<thead>
 				<tr>
 					<th style="text-align: left" class="col col-sm-2" id="check-run-party-filter">
-						<div>
-							<span class="party-onclick party-display" v-if="!show_party_filter"
-								>Party
-								<span class="filter-icon">
-									<svg class="icon icon-sm" style="" @click="show_party_filter = !show_party_filter">
-										<use class="" href="#icon-filter"></use>
-									</svg>
-								</span>
+						<div class="d-flex align-items-center justify-between gap-2">
+							<span class="party-onclick party-display">
+								Party
+							</span>
+							<span class="filter-icon" @click="show_party_filter = !show_party_filter">
+								<svg class="icon icon-sm">
+									<use class="" href="#icon-filter"></use>
+								</svg>
 							</span>
 						</div>
-						<div class="party-filter" v-if="show_party_filter">
-							<input type="text" class="form-control" v-model="filters.party" />
+						<div class="mt-2">
+							<input
+								v-if="show_party_filter"
+								type="text"
+								class="form-control"
+								v-model="filters.party"
+							/>
 						</div>
 					</th>
 					<th class="col col-sm-2">Document</th>
@@ -26,9 +31,28 @@
 						>
 					</th>
 					<th class="col col-sm-2" style="white-space: nowrap; width: 12.49%">
-						<span @click="update_sort('mode_of_payment')" class="check-run-sort-indicator" id="check-run-mop-sort">
-							Mode of Payment &#11021;
-						</span>
+						<div class="d-flex align-items-center justify-between gap-2">
+							<span @click="update_sort('mode_of_payment')" class="flex-grow-1 check-run-sort-indicator" id="check-run-mop-sort">
+								Mode of Payment &#11021;
+							</span>
+							<span class="filter-icon" @click="show_mop_filter = !show_mop_filter">
+								<svg class="icon icon-sm">
+									<use href="#icon-filter"></use>
+								</svg>
+							</span>
+						</div>
+
+						<div v-if="show_mop_filter" class="mt-2">
+							<select
+								class="form-control form-select form-select-sm"
+								v-model="filters.mode_of_payment_filter"
+							>
+								<option value="All">All</option>
+								<option v-for="mop in modes_of_payment" :key="mop" :value="mop">
+									{{ mop === '' ? 'Not Set' : mop }}
+								</option>
+							</select>
+						</div>
 					</th>
 					<th class="col col-sm-2">
 						<span @click="update_sort('amount')" class="check-run-sort-indicator" id="check-run-outstanding-sort">
@@ -57,8 +81,6 @@
 			<tbody id="tableTransactions">
 				<template v-for="(item, i) in orderedTransactions">
 					<tr
-						v-if="partyIsInFilter(item.party)"
-						:key="i"
 						:id="i"
 						class="checkrun-row-container"
 						:class="{ selectedRow: selectedRow == i }"
@@ -146,6 +168,7 @@ frappe.provide('check_run')
 let transactions = reactive(window.check_run.transactions)
 let filters = reactive(window.check_run.filters)
 let show_party_filter = ref(false)
+let show_mop_filter = ref(false)
 let selectAll = ref(false)
 let selectedRow = computed(() => unref(window.check_run.selectedRow))
 let location = ref(window.location)
@@ -157,7 +180,15 @@ let orderedTransactions = computed(() => {
 			.sort()
 			.reduce((r, k) => ((r[k] = transactions[k]), r), {})
 	)
-	return Object.values(r).sort((a, b) =>
+	let arr = Object.values(r)
+	arr = arr.filter(item => partyIsInFilter(item.party))
+    arr = arr.filter(item => {
+		if (filters.mode_of_payment_filter === '') return !item.mode_of_payment
+		if (!filters.mode_of_payment_filter || filters.mode_of_payment_filter === 'All') return true
+		return item.mode_of_payment === filters.mode_of_payment_filter
+	})
+    
+	return arr.sort((a, b) =>
 		a[filters.key] > b[filters.key] ? filters[filters.key] : filters[filters.key] * -1
 	)
 })
