@@ -630,6 +630,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 				f"{settings.purchase_invoice}" or "\n",
 			).as_("mode_of_payment"),
 			(payment_schedule.payment_term).as_("payment_term"),
+			purchase_invoices.on_hold,
 		)
 		.where(Coalesce(payment_schedule.due_date, purchase_invoices.due_date) <= end_date)
 		.where(stand_alone_debit_note_filter)
@@ -663,6 +664,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 				f"{settings.expense_claim}" or "\n",
 			).as_("mode_of_payment"),
 			ConstantColumn("").as_("payment_term"),
+			ConstantColumn(None).as_("on_hold"),
 		)
 		.where(exp_claims.grand_total > exp_claims.total_amount_reimbursed)
 		.where(exp_claims.company == company)
@@ -705,6 +707,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 				"mode_of_payment"
 			),
 			ConstantColumn("").as_("payment_term"),
+			ConstantColumn(None).as_("on_hold"),
 		)
 		.where(journal_entries.company == company)
 		.where(journal_entries.docstatus == 1)
@@ -750,6 +753,8 @@ def get_entries(doc: CheckRun | str) -> dict:
 			] or [
 				{"file_name": doc_name, "file_url": f"/app/Form/{transaction.doctype}/{doc_name}"}
 			]
+
+		transaction["on_hold"] = bool(transaction.get("on_hold", 0))
 
 		if settings and settings.pre_check_overdue_items:
 			if transaction.due_date < doc.posting_date:  # type: ignore
