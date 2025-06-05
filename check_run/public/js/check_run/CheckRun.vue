@@ -37,7 +37,7 @@
 					</th>
 					<th class="col col-sm-1">
 						<span @click="update_sort('due_date')" class="check-run-sort-indicator" id="check-run-due-date-sort"
-							>Due Date &#11021;</span
+							>Days Past Due &#11021;</span
 						>
 					</th>
 					<th
@@ -118,7 +118,7 @@
 							<span v-else>{{ transactions[item.name].mode_of_payment }}</span>
 						</td>
 						<td>{{ format_currency(item.amount, frm.pay_to_account_currency, 2) }}</td>
-						<td>{{ datetime.str_to_user(item.due_date) }}</td>
+						<td>{{ item.due_date }}</td>
 						<td v-if="['Draft', 'Pending Approval', 'Approved'].includes(frm.doc.status)" style="text-align: left">
 							<input
 								type="checkbox"

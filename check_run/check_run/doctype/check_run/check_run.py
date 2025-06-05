@@ -563,6 +563,8 @@ def confirm_print(docname: str) -> None:
 @frappe.whitelist()
 @frappe.read_only()
 def get_entries(doc: CheckRun | str) -> dict:
+	print("\n")
+	print("get_entries")
 	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc  # type: ignore
 	if isinstance(doc.end_date, str):
 		doc.end_date = getdate(doc.end_date)  # type: ignore
@@ -571,17 +573,21 @@ def get_entries(doc: CheckRun | str) -> dict:
 	if frappe.db.exists(
 		"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
 	):
+		print(1)
 		settings = frappe.get_doc(
 			"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
 		)
 	else:
+		print(2)
 		settings = None
 	db_doc = None
 	if frappe.db.exists("Check Run", doc.name):
+		print("1.1")
 		db_doc = frappe.get_doc("Check Run", doc.name)
 		if not doc.modified or get_datetime(doc.modified) < db_doc.modified:
 			doc = db_doc
 		if doc.end_date == db_doc.end_date and db_doc.transactions:  # type: ignore
+			print("1.2", db_doc.docstatus == 0)
 			if db_doc.docstatus == 0:
 				outstanding_transaction = []
 				for row in json.loads(db_doc.transactions):
@@ -589,6 +595,10 @@ def get_entries(doc: CheckRun | str) -> dict:
 						outstanding_transaction.append(row)
 			else:
 				outstanding_transaction = json.loads(db_doc.transactions)
+			print("\n")
+			print("1 outstanding_transaction")
+			print(outstanding_transaction)
+			print("\n")
 			return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
 
 	company = doc.company  # type: ignore
@@ -766,6 +776,13 @@ def get_entries(doc: CheckRun | str) -> dict:
 				transaction.mode_of_payment = (
 					frappe.get_value("Employee", transaction.party, "mode_of_payment") or settings.journal_entry
 				)
+		
+		if transaction.due_date:
+			print("\n")
+			print("transaction.due_date", transaction.due_date)
+			transaction.due_date = (getdate(nowdate()) - transaction.due_date).days
+			print("transaction.due_date", transaction.due_date)
+			print("\n")
 
 	outstanding_transaction = []
 	if not isinstance(doc, CheckRun):
@@ -777,6 +794,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 		if not doc.not_outstanding_or_cancelled(row):  # type: ignore
 			outstanding_transaction.append(row)
 
+	
 	return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
 
 
