@@ -754,7 +754,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 				{"file_name": doc_name, "file_url": f"/app/Form/{transaction.doctype}/{doc_name}"}
 			]
 
-		transaction["on_hold"] = bool(transaction.get("on_hold", 0))
+		transaction["on_hold"] = transaction.get("on_hold") == "1"
 
 		if settings and settings.pre_check_overdue_items:
 			if transaction.due_date < doc.posting_date:  # type: ignore

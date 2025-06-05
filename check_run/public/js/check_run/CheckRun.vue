@@ -119,7 +119,10 @@
 						</td>
 						<td>{{ format_currency(item.amount, frm.pay_to_account_currency, 2) }}</td>
 						<td>{{ datetime.str_to_user(item.due_date) }}</td>
-						<td v-if="['Draft', 'Pending Approval', 'Approved'].includes(frm.doc.status)" style="text-align: left">
+						<td v-if="item.on_hold">
+							<span style="font-weight: bold">On Hold</span>
+						</td>
+						<td v-else-if="['Draft', 'Pending Approval', 'Approved'].includes(frm.doc.status)" style="text-align: left">
 							<input
 								type="checkbox"
 								class="input-with-feedback checkrun-check-box"
