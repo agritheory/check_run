@@ -766,7 +766,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 				transaction.mode_of_payment = (
 					frappe.get_value("Employee", transaction.party, "mode_of_payment") or settings.journal_entry
 				)
-		
+
 		if transaction.due_date:
 			transaction.due_date = (getdate(nowdate()) - transaction.due_date).days
 
@@ -780,7 +780,6 @@ def get_entries(doc: CheckRun | str) -> dict:
 		if not doc.not_outstanding_or_cancelled(row):  # type: ignore
 			outstanding_transaction.append(row)
 
-	
 	return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
 
 
