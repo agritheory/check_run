@@ -43,7 +43,12 @@
 		"column_break_27",
 		"immediate_origin",
 		"company_discretionary_data",
-		"custom_post_processing_hook"
+		"custom_post_processing_hook",
+		"positive_pay_settings_section",
+		"attach_positive_pay",
+		"positive_pay_file_format",
+		"csv_delimiter",
+		"csv_quoting"
 	],
 	"fields": [
 		{
@@ -273,10 +278,45 @@
 			"fieldname": "allow_removal",
 			"fieldtype": "Check",
 			"label": "Allow removal of Payment Entries from Check Run after processing"
+		},
+		{
+			"fieldname": "positive_pay_settings_section",
+			"fieldtype": "Section Break",
+			"label": "Positive Pay Settings"
+		},
+		{
+			"default": "0",
+			"fieldname": "attach_positive_pay",
+			"fieldtype": "Check",
+			"label": "Automatically Generate and Attach Positive Pay to Check Run"
+		},
+		{
+			"default": "CSV",
+			"depends_on": "attach_positive_pay",
+			"fieldname": "positive_pay_file_format",
+			"fieldtype": "Select",
+			"label": "Positive Pay File Format",
+			"options": "CSV\nExcel"
+		},
+		{
+			"default": ",",
+			"depends_on": "eval:doc.attach_positive_pay && doc.positive_pay_file_format === \"CSV\"",
+			"fieldname": "csv_delimiter",
+			"fieldtype": "Data",
+			"label": "CSV Delimiter",
+			"length": 1
+		},
+		{
+			"default": "Non-numeric",
+			"depends_on": "eval:doc.attach_positive_pay && doc.positive_pay_file_format === \"CSV\"",
+			"fieldname": "csv_quoting",
+			"fieldtype": "Select",
+			"label": "CSV Quoting",
+			"options": "Minimal\nAll\nNon-numeric\nNone"
 		}
 	],
 	"links": [],
-	"modified": "2025-05-22 16:59:01.070059",
+	"modified": "2025-06-04 16:39:03.097246",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",
