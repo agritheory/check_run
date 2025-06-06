@@ -782,7 +782,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			if not query:
 				query = qb
 			else:
-				query = query.union(qb)
+				query = query.union(qb)  # type: ignore
 	if query:
 		query = query.orderby("due_date", "name").get_sql()
 

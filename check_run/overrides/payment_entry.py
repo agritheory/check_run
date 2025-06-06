@@ -346,6 +346,7 @@ def remove_from_check_run(check_run, payment_entry):
 	frappe.msgprint(_("Removed from Check Run"), alert=True)
 	return "removed"
 
+
 @frappe.whitelist()
 def get_image_base64_data(file_url):
 	file_doc = frappe.get_doc("File", {"file_url": file_url})
