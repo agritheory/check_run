@@ -84,6 +84,23 @@ There is also a section for all settings related to ACH payments.
     - Default is blank
     - Optional field to add a description to ACH files
 
+The Positive Pay Settings section enables the user to automatically attach the results of the [Positive Pay report](./positivepay.md) as either a CSV or Excel file to the Check Run. The options are similar to what the user would see in the report's export dialog.
+
+![Screen shot showing the Positive Pay Settings section. A description of each setting and its default value is listed below.](./assets/Settings_Positive_Pay.png)
+
+- **Automatically Generate and Attach Positive Pay to Check Run:**
+    - Unselected by default
+    - Indicates whether or not the results of the Positive Pay report are attached to the Check Run. The report requires a bank account and start and end dates to filter its results. This feature uses the Check Run's bank account and posting date for those inputs
+- **Positive Pay File Format:**
+    - Default is "CSV"
+    - Either "CSV" or "Excel", indicates the file format of the report output that's attached to the Check Run
+- **CSV Delimiter:**
+    - Default is a comma - only relevant if "CSV" is selected as the file format
+    - A single character to use as the field delimiter in the resulting csv file
+- **CSV Quoting:**
+    - Default is "Non-numeric" - only relevant if "CSV" is selected as the file format
+    - Dictates the quoting behavior around field values (if at all). Given that one column of the report is the party name, it's recommended to use some form of quoting around values if there's the potential for a party name to include the delimiter character
+
 ## Considerations for Purchase Invoices with Payment Schedules
 
 One feature of Check Run for purchase invoices with a defined Payment Schedule is it will break out and show separate transactions for each outstanding Payment Term from the Payment Schedule by due date instead of the entire Invoice amount.
