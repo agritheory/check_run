@@ -8,6 +8,7 @@
 	"field_order": [
 		"company",
 		"bank_account",
+		"approver_role",
 		"column_break_3",
 		"pay_to_account",
 		"section_break_4",
@@ -17,6 +18,7 @@
 		"pre_check_overdue_items",
 		"allow_cancellation",
 		"cascade_cancellation",
+		"allow_removal",
 		"validate_unique_check_number",
 		"set_payment_entry_posting_date",
 		"column_break_9",
@@ -38,6 +40,7 @@
 		"column_break_21",
 		"expense_claim",
 		"ach_settings_section",
+		"allow_only_verified_accounts_in_nacha_generation",
 		"ach_file_extension",
 		"ach_service_class_code",
 		"ach_standard_class_code",
@@ -45,20 +48,28 @@
 		"column_break_27",
 		"immediate_origin",
 		"company_discretionary_data",
-		"custom_post_processing_hook"
+		"custom_post_processing_hook",
+		"positive_pay_settings_section",
+		"attach_positive_pay",
+		"positive_pay_file_format",
+		"csv_delimiter",
+		"csv_quoting"
 	],
 	"fields": [
 		{
 			"fieldname": "company",
 			"fieldtype": "Link",
+			"in_list_view": 1,
 			"label": "Company",
-			"options": "Company"
+			"options": "Company",
+			"reqd": 1
 		},
 		{
 			"fieldname": "bank_account",
 			"fieldtype": "Link",
 			"label": "Bank Account",
-			"options": "Bank Account"
+			"options": "Bank Account",
+			"reqd": 1
 		},
 		{
 			"fieldname": "section_break_4",
@@ -129,7 +140,8 @@
 			"fieldname": "pay_to_account",
 			"fieldtype": "Link",
 			"label": "Payable Account",
-			"options": "Account"
+			"options": "Account",
+			"reqd": 1
 		},
 		{
 			"fieldname": "ach_service_class_code",
@@ -280,10 +292,63 @@
 			"fieldtype": "Select",
 			"label": "Set Payment Entry Posting Date",
 			"options": "Use Today's Date\nUse Check Run's Posting Date"
+		},
+		{
+			"fieldname": "approver_role",
+			"fieldtype": "Link",
+			"label": "Approver Role",
+			"options": "Role"
+		},
+		{
+			"default": "0",
+			"fieldname": "allow_only_verified_accounts_in_nacha_generation",
+			"fieldtype": "Check",
+			"label": "Allow only verified accounts in NACHA generation"
+		},
+		{
+			"default": "0",
+			"fieldname": "allow_removal",
+			"fieldtype": "Check",
+			"label": "Allow removal of Payment Entries from Check Run after processing"
+		},
+		{
+			"fieldname": "positive_pay_settings_section",
+			"fieldtype": "Section Break",
+			"label": "Positive Pay Settings"
+		},
+		{
+			"default": "0",
+			"fieldname": "attach_positive_pay",
+			"fieldtype": "Check",
+			"label": "Automatically Generate and Attach Positive Pay to Check Run"
+		},
+		{
+			"default": "CSV",
+			"depends_on": "attach_positive_pay",
+			"fieldname": "positive_pay_file_format",
+			"fieldtype": "Select",
+			"label": "Positive Pay File Format",
+			"options": "CSV\nExcel"
+		},
+		{
+			"default": ",",
+			"depends_on": "eval:doc.attach_positive_pay && doc.positive_pay_file_format === \"CSV\"",
+			"fieldname": "csv_delimiter",
+			"fieldtype": "Data",
+			"label": "CSV Delimiter",
+			"length": 1
+		},
+		{
+			"default": "Non-numeric",
+			"depends_on": "eval:doc.attach_positive_pay && doc.positive_pay_file_format === \"CSV\"",
+			"fieldname": "csv_quoting",
+			"fieldtype": "Select",
+			"label": "CSV Quoting",
+			"options": "Minimal\nAll\nNon-numeric\nNone"
 		}
 	],
 	"links": [],
-	"modified": "2025-06-11 05:33:02.366589",
+	"modified": "2025-06-12 05:33:02.366589",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",

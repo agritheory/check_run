@@ -1,5 +1,8 @@
+# Copyright (c) 2025, AgriTheory and contributors
+# For license information, please see license.txt
+
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import frappe
 import pytest
@@ -39,3 +42,30 @@ def db_instance():
 	frappe.connect()
 	frappe.db.commit = MagicMock()
 	yield frappe.db
+
+
+@pytest.fixture(autouse=True)
+def mock_assets_json():
+	app_path = Path(frappe.get_app_path("frappe"))
+	site_path = Path(frappe.utils.get_site_path())
+
+	def get_abs_path(rel_path):
+		if rel_path.startswith("/"):
+			return site_path / "public" / rel_path.lstrip("/")
+		else:
+			return app_path / "public" / rel_path
+
+	mock_assets = {
+		"print.bundle.css": str(get_abs_path("css/print.css")),
+		"website.bundle.css": str(get_abs_path("css/website.css")),
+		"frappe.bundle.js": str(get_abs_path("js/frappe.js")),
+		"web_form.bundle.js": str(get_abs_path("js/web_form.js")),
+		"desk.bundle.js": str(get_abs_path("js/desk.js")),
+		"list.bundle.js": str(get_abs_path("js/list.js")),
+		"form.bundle.js": str(get_abs_path("js/form.js")),
+		"controls.bundle.js": str(get_abs_path("js/controls.js")),
+		"dialog.bundle.js": str(get_abs_path("js/dialog.js")),
+	}
+
+	with patch("frappe.utils.get_assets_json", return_value=mock_assets):
+		yield

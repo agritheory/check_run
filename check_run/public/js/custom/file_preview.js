@@ -62,12 +62,13 @@ frappe.ui.form.Attachments.prototype.add_attachment = attachment => {
 	})
 
 	if (file_name.toLowerCase().endsWith('.pdf')) {
-		frappe.ui.addFilePreviewWrapper(cur_frm)
+		frappe.ui.addFilePreviewWrapper()
 	}
 }
 
-frappe.ui.addFilePreviewWrapper = frm => {
+frappe.ui.addFilePreviewWrapper = () => {
 	$('#pdf-preview-wrapper').remove()
+	frm = cur_frm
 	let target_div = $(`[id='page-${frm.doctype}']`)
 	if (target_div) {
 		let page_body = target_div.find('.page-body')
