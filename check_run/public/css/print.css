@@ -1,0 +1,6 @@
+/* remove any attached background image from the print */
+@media print {
+	.print-format {
+		background-image: none !important;
+	}
+}

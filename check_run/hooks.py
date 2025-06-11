@@ -19,7 +19,11 @@ docs_languages = ["es"]
 # ------------------
 
 # include js, css files in header of desk.html
-app_include_css = ["/assets/check_run/dist/js/style.css", "/assets/check_run/css/file_preview.css"]
+app_include_css = [
+	"/assets/check_run/dist/js/style.css",
+	"/assets/check_run/css/file_preview.css",
+	"/assets/check_run/css/print.css",
+]
 app_include_js = [
 	"check_run.bundle.js",
 	"/assets/check_run/dist/js/check_run.js",
