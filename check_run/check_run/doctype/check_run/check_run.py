@@ -1001,11 +1001,11 @@ def download_pdf(
 					@print {
 						margin: 0;
 					}
-					
+
 					.back_image {
 						background: none !important;
 					}
-				}	
+				}
 			"""
 
 	html = """<style type='text/css'>{}</style><link href={}{} rel='stylesheet'>""".format(

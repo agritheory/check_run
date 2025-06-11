@@ -48,15 +48,15 @@ Co-authored-by: Tyler Matteson &lt;tyler@agritheory.com&gt; ([`061be4e`](https:/
 
 * print format changes
 
-* comma saperated on bothe tablec
+* comma separated on both tables
 
 * commit to solve linter test
 
-* secondary print format with same attechment
+* secondary print format with same attachment
 
 * change field name in print format
 
-* split pdf in two attechment
+* split pdf in two attachment
 
 * comment to run lint
 
@@ -170,7 +170,7 @@ Co-authored-by: viralpatel15 &lt;viralkansodiya167@gmail.com&gt; ([`0b4bff0`](ht
 
 * Override a function to improve error msg (#205)
 
-* Allocated ammount validation override for msg improvement
+* Allocated amount validation override for msg improvement
 
 * comment add
 
@@ -242,7 +242,7 @@ Co-authored-by: viralpatel15 &lt;viralkansodiya167@gmail.com&gt; ([`80fa4cf`](ht
 
 * feat: improvement
 
-* feat: file preview treshold
+* feat: file preview threshold
 
 * fix: refactor filters to work with prettier, also fix rendering bug
 
@@ -502,7 +502,7 @@ Resolution for `TypeError: the JSON object must be str, bytes or bytearray, not 
 
 * fix: move bank validation out of override class into hook (#142) ([`f07ad5a`](https://github.com/agritheory/check_run/commit/f07ad5a1c4a9b7e424ad534ec40731f26f6feb0c))
 
-* fix: only increment if check numer is numeric (#139) ([`079aa52`](https://github.com/agritheory/check_run/commit/079aa52bf013e13d3350848ef011b74b99b64bf1))
+* fix: only increment if check number is numeric (#139) ([`079aa52`](https://github.com/agritheory/check_run/commit/079aa52bf013e13d3350848ef011b74b99b64bf1))
 
 ### Unknown
 
@@ -548,7 +548,7 @@ Co-authored-by: Heather Kusmierz &lt;heather.kusmierz@gmail.com&gt; ([`4ccba65`]
 
 * fix: refactor frappe.db.sql to query builder for outstanding
 
-* fix: refactor postive pay to query builder
+* fix: refactor positive pay to query builder
 
 * chore: remove print statement
 
@@ -666,9 +666,9 @@ Co-authored-by: agritheory &lt;agritheory@users.noreply.github.com&gt; ([`6f5023
 
 * V14 ports (#98)
 
-* chore: port payement entry check number fetch/save to V14
+* chore: port payment entry check number fetch/save to V14
 
-* chore: port ach_post procesing hook and company disc data
+* chore: port ach_post processing hook and company disc data
 
 * chore: port docstatus fix for ach-only crs
 
@@ -680,9 +680,9 @@ Co-authored-by: agritheory &lt;agritheory@users.noreply.github.com&gt; ([`6f5023
 
 * The hook jenv is deprecated New variable is jinja
 
-* chore: port ach_post procesing hook and company disc data
+* chore: port ach_post processing hook and company disc data
 
-* fix: fix savepoint wierdness
+* fix: fix savepoint weirdness
 
 * fix: company discretionary data fix
 
@@ -918,7 +918,7 @@ Not implemented yet:
 
 * test: stub UI test yaml - copied from Frappe
 
-* test: add helper shell files, remove job contitionals
+* test: add helper shell files, remove job conditionals
 
 * test: remove producer/consumer test dbs from install script
 
@@ -956,7 +956,7 @@ Not implemented yet:
 
 * test: allow empty password = yes
 
-* test: file wasnt saved
+* test: file wasn't saved
 
 * test: mariadb version 10.5 =&gt; 10.3
 
@@ -992,7 +992,7 @@ Not implemented yet:
 
 * test: install apps
 
-* test: add site adn skip assets
+* test: add site and skip assets
 
 * test: ci=yes install-app
 
