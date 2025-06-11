@@ -13,9 +13,12 @@ from check_run.tests.fixtures import employees, suppliers, tax_authority
 
 
 def before_test():
-	frappe.clear_cache()
-	today = frappe.utils.getdate()
-	setup_complete(
+		# avoid call to _ensure_idle_system in ERPNext's account controller
+		frappe.flags.in_test = True
+
+		frappe.clear_cache()
+		today = frappe.utils.getdate()
+		setup_complete(
 		{
 			"currency": "USD",
 			"full_name": "Administrator",
@@ -34,14 +37,16 @@ def before_test():
 			"bank_account": "Primary Checking",
 		}
 	)
-	enable_all_roles_and_domains()
-	set_defaults_for_tests()
-	frappe.db.commit()
-	create_test_data()
-	for modu in frappe.get_all("Module Onboarding"):
-		frappe.db.set_value("Module Onboarding", modu, "is_complete", 1)
-	frappe.set_value("Website Settings", "Website Settings", "home_page", "login")
-	frappe.db.commit()
+		enable_all_roles_and_domains()
+		set_defaults_for_tests()
+		frappe.db.commit()
+		create_test_data()
+		for modu in frappe.get_all("Module Onboarding"):
+				frappe.db.set_value("Module Onboarding", modu, "is_complete", 1)
+		frappe.set_value("Website Settings", "Website Settings", "home_page", "login")
+		frappe.db.commit()
+
+		frappe.flags.in_test = False
 
 
 def create_test_data():
