@@ -3,8 +3,6 @@
 
 import unittest
 
-import frappe
-
 
 class TestCheckRun(unittest.TestCase):
 	pass
