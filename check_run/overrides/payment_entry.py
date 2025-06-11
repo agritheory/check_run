@@ -1,6 +1,8 @@
 # Copyright (c) 2023, AgriTheory and contributors
 # For license information, please see license.txt
 
+import base64
+
 import frappe
 from erpnext.accounts.doctype.payment_entry.payment_entry import (
 	PaymentEntry,
@@ -8,7 +10,8 @@ from erpnext.accounts.doctype.payment_entry.payment_entry import (
 	get_outstanding_reference_documents,
 )
 from erpnext.accounts.general_ledger import make_gl_entries, process_gl_map
-from frappe import _
+from frappe import _, safe_decode
+from frappe.core.doctype.file.utils import get_local_image
 from frappe.utils import flt, get_link_to_form
 from frappe.utils.data import getdate
 
@@ -332,3 +335,13 @@ def update_outstanding_amount(doc: PaymentEntry, method: str | None = None):
 					frappe.db.set_value("Payment Schedule", term.name, "outstanding", reverse)
 					if paid_amount >= doc.paid_amount:
 						break
+
+
+@frappe.whitelist()
+def get_image_base64_data(file_url):
+	file_doc = frappe.get_doc("File", {"file_url": file_url})
+	if not file_doc.has_permission(ptype="read"):
+		return ""
+	image, unused_filename, extn = get_local_image(file_url)
+	file_content = file_doc.get_content()
+	return f"data:image/{extn};base64,{safe_decode(base64.b64encode(file_content).decode('utf-8'))}"
