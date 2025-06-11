@@ -12,6 +12,8 @@ from erpnext.accounts.doctype.payment_entry.payment_entry import PaymentEntry
 from erpnext.accounts.utils import get_balance_on
 from frappe.contacts.doctype.address.address import get_default_address
 from frappe.desk.form.load import get_attachments
+from frappe.desk.query_report import build_xlsx_data, format_fields, run
+from frappe.desk.utils import get_csv_bytes, pop_csv_params
 from frappe.model.document import Document
 from frappe.permissions import has_permission
 from frappe.query_builder.custom import ConstantColumn
@@ -20,6 +22,7 @@ from frappe.utils.data import flt, get_datetime, getdate, now, nowdate
 from frappe.utils.file_manager import remove_all, save_file
 from frappe.utils.password import get_decrypted_password
 from frappe.utils.print_format import read_multi_pdf
+from frappe.utils.xlsxutils import make_xlsx
 from pypdf import PdfWriter
 
 from check_run.check_run.doctype.check_run_settings.check_run_settings import (
@@ -228,6 +231,7 @@ class CheckRun(Document):
 		self.set_status("Submitted")
 		self.save()
 		self.submit()
+		self.create_and_attach_positive_pay()
 		frappe.db.sql("RELEASE SAVEPOINT process_check_run")
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
@@ -498,6 +502,56 @@ class CheckRun(Document):
 		frappe.db.commit()
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
+	def create_and_attach_positive_pay(self):
+		settings = get_check_run_settings(self)
+		if not settings.attach_positive_pay:
+			return
+
+		csv_delimiter_map = {
+			"Minimal": 0,
+			"All": 1,
+			"Non-numeric": 2,
+			"None": 3,
+		}
+		filters = frappe._dict(
+			{
+				"bank_account": self.bank_account,
+				"start_date": self.posting_date,
+				"end_date": self.posting_date,
+			}
+		)
+		csv_params = pop_csv_params(
+			{
+				"csv_delimiter": settings.csv_delimiter,
+				"csv_quoting": csv_delimiter_map.get(settings.csv_quoting, 2),
+			}
+		)
+
+		data = run("Positive Pay", filters, are_default_filters=False)
+		data = frappe._dict(data)
+		if not data.columns:
+			return
+
+		format_fields(data)
+		xlsx_data, column_widths = build_xlsx_data(
+			data, visible_idx=[], include_indentation=1, include_filters=False, ignore_visible_idx=True
+		)
+		if settings.positive_pay_file_format == "CSV":
+			content = get_csv_bytes(xlsx_data, csv_params)
+			file_extension = "csv"
+		elif settings.positive_pay_file_format == "Excel":
+			file_extension = "xlsx"
+			content = make_xlsx(xlsx_data, "Query Report", column_widths=column_widths).getvalue()
+		save_file(
+			f"{self.name}_positive_pay.{file_extension}",
+			content,
+			"Check Run",
+			self.name,
+			"Home/Check Run",
+			False,
+			0,
+		)
+
 
 @frappe.whitelist()
 def check_for_draft_check_run(company: str, bank_account: str, payable_account: str) -> str:
@@ -701,7 +755,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			if not query:
 				query = qb
 			else:
-				query = query.union(qb)
+				query = query.union(qb)  # type: ignore
 	if query:
 		query = query.orderby("due_date", "name").get_sql()
 

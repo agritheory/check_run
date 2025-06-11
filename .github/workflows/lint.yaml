@@ -49,10 +49,10 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Black (Frappe)
-        run: pip install git+https://github.com/frappe/black.git
+      - name: Install Black (Frappe / AgriTheory)
+        run: pip install git+https://github.com/agritheory/black.git
 
-      - name: Run Black (Frappe)
+      - name: Run Black (Frappe / AgriTheory)
         run: black --check .
 
   prettier:

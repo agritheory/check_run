@@ -33,6 +33,7 @@
 		"column_break_21",
 		"expense_claim",
 		"ach_settings_section",
+		"allow_only_verified_accounts_in_nacha_generation",
 		"ach_file_extension",
 		"ach_service_class_code",
 		"ach_standard_class_code",
@@ -41,7 +42,12 @@
 		"immediate_origin",
 		"company_discretionary_data",
 		"custom_post_processing_hook",
-		"role_allowed_to_download_ach_file_multiple_times"
+		"role_allowed_to_download_ach_file_multiple_times",
+		"positive_pay_settings_section",
+		"attach_positive_pay",
+		"positive_pay_file_format",
+		"csv_delimiter",
+		"csv_quoting"
 	],
 	"fields": [
 		{
@@ -266,10 +272,45 @@
 			"fieldname": "allow_only_verified_accounts_in_nacha_generation",
 			"fieldtype": "Check",
 			"label": "Allow only verified accounts in NACHA generation"
+		},
+		{
+			"fieldname": "positive_pay_settings_section",
+			"fieldtype": "Section Break",
+			"label": "Positive Pay Settings"
+		},
+		{
+			"default": "0",
+			"fieldname": "attach_positive_pay",
+			"fieldtype": "Check",
+			"label": "Automatically Generate and Attach Positive Pay to Check Run"
+		},
+		{
+			"default": "CSV",
+			"depends_on": "attach_positive_pay",
+			"fieldname": "positive_pay_file_format",
+			"fieldtype": "Select",
+			"label": "Positive Pay File Format",
+			"options": "CSV\nExcel"
+		},
+		{
+			"default": ",",
+			"depends_on": "eval:doc.attach_positive_pay && doc.positive_pay_file_format === \"CSV\"",
+			"fieldname": "csv_delimiter",
+			"fieldtype": "Data",
+			"label": "CSV Delimiter",
+			"length": 1
+		},
+		{
+			"default": "Non-numeric",
+			"depends_on": "eval:doc.attach_positive_pay && doc.positive_pay_file_format === \"CSV\"",
+			"fieldname": "csv_quoting",
+			"fieldtype": "Select",
+			"label": "CSV Quoting",
+			"options": "Minimal\nAll\nNon-numeric\nNone"
 		}
 	],
 	"links": [],
-	"modified": "2025-05-15 11:47:48.719496",
+	"modified": "2025-06-06 10:55:22.167358",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",
