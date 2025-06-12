@@ -19,7 +19,7 @@ repos:
       - id: debug-statements
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.19.1
+    rev: v3.20.0
     hooks:
       - id: pyupgrade
         args: ['--py310-plus']
@@ -42,20 +42,20 @@ repos:
         args: [--remove-all-unused-imports, --in-place]
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.1.2
+    rev: 7.2.0
     hooks:
       - id: flake8
         additional_dependencies: ['flake8-bugbear']
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
         additional_dependencies:
           - tomli
 
   - repo: https://github.com/agritheory/test_utils
-    rev: v0.17.0
+    rev: v1.0.0
     hooks:
       - id: update_pre_commit_config
       - id: validate_copyright
@@ -66,7 +66,7 @@ repos:
       - id: validate_customizations
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.16.0
     hooks:
       - id: mypy
         exclude: ^tests/

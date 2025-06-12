@@ -36,6 +36,9 @@ addopts = "--cov=check_run --cov-report term-missing"
 [tool.black]
 line-length = 99
 
+[tool.codespell]
+skip = "yarn.lock,CHANGELOG.md"
+
 [tool.isort]
 line_length = 99
 multi_line_output = 3
