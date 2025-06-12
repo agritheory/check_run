@@ -12,6 +12,8 @@ from erpnext.accounts.doctype.payment_entry.payment_entry import PaymentEntry
 from erpnext.accounts.utils import get_balance_on
 from frappe.contacts.doctype.address.address import get_default_address
 from frappe.desk.form.load import get_attachments
+from frappe.desk.query_report import build_xlsx_data, format_fields, run
+from frappe.desk.utils import get_csv_bytes, pop_csv_params
 from frappe.model.document import Document
 from frappe.permissions import has_permission
 from frappe.query_builder.custom import ConstantColumn
@@ -20,6 +22,7 @@ from frappe.utils.data import flt, get_datetime, getdate, now, nowdate
 from frappe.utils.file_manager import remove_all, save_file
 from frappe.utils.password import get_decrypted_password
 from frappe.utils.print_format import read_multi_pdf
+from frappe.utils.xlsxutils import make_xlsx
 from pypdf import PdfWriter
 
 from check_run.check_run.doctype.check_run_settings.check_run_settings import (
@@ -52,6 +55,11 @@ class CheckRun(Document):
 			)
 			self.set_onload("pay_to_account_currency", pay_to_account_currency)
 
+		self.set_onload("approver_role", settings.approver_role)
+		self.set_onload(
+			"is_approver_user", settings.approver_role in frappe.get_roles(frappe.session.user)
+		)
+
 	def validate(self) -> None:
 		gl_account = frappe.get_value("Bank Account", self.bank_account, "account")
 		if not gl_account:
@@ -63,7 +71,7 @@ class CheckRun(Document):
 				self.set_default_payable_account()
 				self.set_default_dates()
 		else:
-			if self.status == "Draft":  # type: ignore # str or None
+			if self.status in ("Draft", "Pending Approval", "Approved"):  # type: ignore # str or None
 				self.filter_transactions()
 
 	def on_cancel(self) -> None:
@@ -223,6 +231,7 @@ class CheckRun(Document):
 		self.set_status("Submitted")
 		self.save()
 		self.submit()
+		self.create_and_attach_positive_pay()
 		frappe.db.sql("RELEASE SAVEPOINT process_check_run")
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
@@ -493,6 +502,56 @@ class CheckRun(Document):
 		frappe.db.commit()
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
+	def create_and_attach_positive_pay(self):
+		settings = get_check_run_settings(self)
+		if not settings.attach_positive_pay:
+			return
+
+		csv_delimiter_map = {
+			"Minimal": 0,
+			"All": 1,
+			"Non-numeric": 2,
+			"None": 3,
+		}
+		filters = frappe._dict(
+			{
+				"bank_account": self.bank_account,
+				"start_date": self.posting_date,
+				"end_date": self.posting_date,
+			}
+		)
+		csv_params = pop_csv_params(
+			{
+				"csv_delimiter": settings.csv_delimiter,
+				"csv_quoting": csv_delimiter_map.get(settings.csv_quoting, 2),
+			}
+		)
+
+		data = run("Positive Pay", filters, are_default_filters=False)
+		data = frappe._dict(data)
+		if not data.columns:
+			return
+
+		format_fields(data)
+		xlsx_data, column_widths = build_xlsx_data(
+			data, visible_idx=[], include_indentation=1, include_filters=False, ignore_visible_idx=True
+		)
+		if settings.positive_pay_file_format == "CSV":
+			content = get_csv_bytes(xlsx_data, csv_params)
+			file_extension = "csv"
+		elif settings.positive_pay_file_format == "Excel":
+			file_extension = "xlsx"
+			content = make_xlsx(xlsx_data, "Query Report", column_widths=column_widths).getvalue()
+		save_file(
+			f"{self.name}_positive_pay.{file_extension}",
+			content,
+			"Check Run",
+			self.name,
+			"Home/Check Run",
+			False,
+			0,
+		)
+
 
 @frappe.whitelist()
 def check_for_draft_check_run(company: str, bank_account: str, payable_account: str) -> str:
@@ -530,10 +589,10 @@ def confirm_print(docname: str) -> None:
 @frappe.whitelist()
 @frappe.read_only()
 def get_entries(doc: CheckRun | str) -> dict:
-	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc  # type: ignore
 	if isinstance(doc.end_date, str):
-		doc.end_date = getdate(doc.end_date)
-		doc.posting_date = getdate(doc.posting_date)
+		doc.end_date = getdate(doc.end_date)  # type: ignore
+		doc.posting_date = getdate(doc.posting_date)  # type: ignore
 	modes_of_payment = [""] + frappe.get_all("Mode of Payment", order_by="name", pluck="name")
 	if frappe.db.exists(
 		"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
@@ -543,9 +602,12 @@ def get_entries(doc: CheckRun | str) -> dict:
 		)
 	else:
 		settings = None
+	db_doc = None
 	if frappe.db.exists("Check Run", doc.name):
 		db_doc = frappe.get_doc("Check Run", doc.name)
-		if doc.end_date == db_doc.end_date and db_doc.transactions:
+		if not doc.modified or get_datetime(doc.modified) < db_doc.modified:
+			doc = db_doc
+		if doc.end_date == db_doc.end_date and db_doc.transactions:  # type: ignore
 			if db_doc.docstatus == 0:
 				outstanding_transaction = []
 				for row in json.loads(db_doc.transactions):
@@ -555,9 +617,9 @@ def get_entries(doc: CheckRun | str) -> dict:
 				outstanding_transaction = json.loads(db_doc.transactions)
 			return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
 
-	company = doc.company
-	pay_to_account = doc.pay_to_account
-	end_date = doc.end_date
+	company = doc.company  # type: ignore
+	pay_to_account = doc.pay_to_account  # type: ignore
+	end_date = doc.end_date  # type: ignore
 
 	# Build purchase invoices query
 	payment_schedule = frappe.qb.DocType("Payment Schedule")
@@ -675,7 +737,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 		.where(journal_entries.docstatus == 1)
 		.where(je_accounts.account == pay_to_account)
 		.where(journal_entries.due_date <= end_date)
-		.where((journal_entries.name).notin(sub_q))
+		.where((journal_entries.name).notin(sub_q))  # codespell:ignore
 	)
 
 	if not settings:
@@ -693,7 +755,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			if not query:
 				query = qb
 			else:
-				query = query.union(qb)
+				query = query.union(qb)  # type: ignore
 	if query:
 		query = query.orderby("due_date", "name").get_sql()
 
@@ -717,7 +779,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			]
 
 		if settings and settings.pre_check_overdue_items:
-			if transaction.due_date < doc.posting_date:
+			if transaction.due_date < doc.posting_date:  # type: ignore
 				transaction.pay = 1
 		if transaction.doctype == "Journal Entry":
 			if transaction.party_type == "Supplier":
@@ -734,9 +796,13 @@ def get_entries(doc: CheckRun | str) -> dict:
 	# Process Unpaid Transaction
 	# start
 	outstanding_transaction = []
-	db_doc = frappe.get_doc("Check Run", doc.name)
+	if not isinstance(doc, CheckRun):
+		if db_doc:
+			doc = db_doc
+		else:
+			doc = frappe.get_doc("Check Run")
 	for row in transactions:
-		if not db_doc.not_outstanding_or_cancelled(row):
+		if not doc.not_outstanding_or_cancelled(row):  # type: ignore
 			outstanding_transaction.append(row)
 	# end
 	return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
@@ -915,9 +981,7 @@ def ach_only(docname: str) -> dict:
 
 @frappe.whitelist()
 def process_check_run(docname: str) -> None:
-	has_permission(
-		"Check Run", ptype="submit", verbose=False, user=frappe.session.user, raise_exception=True
-	)
+	has_permission("Check Run", ptype="submit", user=frappe.session.user, raise_exception=True)
 	doc = frappe.get_doc("Check Run", docname)
 	doc.process_check_run()
 

@@ -5,18 +5,23 @@
 			<thead>
 				<tr>
 					<th style="text-align: left" class="col col-sm-2" id="check-run-party-filter">
-						<div>
-							<span class="party-onclick party-display" v-if="!show_party_filter"
-								>Party
-								<span class="filter-icon">
-									<svg class="icon icon-sm" style="" @click="show_party_filter = !show_party_filter">
-										<use class="" href="#icon-filter"></use>
-									</svg>
-								</span>
+						<div class="d-flex align-items-center justify-between gap-2">
+							<span class="party-onclick party-display">
+								Party
+							</span>
+							<span class="filter-icon" style="cursor: pointer;" @click="show_party_filter = !show_party_filter">
+								<svg class="icon icon-sm">
+									<use class="" href="#icon-filter"></use>
+								</svg>
 							</span>
 						</div>
-						<div class="party-filter" v-if="show_party_filter">
-							<input type="text" class="form-control" v-model="filters.party" />
+						<div class="mt-2">
+							<input
+								v-if="show_party_filter"
+								type="text"
+								class="form-control"
+								v-model="filters.party"
+							/>
 						</div>
 					</th>
 					<th class="col col-sm-2">Document</th>
@@ -26,9 +31,28 @@
 						>
 					</th>
 					<th class="col col-sm-2" style="white-space: nowrap; width: 12.49%">
-						<span @click="update_sort('mode_of_payment')" class="check-run-sort-indicator" id="check-run-mop-sort">
-							Mode of Payment &#11021;
-						</span>
+						<div class="d-flex align-items-center justify-between gap-2">
+							<span @click="update_sort('mode_of_payment')" class="flex-grow-1 check-run-sort-indicator" id="check-run-mop-sort">
+								Mode of Payment &#11021;
+							</span>
+							<span class="filter-icon" style="cursor: pointer;" @click="show_mop_filter = !show_mop_filter">
+								<svg class="icon icon-sm">
+									<use href="#icon-filter"></use>
+								</svg>
+							</span>
+						</div>
+
+						<div v-if="show_mop_filter" class="mt-2">
+							<select
+								class="form-control form-select form-select-sm"
+								v-model="filters.mode_of_payment_filter"
+							>
+								<option value="All">All</option>
+								<option v-for="mop in modes_of_payment" :key="mop" :value="mop">
+									{{ mop === '' ? 'Not Set' : mop }}
+								</option>
+							</select>
+						</div>
 					</th>
 					<th class="col col-sm-2">
 						<span @click="update_sort('amount')" class="check-run-sort-indicator" id="check-run-outstanding-sort">
@@ -40,26 +64,43 @@
 							>Due Date &#11021;</span
 						>
 					</th>
-					<th v-if="frm.doc.status == 'Draft'" class="col col-sm-1" style="text-align: left">
-						<input
-							type="checkbox"
-							autocomplete="off"
-							class="input-with-feedback reconciliation"
-							data-fieldtype="Check"
-							v-model="selectAll" /><span>Select All</span>
+					<th
+						v-if="['Draft', 'Pending Approval', 'Approved'].includes(frm.doc.status)"
+						class="col col-sm-1"
+						style="text-align: left">
+						<div class="d-flex align-items-center justify-between gap-2">
+							<span>Pay</span>
+							<span class="filter-icon" style="cursor: pointer;" @click="show_paid_filter = !show_paid_filter">
+								<svg class="icon icon-sm">
+									<use href="#icon-filter"></use>
+								</svg>
+							</span>
+						</div>
+
+						<div v-if="show_paid_filter" class="mt-2">
+							<select
+								class="form-control form-select form-select-sm"
+								v-model="filters.paid_filter"
+							>
+								<option value="All">All</option>
+								<option value="Paid">Paid</option>
+								<option value="Unpaid">Unpaid</option>
+							</select>
+						</div>
 					</th>
 					<th v-else class="col col-sm-1">Check Number | Reference</th>
 				</tr>
 			</thead>
-			<tbody>
+			<tbody id="tableTransactions">
 				<template v-for="(item, i) in orderedTransactions">
 					<tr
-						v-if="partyIsInFilter(item.party)"
-						:key="i"
+						:id="i"
 						class="checkrun-row-container"
 						:class="{ selectedRow: selectedRow == i }"
 						tabindex="1"
-						@click="selectedRow = i">
+						@keydown.prevent.esc="handleEsc(item)"
+						@keydown.prevent.space="handleSelectRow(i, item)"
+						@keydown="handleKeyPress(i, item.name)">
 						<td style="text-align: left">{{ item.party_name || item.party }}</td>
 						<td style="text-align: left; white-space: nowrap">
 							<a :href="transactionUrl(item)" target="_blank">
@@ -102,7 +143,9 @@
 							<select
 								v-if="frm.doc.status == 'Draft'"
 								class="form-control form-select form-select-lg mb-3"
-								@change="onMOPChange(frm, $event, item.name)">
+								@change="onMOPChange(frm, $event, item.name)"
+								:ref="el => (paymentSelects[item.name] = el)"
+								:data-select="item.name">
 								<option v-for="mop in modes_of_payment" :selected="transactions[item.name].mode_of_payment == mop">
 									{{ mop }}
 								</option>
@@ -111,13 +154,14 @@
 						</td>
 						<td>{{ format_currency(item.amount, frm.pay_to_account_currency, 2) }}</td>
 						<td>{{ datetime.str_to_user(item.due_date) }}</td>
-						<td v-if="frm.doc.status == 'Draft'" style="text-align: left">
+						<td v-if="['Draft', 'Pending Approval', 'Approved'].includes(frm.doc.status)" style="text-align: left">
 							<input
 								type="checkbox"
 								class="input-with-feedback checkrun-check-box"
 								data-fieldtype="Check"
 								@change="onPayChange($event, item.name)"
-								:checked="transactions[item.name].pay" />Pay
+								:checked="transactions[item.name].pay"
+								:disabled="['Pending Approval', 'Approved'].includes(frm.doc.status)" />Pay
 						</td>
 						<td v-else>
 							<a target="_blank" :href="paymentEntryUrl(item)"> {{ item.payment_entry }}</a>
@@ -129,7 +173,7 @@
 	</div>
 </template>
 <script setup>
-import { computed, onMounted, ref, reactive, watch, unref } from 'vue'
+import { computed, onMounted, ref, reactive, watch, unref, nextTick } from 'vue'
 import ModeOfPaymentSummary from './ModeOfPaymentSummary.vue'
 
 frappe.provide('check_run')
@@ -137,20 +181,43 @@ frappe.provide('check_run')
 let transactions = reactive(window.check_run.transactions)
 let filters = reactive(window.check_run.filters)
 let show_party_filter = ref(false)
+let show_mop_filter = ref(false)
+let show_paid_filter = ref(false)
 let selectAll = ref(false)
-let selectedRow = ref()
+let selectedRow = computed(() => unref(window.check_run.selectedRow))
 let location = ref(window.location)
+let paymentSelects = ref({})
 
 let orderedTransactions = computed(() => {
-	let r = unref(
-		Object.keys(transactions)
-			.sort()
-			.reduce((r, k) => ((r[k] = transactions[k]), r), {})
-	)
-	return Object.values(r).sort((a, b) =>
-		a[filters.key] > b[filters.key] ? filters[filters.key] : filters[filters.key] * -1
-	)
-})
+    let arr = Object.values(transactions);
+
+    arr = arr.filter(item => {
+        if (!partyIsInFilter(item.party)) return false;
+
+        if (filters.mode_of_payment_filter === '') {
+            if (item.mode_of_payment) return false;
+        } else if (
+            filters.mode_of_payment_filter &&
+            filters.mode_of_payment_filter !== 'All' &&
+            item.mode_of_payment !== filters.mode_of_payment_filter
+        ) {
+            return false;
+        }
+
+        if (filters.paid_filter && filters.paid_filter !== 'All') {
+            if (filters.paid_filter === 'Paid' && !item.pay) return false;
+            if (filters.paid_filter === 'Unpaid' && item.pay) return false;
+        }
+
+		return true;
+    });
+
+    return arr.sort((a, b) => {
+        if (a[filters.key] > b[filters.key]) return filters[filters.key];
+        if (a[filters.key] < b[filters.key]) return -filters[filters.key];
+        return 0;
+    });
+});
 
 let modes_of_payment = computed(() => {
 	return unref(window.check_run.modes_of_payment)
@@ -220,6 +287,7 @@ function update_sort(key_name) {
 }
 
 function onMOPChange(frm, event, rowName) {
+	window.check_run.selectedRow.value = -1
 	transactions[rowName].mode_of_payment = modes_of_payment.value[event.target.selectedIndex]
 	frm.dirty()
 	frm.page.set_indicator('Unsaved', 'orange')
@@ -234,6 +302,55 @@ function paymentEntryUrl(transaction) {
 		return ''
 	}
 	return encodeURI(`${frappe.urllib.get_base_url()}/app/payment-entry/${transaction.payment_entry}`)
+}
+
+function handleEsc(item) {
+	window.check_run.selectedRow.value = -1
+	togglePayUnselect(item)
+}
+
+function handleSelectRow(row, item) {
+	if (window.check_run.selectedRow.value === -1 || row !== window.check_run.selectedRow.value) {
+		togglePaySelect(item, row)
+	} else {
+		window.check_run.selectedRow.value = -1
+		togglePayUnselect(item)
+	}
+	check_run.total(frm)
+}
+
+function handleKeyPress(row, itemName, event) {
+	if (selectedRow.value === row) {
+		nextTick(() => {
+			const select = paymentSelects.value[itemName]
+			if (select) {
+				select.focus()
+				if (['ArrowUp', 'ArrowDown'].includes(event?.key)) {
+					const event = new Event('mousedown', { bubbles: true })
+					select.dispatchEvent(event)
+				}
+			}
+		})
+	}
+}
+
+function togglePaySelect(item, row) {
+	const rowName = item.name
+	if (transactions[rowName].pay) {
+		transactions[rowName].pay = false
+		return
+	}
+
+	transactions[rowName].pay = true
+	if (!transactions[rowName].mode_of_payment || transactions[rowName].mode_of_payment === 'None') {
+		window.check_run.selectedRow.value = row
+		frappe.show_alert(__('Please add a Mode of Payment for this row'))
+	}
+}
+
+function togglePayUnselect(item) {
+	const rowName = item.name
+	if (!transactions[rowName].mode_of_payment) transactions[rowName].pay = false
 }
 </script>
 <style scoped>
@@ -263,5 +380,12 @@ function paymentEntryUrl(transaction) {
 
 .table tr {
 	height: 50px;
+}
+
+.table tr:focus-visible {
+	color: var(--text-color);
+	border-color: var(--gray-500);
+	outline: 0;
+	box-shadow: 0 0 0 2px rgba(104, 113, 120, 0.25);
 }
 </style>
