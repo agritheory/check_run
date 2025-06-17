@@ -1131,10 +1131,9 @@ def download_pdf(
 				}
 			"""
 
-	html = """<style type='text/css'>{}</style><link href={}{} rel='stylesheet'>""".format(
-		style, baseurl, printcss
+	html = (
+		f"""<style type='text/css'>{style}</style><link href={baseurl}{printcss} rel='stylesheet'>"""
 	)
-
 	html += f"<div class='print-format print-format-preview'>{data}</div>"
 
 	modified_html_string = html.replace("</style>", hide_image + "</style>")
@@ -1150,8 +1149,6 @@ def download_pdf(
 			no_letterhead=no_letterhead,
 		)
 
-	frappe.local.response.filename = "{name}.pdf".format(
-		name=name.replace(" ", "-").replace("/", "-")
-	)
+	frappe.local.response.filename = f"{name}.pdf".replace(" ", "-").replace("/", "-")
 	frappe.local.response.filecontent = pdf_file
 	frappe.local.response.type = "pdf"

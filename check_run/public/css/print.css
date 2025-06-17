@@ -1,6 +1,6 @@
-/* remove any attached background image from the print */
+/* remove any attached background image from Check Run prints */
 @media print {
-	.print-format {
+	.check-run-print {
 		background-image: none !important;
 	}
 }
