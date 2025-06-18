@@ -340,7 +340,7 @@ def update_outstanding_amount(doc: PaymentEntry, method: str | None = None):
 @frappe.whitelist()
 def get_image_base64_data(file_url):
 	file_doc = frappe.get_doc("File", {"file_url": file_url})
-	if not file_doc.has_permission(ptype="read"):
+	if not file_doc.has_permission(permtype="read"):
 		return ""
 	image, unused_filename, extn = get_local_image(file_url)
 	file_content = file_doc.get_content()
