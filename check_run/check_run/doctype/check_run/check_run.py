@@ -825,7 +825,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 					frappe.get_value("Employee", transaction.party, "mode_of_payment") or settings.journal_entry
 				)
 
-		if transaction.due_date:
+		if transaction.due_date and settings.show_due_date == "Show Days Past Due":
 			transaction.due_date = (getdate(nowdate()) - transaction.due_date).days
 
 	outstanding_transaction = []
