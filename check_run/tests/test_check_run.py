@@ -70,25 +70,39 @@ def test_process_check_run_on_hold_invoice_error(cr):
 	with pytest.raises(
 		frappe.exceptions.ValidationError, match=f"Purchase Invoice ACC-PINV-{year}-00020 is on hold"
 	):
-		# cr.flags.in_test = True
 		cr.process_check_run()
 
 
 @pytest.mark.order(12)
 def test_process_check_run_on_hold_invoice_auto_release(cr):
 	# Test Settings auto-release of on-hold invoices
-	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
+	crs = get_check_run_settings(cr)
+	crs.pre_check_overdue_items = True
+	crs.save()
+	cr.end_date = datetime.date(year, 12, 30)
+	cr.transactions = get_entries(cr).get("transactions")
 	for row in cr.transactions:
-		if row.get("party") == "Liu & Loewen Accountants LLP":
+		if row.get("party") == "Liu & Loewen Accountants LLP" and row.get("on_hold") == True:
+			assert not row.get("pay")  # test that on-hold invoices are not selected for payment
+			row["pay"] = True
+			row["mode_of_payment"] = "Credit Card"
+		else:
+			assert row["pay"]
+
+	crs = get_check_run_settings(cr)
+	crs.pre_check_overdue_items = False
+	crs.automatically_release_on_hold_invoices = True
+	crs.save()
+
+	cr.end_date = datetime.date(year, 12, 31)
+	cr.transactions = get_entries(cr).get("transactions")
+	for row in cr.transactions:
+		if row.get("party") == "Liu & Loewen Accountants LLP" and row.get("on_hold") == True:
 			row["pay"] = True
 			row["mode_of_payment"] = "Credit Card"
 	cr.transactions = frappe.as_json(cr.transactions)
 	cr.flags.in_test = True
 	cr.save()
-
-	crs = get_check_run_settings(cr)
-	crs.automatically_release_on_hold_invoices = True
-	crs.save()
 
 	try:
 		cr.process_check_run()
