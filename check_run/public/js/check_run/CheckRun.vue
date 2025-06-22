@@ -69,22 +69,12 @@
 						class="col col-sm-1"
 						style="text-align: left">
 						<div class="d-flex align-items-center justify-between gap-2">
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> c1a730d (fix: re-add select all, fix due date and add on hold filters)
 							<input
 								type="checkbox"
 								autocomplete="off"
 								class="input-with-feedback reconciliation"
 								data-fieldtype="Check"
 								v-model="selectAll" /><span>Select All</span>
-<<<<<<< HEAD
-=======
-							<span>Pay</span>
->>>>>>> 0e8c4f7 (fix: ensure that on-hold invoices are not preselected for payment (#358))
-=======
->>>>>>> c1a730d (fix: re-add select all, fix due date and add on hold filters)
 							<span class="filter-icon" style="cursor: pointer" @click="show_paid_filter = !show_paid_filter">
 								<svg class="icon icon-sm">
 									<use href="#icon-filter"></use>
@@ -222,14 +212,7 @@ let orderedTransactions = computed(() => {
 		if (filters.paid_filter && filters.paid_filter !== 'All') {
 			if (filters.paid_filter === 'Paid' && !item.pay) return false
 			if (filters.paid_filter === 'Unpaid' && item.pay) return false
-<<<<<<< HEAD
-<<<<<<< HEAD
 			if (filters.paid_filter === 'On Hold' && !item.on_hold) return false
-=======
->>>>>>> 0e8c4f7 (fix: ensure that on-hold invoices are not preselected for payment (#358))
-=======
-			if (filters.paid_filter === 'On Hold' && !item.on_hold) return false
->>>>>>> c1a730d (fix: re-add select all, fix due date and add on hold filters)
 		}
 
 		return true
