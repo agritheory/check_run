@@ -6,22 +6,15 @@
 				<tr>
 					<th style="text-align: left" class="col col-sm-2" id="check-run-party-filter">
 						<div class="d-flex align-items-center justify-between gap-2">
-							<span class="party-onclick party-display">
-								Party
-							</span>
-							<span class="filter-icon" style="cursor: pointer;" @click="show_party_filter = !show_party_filter">
+							<span class="party-onclick party-display"> Party </span>
+							<span class="filter-icon" style="cursor: pointer" @click="show_party_filter = !show_party_filter">
 								<svg class="icon icon-sm">
 									<use class="" href="#icon-filter"></use>
 								</svg>
 							</span>
 						</div>
 						<div class="mt-2">
-							<input
-								v-if="show_party_filter"
-								type="text"
-								class="form-control"
-								v-model="filters.party"
-							/>
+							<input v-if="show_party_filter" type="text" class="form-control" v-model="filters.party" />
 						</div>
 					</th>
 					<th class="col col-sm-2">Document</th>
@@ -32,10 +25,13 @@
 					</th>
 					<th class="col col-sm-2" style="white-space: nowrap; width: 12.49%">
 						<div class="d-flex align-items-center justify-between gap-2">
-							<span @click="update_sort('mode_of_payment')" class="flex-grow-1 check-run-sort-indicator" id="check-run-mop-sort">
+							<span
+								@click="update_sort('mode_of_payment')"
+								class="flex-grow-1 check-run-sort-indicator"
+								id="check-run-mop-sort">
 								Mode of Payment &#11021;
 							</span>
-							<span class="filter-icon" style="cursor: pointer;" @click="show_mop_filter = !show_mop_filter">
+							<span class="filter-icon" style="cursor: pointer" @click="show_mop_filter = !show_mop_filter">
 								<svg class="icon icon-sm">
 									<use href="#icon-filter"></use>
 								</svg>
@@ -43,10 +39,7 @@
 						</div>
 
 						<div v-if="show_mop_filter" class="mt-2">
-							<select
-								class="form-control form-select form-select-sm"
-								v-model="filters.mode_of_payment_filter"
-							>
+							<select class="form-control form-select form-select-sm" v-model="filters.mode_of_payment_filter">
 								<option value="All">All</option>
 								<option v-for="mop in modes_of_payment" :key="mop" :value="mop">
 									{{ mop === '' ? 'Not Set' : mop }}
@@ -69,8 +62,13 @@
 						class="col col-sm-1"
 						style="text-align: left">
 						<div class="d-flex align-items-center justify-between gap-2">
-							<span>Pay</span>
-							<span class="filter-icon" style="cursor: pointer;" @click="show_paid_filter = !show_paid_filter">
+							<input
+								type="checkbox"
+								autocomplete="off"
+								class="input-with-feedback reconciliation"
+								data-fieldtype="Check"
+								v-model="selectAll" /><span>Select All</span>
+							<span class="filter-icon" style="cursor: pointer" @click="show_paid_filter = !show_paid_filter">
 								<svg class="icon icon-sm">
 									<use href="#icon-filter"></use>
 								</svg>
@@ -78,13 +76,11 @@
 						</div>
 
 						<div v-if="show_paid_filter" class="mt-2">
-							<select
-								class="form-control form-select form-select-sm"
-								v-model="filters.paid_filter"
-							>
+							<select class="form-control form-select form-select-sm" v-model="filters.paid_filter">
 								<option value="All">All</option>
 								<option value="Paid">Paid</option>
 								<option value="Unpaid">Unpaid</option>
+								<option value="On Hold">On Hold</option>
 							</select>
 						</div>
 					</th>
@@ -154,7 +150,7 @@
 						</td>
 						<td>{{ format_currency(item.amount, frm.pay_to_account_currency, 2) }}</td>
 						<td>{{ item.due_date }}</td>
-						<td v-if="item.on_hold">
+						<td v-if="item.on_hold && frm.settings.automatically_release_on_hold_invoices == 0">
 							<span style="font-weight: bold">On Hold</span>
 						</td>
 						<td v-else-if="['Draft', 'Pending Approval', 'Approved'].includes(frm.doc.status)" style="text-align: left">
@@ -192,35 +188,36 @@ let location = ref(window.location)
 let paymentSelects = ref({})
 
 let orderedTransactions = computed(() => {
-    let arr = Object.values(transactions);
+	let arr = Object.values(transactions)
 
-    arr = arr.filter(item => {
-        if (!partyIsInFilter(item.party)) return false;
+	arr = arr.filter(item => {
+		if (!partyIsInFilter(item.party)) return false
 
-        if (filters.mode_of_payment_filter === '') {
-            if (item.mode_of_payment) return false;
-        } else if (
-            filters.mode_of_payment_filter &&
-            filters.mode_of_payment_filter !== 'All' &&
-            item.mode_of_payment !== filters.mode_of_payment_filter
-        ) {
-            return false;
-        }
+		if (filters.mode_of_payment_filter === '') {
+			if (item.mode_of_payment) return false
+		} else if (
+			filters.mode_of_payment_filter &&
+			filters.mode_of_payment_filter !== 'All' &&
+			item.mode_of_payment !== filters.mode_of_payment_filter
+		) {
+			return false
+		}
 
-        if (filters.paid_filter && filters.paid_filter !== 'All') {
-            if (filters.paid_filter === 'Paid' && !item.pay) return false;
-            if (filters.paid_filter === 'Unpaid' && item.pay) return false;
-        }
+		if (filters.paid_filter && filters.paid_filter !== 'All') {
+			if (filters.paid_filter === 'Paid' && !item.pay) return false
+			if (filters.paid_filter === 'Unpaid' && item.pay) return false
+			if (filters.paid_filter === 'On Hold' && !item.on_hold) return false
+		}
 
-		return true;
-    });
+		return true
+	})
 
-    return arr.sort((a, b) => {
-        if (a[filters.key] > b[filters.key]) return filters[filters.key];
-        if (a[filters.key] < b[filters.key]) return -filters[filters.key];
-        return 0;
-    });
-});
+	return arr.sort((a, b) => {
+		if (a[filters.key] > b[filters.key]) return filters[filters.key]
+		if (a[filters.key] < b[filters.key]) return -filters[filters.key]
+		return 0
+	})
+})
 
 let modes_of_payment = computed(() => {
 	return unref(window.check_run.modes_of_payment)
