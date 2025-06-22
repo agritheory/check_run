@@ -233,7 +233,6 @@ class CheckRun(Document):
 		self.submit()
 		self.create_and_attach_positive_pay()
 		frappe.db.sql("RELEASE SAVEPOINT process_check_run")
-		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
 	def build_nacha_file(self, settings: CheckRunSettings) -> str:
 		electronic_mop = frappe.get_all(
@@ -779,7 +778,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			]
 
 		if settings and settings.pre_check_overdue_items:
-			if transaction.due_date < doc.posting_date:  # type: ignore
+			if transaction.due_date < doc.posting_date and transaction["on_hold"] == 0:  # type: ignore
 				transaction.pay = 1
 		if transaction.doctype == "Journal Entry":
 			if transaction.party_type == "Supplier":
