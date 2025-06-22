@@ -74,7 +74,8 @@
 								autocomplete="off"
 								class="input-with-feedback reconciliation"
 								data-fieldtype="Check"
-								v-model="selectAll" /><span>Select All</span>
+								v-model="selectAll"
+               /><span>Select All</span>
 							<span class="filter-icon" style="cursor: pointer" @click="show_paid_filter = !show_paid_filter">
 								<svg class="icon icon-sm">
 									<use href="#icon-filter"></use>
