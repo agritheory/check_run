@@ -284,6 +284,25 @@ def create_payment_terms_templates(settings):
 				},
 			)
 		doc.save()
+	if not frappe.db.exists("Payment Terms Template", "Due After Month End"):
+		pt = frappe.new_doc("Payment Term")
+		pt.payment_term_name = "Due After Month End"
+		pt.due_date_based_on = "Month(s) after the end of the invoice month"
+		pt.invoice_portion = 100
+		pt.credit_days = 25
+		pt.save()
+		doc = frappe.new_doc("Payment Terms Template")
+		doc.template_name = pt.name
+		doc.append(
+			"terms",
+			{
+				"payment_term": pt.name,
+				"invoice_portion": pt.invoice_portion,
+				"due_date_based_on": pt.due_date_based_on,
+				"credit_days": pt.credit_days,
+			},
+		)
+		doc.save()
 
 	if not frappe.db.exists("Payment Terms Template", "Due After Month End"):
 		pt = frappe.new_doc("Payment Term")
@@ -451,6 +470,8 @@ def create_suppliers(settings):
 
 def create_items(settings):
 	for supplier in suppliers + tax_authority:
+		if frappe.db.exists("Item", supplier[1]):
+			continue
 		item = frappe.new_doc("Item")
 		item.item_code = item.item_name = supplier[1]
 		item.item_group = "Services"
