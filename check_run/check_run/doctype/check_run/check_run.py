@@ -792,8 +792,10 @@ def get_entries(doc: CheckRun | str) -> dict:
 				transaction.mode_of_payment = (
 					frappe.get_value("Employee", transaction.party, "mode_of_payment") or settings.journal_entry
 				)
-	# Process Unpaid Transaction
-	# start
+
+		if transaction.due_date and settings.show_due_date == "Show Days Past Due":
+			transaction.due_date = (getdate(nowdate()) - transaction.due_date).days
+
 	outstanding_transaction = []
 	if not isinstance(doc, CheckRun):
 		if db_doc:
