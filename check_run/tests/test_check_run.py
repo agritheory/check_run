@@ -107,6 +107,11 @@ def test_process_check_run_on_hold_invoice_auto_release(cr):
 	except frappe.exceptions.ValidationError:
 		pytest.fail("Error raised on Check Run process when should have passed.")
 
+	try:
+		cr.process_check_run()
+	except frappe.exceptions.ValidationError:
+		pytest.fail("Error raised on Check Run process when should have passed.")
+
 
 @pytest.mark.order(13)
 def test_return_excluded_in_check_run(cr):
