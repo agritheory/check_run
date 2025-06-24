@@ -809,8 +809,8 @@ def get_entries(doc: CheckRun | str) -> dict:
 
 		transaction["on_hold"] = transaction.get("on_hold") == "1"
 
-		if settings and settings.pre_check_overdue_items:
-			if transaction.due_date < doc.posting_date and transaction["on_hold"] == 0:  # type: ignore
+		if settings and settings.c:
+			if transaction.due_date < doc.posting_date and not transaction.get("on_hold"):  # type: ignore
 				transaction.pay = 1
 		if transaction.doctype == "Journal Entry":
 			if transaction.party_type == "Supplier":
