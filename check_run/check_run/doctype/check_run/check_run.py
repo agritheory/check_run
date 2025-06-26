@@ -237,7 +237,6 @@ class CheckRun(Document):
 		self.submit()
 		self.create_and_attach_positive_pay()
 		frappe.db.sql("RELEASE SAVEPOINT process_check_run")
-		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
 	def get_ach_payment_entries(self: Self) -> list[PaymentEntry]:
 		electronic_mop = frappe.get_all(
@@ -836,7 +835,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 		transaction["on_hold"] = transaction.get("on_hold") == "1"
 
 		if settings and settings.pre_check_overdue_items:
-			if transaction.due_date < doc.posting_date:  # type: ignore
+			if transaction.due_date < doc.posting_date and not transaction.get("on_hold"):  # type: ignore
 				transaction.pay = 1
 		if transaction.doctype == "Journal Entry":
 			if transaction.party_type == "Supplier":
@@ -851,7 +850,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 					frappe.get_value("Employee", transaction.party, "mode_of_payment") or settings.journal_entry
 				)
 
-		if transaction.due_date:
+		if transaction.due_date and settings.show_due_date == "Show Days Past Due":
 			transaction.due_date = (getdate(nowdate()) - transaction.due_date).days
 
 	outstanding_transaction = []
