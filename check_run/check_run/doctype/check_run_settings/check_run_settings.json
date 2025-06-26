@@ -11,7 +11,6 @@
 		"approver_role",
 		"column_break_3",
 		"pay_to_account",
-		"print_format",
 		"section_break_4",
 		"include_purchase_invoices",
 		"include_journal_entries",
@@ -30,6 +29,13 @@
 		"secondary_print_format",
 		"file_preview_threshold",
 		"allow_stand_alone_debit_notes",
+		"print_settings_section",
+		"print_preview",
+		"print_format",
+		"secondary_print_format",
+		"column_break_ctnqm",
+		"printable_mop_in_check_run",
+		"background_image",
 		"default_modes_of_payment_section_section",
 		"purchase_invoice",
 		"journal_entry",
@@ -249,6 +255,33 @@
 			"options": "Print Format"
 		},
 		{
+			"fieldname": "background_image",
+			"fieldtype": "Attach",
+			"label": "Background Image"
+		},
+		{
+			"default": "Automatically Render PDF After Submit",
+			"fieldname": "print_preview",
+			"fieldtype": "Select",
+			"label": "Print Preview",
+			"options": "Automatically Render PDF After Submit\nPrint from Print Preview"
+		},
+		{
+			"fieldname": "print_settings_section",
+			"fieldtype": "Section Break",
+			"label": "Print Settings"
+		},
+		{
+			"fieldname": "column_break_ctnqm",
+			"fieldtype": "Column Break"
+		},
+		{
+			"fieldname": "printable_mop_in_check_run",
+			"fieldtype": "Table MultiSelect",
+			"label": "Printable Modes of Payment in Check Run",
+			"options": "Check Run Printable MOP"
+		},
+		{
 			"default": "No",
 			"fieldname": "allow_stand_alone_debit_notes",
 			"fieldtype": "Select",
@@ -324,7 +357,7 @@
 		}
 	],
 	"links": [],
-	"modified": "2025-06-22 14:56:43.637709",
+	"modified": "2025-06-23 14:56:43.637709",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",

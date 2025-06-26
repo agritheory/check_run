@@ -16,6 +16,9 @@ from check_run.tests.fixtures import employees, suppliers, tax_authority
 
 
 def before_test():
+	# avoid call to _ensure_idle_system in ERPNext's account controller
+	frappe.flags.in_test = True
+
 	frappe.clear_cache()
 	today = frappe.utils.getdate()
 	setup_complete(
@@ -46,6 +49,8 @@ def before_test():
 	frappe.set_value("Website Settings", "Website Settings", "home_page", "login")
 	frappe.db.commit()
 
+	frappe.flags.in_test = False
+
 
 def create_test_data():
 	today = frappe.utils.getdate()
@@ -73,8 +78,8 @@ def create_test_data():
 	create_employees(settings)
 	create_expense_claim(settings)
 	for month in range(1, 13):
-		create_payroll_journal_entry(settings)
 		settings.day = settings.day.replace(month=month)
+		create_payroll_journal_entry(settings)
 	create_manual_payment_entry(settings)
 
 
@@ -156,7 +161,6 @@ def create_bank_and_bank_account(settings):
 
 
 def setup_accounts():
-	frappe.flags.in_test = True
 	frappe.rename_doc(
 		"Account", "1000 - Application of Funds (Assets) - CFC", "1000 - Assets - CFC", force=True
 	)
@@ -318,7 +322,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = settings.day
+	pi.bill_date = pi.posting_date = settings.day
 	pi.supplier = "Tireless Equipment Rental, Inc"
 	pi.append(
 		"items",
@@ -339,7 +343,7 @@ def create_invoices(settings):
 		pi = frappe.new_doc("Purchase Invoice")
 		pi.company = settings.company
 		pi.set_posting_time = 1
-		pi.posting_date = settings.day
+		pi.bill_date = pi.posting_date = settings.day
 		pi.supplier = supplier[0]
 		pi.append(
 			"items",
@@ -355,7 +359,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = settings.day
+	pi.bill_date = pi.posting_date = settings.day
 	pi.supplier = suppliers[0][0]
 	pi.append(
 		"items",
@@ -372,7 +376,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = settings.day
+	pi.bill_date = pi.posting_date = settings.day
 	pi.supplier = suppliers[4][0]
 	pi.append(
 		"items",
@@ -395,7 +399,7 @@ def create_invoices(settings):
 		pi = frappe.new_doc("Purchase Invoice")
 		pi.company = settings.company
 		pi.set_posting_time = 1
-		pi.posting_date = next_day
+		pi.bill_date = pi.posting_date = next_day
 		pi.supplier = supplier[0]
 		pi.append(
 			"items",
@@ -413,7 +417,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = next_day
+	pi.bill_date = pi.posting_date = next_day
 	pi.supplier = suppliers[0][0]
 	pi.append(
 		"items",
@@ -430,7 +434,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = settings.day
+	pi.bill_date = pi.posting_date = settings.day
 	pi.supplier = suppliers[4][0]
 	pi.append(
 		"items",
@@ -448,7 +452,7 @@ def create_invoices(settings):
 	pi = frappe.new_doc("Purchase Invoice")
 	pi.company = settings.company
 	pi.set_posting_time = 1
-	pi.posting_date = settings.day
+	pi.bill_date = pi.posting_date = settings.day
 	pi.supplier = suppliers[1][0]
 	pi.append(
 		"items",
@@ -725,7 +729,7 @@ def create_extra_invoices(settings):
 			pi = frappe.new_doc("Purchase Invoice")
 			pi.company = settings.company
 			pi.set_posting_time = 1
-			pi.posting_date = _day
+			pi.bill_date = pi.posting_date = _day
 			pi.supplier = supplier[0]
 			pi.append(
 				"items",
