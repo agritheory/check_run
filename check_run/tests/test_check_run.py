@@ -231,3 +231,24 @@ def test_pdf_length_and_mode_of_payment(cr):
 		payment_mode_pattern = re.compile(r"Mode of Payment:\s*(.*?)$", re.MULTILINE)
 		for i in range(number_of_pages):
 			page_text = pdf.pages[i].extract_text()
+
+
+@pytest.mark.order(31)
+def test_unique_pe_in_nacha(cr):
+	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
+	for row in cr.transactions:
+		if row["mode_of_payment"] == "ACH/EFT":
+			row["pay"] = 1
+		else:
+			row["pay"] = 0
+	cr.transactions = frappe.as_json(cr.transactions)
+	cr.flags.in_test = True
+	cr.save()
+	cr._process_check_run()
+	payment_entries = cr.get_ach_payment_entries()
+	assert len(payment_entries) == 3
+	crs = get_check_run_settings(cr)
+	crs.allow_only_verified_accounts_in_nacha_generation = True
+	crs.save()
+	payment_entries = cr.get_ach_payment_entries()
+	assert len(payment_entries) == 0
