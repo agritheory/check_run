@@ -1,3 +1,6 @@
+# Copyright (c) 2025, AgriTheory and contributors
+# For license information, please see license.txt
+
 import datetime
 import types
 
@@ -25,7 +28,7 @@ def before_test():
 			"country": "United States",
 			"fy_start_date": today.replace(month=1, day=1).isoformat(),
 			"fy_end_date": today.replace(month=12, day=31).isoformat(),
-			"language": "english",
+			"language": "English-US",
 			"company_tagline": "Chelsea Fruit Co",
 			"email": "support@agritheory.dev",
 			"password": "admin",
@@ -40,6 +43,7 @@ def before_test():
 	for modu in frappe.get_all("Module Onboarding"):
 		frappe.db.set_value("Module Onboarding", modu, "is_complete", 1)
 	frappe.set_value("Website Settings", "Website Settings", "home_page", "login")
+	frappe.db.commit()
 
 
 def create_test_data():
@@ -59,7 +63,6 @@ def create_test_data():
 			),
 		}
 	)
-	create_company_address(settings)
 	create_bank_and_bank_account(settings)
 	create_payment_terms_templates(settings)
 	create_suppliers(settings)
@@ -69,22 +72,9 @@ def create_test_data():
 	create_employees(settings)
 	create_expense_claim(settings)
 	for month in range(1, 13):
-		settings.day = settings.day.replace(month=month)
 		create_payroll_journal_entry(settings)
+		settings.day = settings.day.replace(month=month)
 	create_manual_payment_entry(settings)
-
-
-def create_company_address(settings):
-	company_address = frappe.new_doc("Address")
-	company_address.title = settings.company
-	company_address.address_type = "Office"
-	company_address.address_line1 = "67C Sweeny Street"
-	company_address.city = "Chelsea"
-	company_address.state = "MA"
-	company_address.pincode = "89077"
-	company_address.is_your_company_address = True
-	company_address.append("links", {"link_doctype": "Company", "link_name": settings.company})
-	company_address.save()
 
 
 def create_bank_and_bank_account(settings):
@@ -165,6 +155,7 @@ def create_bank_and_bank_account(settings):
 
 
 def setup_accounts():
+	frappe.flags.in_test = True
 	frappe.rename_doc(
 		"Account", "1000 - Application of Funds (Assets) - CFC", "1000 - Assets - CFC", force=True
 	)
@@ -273,6 +264,7 @@ def create_suppliers(settings):
 		if biz.supplier_default_mode_of_payment == "ACH/EFT":
 			biz.bank = "Local Bank"
 			biz.bank_account = "123456789"
+			biz.ach_account_type = "Checking"
 		biz.currency = "USD"
 		biz.default_price_list = "Standard Buying"
 		biz.payment_terms = supplier[4]
@@ -548,6 +540,7 @@ def create_employees(settings):
 		if emp.mode_of_payment == "ACH/EFT":
 			emp.bank = "Local Bank"
 			emp.bank_account = f"{employee_number}12345"
+			emp.ach_account_type = "Checking"
 		emp.save()
 
 
@@ -634,7 +627,8 @@ def create_payroll_journal_entry(settings):
 	je = frappe.new_doc("Journal Entry")
 	je.entry_type = "Journal Entry"
 	je.company = settings.company
-	je.due_date = je.posting_date = settings.day
+	je.posting_date = settings.day
+	je.due_date = settings.day
 	total_payroll = 0.0
 	for idx, emp in enumerate(emps):
 		employee_name = frappe.get_value(

@@ -1,0 +1,29 @@
+{
+	"add_total_row": 0,
+	"columns": [],
+	"creation": "2025-05-12 14:23:36.811868",
+	"disable_prepared_report": 0,
+	"disabled": 0,
+	"docstatus": 0,
+	"doctype": "Report",
+	"filters": [],
+	"idx": 0,
+	"is_standard": "Yes",
+	"modified": "2025-05-12 14:24:14.138591",
+	"modified_by": "Administrator",
+	"module": "Check Run",
+	"name": "ACH Prenote",
+	"owner": "Administrator",
+	"prepared_report": 0,
+	"ref_doctype": "Check Run Settings",
+	"report_name": "ACH Prenote",
+	"report_type": "Script Report",
+	"roles": [
+		{
+			"role": "System Manager"
+		},
+		{
+			"role": "Accounts Manager"
+		}
+	]
+}
