@@ -17,15 +17,17 @@
 		"include_journal_entries",
 		"include_expense_claims",
 		"pre_check_overdue_items",
+		"automatically_release_on_hold_invoices",
 		"allow_cancellation",
 		"cascade_cancellation",
+		"allow_removal",
 		"validate_unique_check_number",
-		"set_payment_entry_posting_date",
+		"split_by_address",
 		"column_break_9",
+		"set_payment_entry_posting_date",
+		"show_due_date",
 		"number_of_invoices_per_voucher",
 		"secondary_print_format",
-		"split_by_address",
-		"automatically_release_on_hold_invoices",
 		"file_preview_threshold",
 		"allow_stand_alone_debit_notes",
 		"default_modes_of_payment_section_section",
@@ -42,7 +44,12 @@
 		"column_break_27",
 		"immediate_origin",
 		"company_discretionary_data",
-		"custom_post_processing_hook"
+		"custom_post_processing_hook",
+		"positive_pay_settings_section",
+		"attach_positive_pay",
+		"positive_pay_file_format",
+		"csv_delimiter",
+		"csv_quoting"
 	],
 	"fields": [
 		{
@@ -262,14 +269,62 @@
 			"options": "Role"
 		},
 		{
-		"default": "0",
-		"fieldname": "allow_only_verified_accounts_in_nacha_generation",
-		"fieldtype": "Check",
-		"label": "Allow only verified accounts in NACHA generation"
+			"default": "0",
+			"fieldname": "allow_only_verified_accounts_in_nacha_generation",
+			"fieldtype": "Check",
+			"label": "Allow only verified accounts in NACHA generation"
+		},
+		{
+			"default": "0",
+			"fieldname": "allow_removal",
+			"fieldtype": "Check",
+			"label": "Allow removal of Payment Entries from Check Run after processing"
+		},
+		{
+			"fieldname": "positive_pay_settings_section",
+			"fieldtype": "Section Break",
+			"label": "Positive Pay Settings"
+		},
+		{
+			"default": "0",
+			"fieldname": "attach_positive_pay",
+			"fieldtype": "Check",
+			"label": "Automatically Generate and Attach Positive Pay to Check Run"
+		},
+		{
+			"default": "CSV",
+			"depends_on": "attach_positive_pay",
+			"fieldname": "positive_pay_file_format",
+			"fieldtype": "Select",
+			"label": "Positive Pay File Format",
+			"options": "CSV\nExcel"
+		},
+		{
+			"default": ",",
+			"depends_on": "eval:doc.attach_positive_pay && doc.positive_pay_file_format === \"CSV\"",
+			"fieldname": "csv_delimiter",
+			"fieldtype": "Data",
+			"label": "CSV Delimiter",
+			"length": 1
+		},
+		{
+			"default": "Non-numeric",
+			"depends_on": "eval:doc.attach_positive_pay && doc.positive_pay_file_format === \"CSV\"",
+			"fieldname": "csv_quoting",
+			"fieldtype": "Select",
+			"label": "CSV Quoting",
+			"options": "Minimal\nAll\nNon-numeric\nNone"
+		},
+		{
+			"default": "Show Due Date",
+			"fieldname": "show_due_date",
+			"fieldtype": "Select",
+			"label": "Show Due Date",
+			"options": "Show Due Date\nShow Days Past Due"
 		}
 	],
 	"links": [],
-	"modified": "2025-05-15 11:47:48.719496",
+	"modified": "2025-06-22 14:56:43.637709",
 	"modified_by": "Administrator",
 	"module": "Check Run",
 	"name": "Check Run Settings",

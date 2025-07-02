@@ -5,15 +5,17 @@ import json
 import timeit
 from itertools import groupby, zip_longest
 from io import StringIO
-from typing_extensions import Self
 
 from PyPDF2 import PdfFileWriter
 import frappe
+from frappe.desk.query_report import run, build_xlsx_data, format_duration_fields
+from frappe.desk.utils import get_csv_bytes, pop_csv_params
 from frappe.model.document import Document
 from frappe.utils import get_link_to_form
 from frappe.utils.data import flt
 from frappe.utils.data import nowdate, getdate, now, get_datetime
 from frappe.utils.print_format import read_multi_pdf
+from frappe.utils.xlsxutils import make_xlsx
 from frappe.permissions import has_permission
 from frappe.utils.file_manager import save_file, remove_all
 from frappe.utils.password import get_decrypted_password
@@ -34,7 +36,7 @@ from check_run.check_run.doctype.check_run_settings.check_run_settings import (
 
 class CheckRun(Document):
 	@frappe.read_only()
-	def onload(self: Self) -> None:
+	def onload(self) -> None:
 		if self.is_new():
 			return
 		settings = get_check_run_settings(self)
@@ -61,7 +63,7 @@ class CheckRun(Document):
 			"is_approver_user", settings.approver_role in frappe.get_roles(frappe.session.user)
 		)
 
-	def validate(self: Self) -> None:
+	def validate(self) -> None:
 		gl_account = frappe.get_value("Bank Account", self.bank_account, "account")
 		if not gl_account:
 			frappe.throw(frappe._("This Bank Account is not associated with a General Ledger Account."))
@@ -75,7 +77,7 @@ class CheckRun(Document):
 			if self.status in ("Draft", "Pending Approval", "Approved"):  # type: ignore # str or None
 				self.filter_transactions()
 
-	def on_cancel(self: Self) -> None:
+	def on_cancel(self) -> None:
 		settings = get_check_run_settings(self)
 		if not settings.allow_cancellation:
 			frappe.throw(frappe._("The settings for this Check Run do not allow cancellation"))
@@ -90,11 +92,11 @@ class CheckRun(Document):
 			for pe in pes:
 				frappe.db.set_value("Payment Entry", pe, "check_run", "")
 
-	def on_update_after_submit(self: Self) -> None:
+	def on_update_after_submit(self) -> None:
 		# required to fire on_update_after_submit hook
 		pass
 
-	def set_status(self: Self, status: str | None = None) -> None:
+	def set_status(self, status: str | None = None) -> None:
 		if status:
 			self.db_set("status", status)
 			return
@@ -107,24 +109,24 @@ class CheckRun(Document):
 		elif self.docstatus == 1:
 			self.status = "Submitted"
 
-	def set_last_check_number(self: Self) -> None:
+	def set_last_check_number(self) -> None:
 		if self.ach_only().ach_only:
 			return
 		check_number = frappe.get_value("Bank Account", self.bank_account, "check_number")
 		self.initial_check_number = int(check_number or 0) + 1
 
-	def set_default_payable_account(self: Self) -> None:
+	def set_default_payable_account(self) -> None:
 		if not self.pay_to_account:  # type: ignore # str or None
 			self.pay_to_account = frappe.get_value("Company", self.company, "default_payable_account")
 
-	def set_default_dates(self: Self) -> None:
+	def set_default_dates(self) -> None:
 		if not self.posting_date:  # type: ignore # datetime or None
 			self.posting_date = getdate()
 		if not self.end_date:  # type: ignore # datetime or None
 			self.end_date = getdate()
 
 	@frappe.read_only()
-	def filter_transactions(self: Self) -> None:
+	def filter_transactions(self) -> None:
 		if not self.get("transactions"):
 			return
 		_t = json.loads(self.get("transactions"))
@@ -141,7 +143,7 @@ class CheckRun(Document):
 				)
 
 	@frappe.read_only()
-	def not_outstanding_or_cancelled(self: Self, transaction: dict) -> bool:
+	def not_outstanding_or_cancelled(self, transaction: dict) -> bool:
 		filters = {
 			"name": transaction["name"]
 			if transaction["doctype"] != "Journal Entry"
@@ -177,7 +179,7 @@ class CheckRun(Document):
 		return False
 
 	@frappe.whitelist()
-	def process_check_run(self: Self) -> None:
+	def process_check_run(self) -> None:
 		check_run_submitting = frappe.defaults.get_global_default("check_run_submitting")
 		if check_run_submitting:
 			frappe.throw(
@@ -207,7 +209,7 @@ class CheckRun(Document):
 				self.doctype, self.name, "_process_check_run", queue="short", timeout=3600, now=True
 			)
 
-	def _process_check_run(self: Self) -> None:
+	def _process_check_run(self) -> None:
 		frappe.defaults.set_global_default("check_run_submitting", self.name)
 		frappe.db.sql("SAVEPOINT process_check_run")
 		try:
@@ -230,25 +232,37 @@ class CheckRun(Document):
 		self.set_status("Submitted")
 		self.save()
 		self.submit()
+		self.create_and_attach_positive_pay()
 		frappe.db.sql("RELEASE SAVEPOINT process_check_run")
-		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 
-	def get_ach_payment_entries(self: Self) -> list[PaymentEntry]:
+	def get_ach_payment_entries(self) -> list[PaymentEntry]:
+		settings = get_check_run_settings(self)
 		electronic_mop = frappe.get_all(
 			"Mode of Payment", {"type": "Electronic", "enabled": 1}, "name", pluck="name"
 		)
+		ach_entries: list[PaymentEntry] = []
 		ach_payment_entries = list(
 			{
-				e.get("payment_entry")
+				frappe.get_doc("Payment Entry", e.get("payment_entry"))
 				for e in json.loads(self.transactions)
 				if e.get("mode_of_payment") in electronic_mop
 			}
 		)
-		return [frappe.get_doc("Payment Entry", pe) for pe in ach_payment_entries]
+		for pe in ach_payment_entries:
+			if pe.get("name") in [a.get("name") for a in ach_entries]:
+				continue
+			if pe.docstatus != 1:
+				continue
+			if settings.allow_only_verified_accounts_in_nacha_generation:
+				if frappe.get_value(pe.party_type, pe.party, "account_details_validated"):
+					ach_entries.append(pe)
+			else:
+				ach_entries.append(pe)
+		return ach_entries
 
 	@frappe.whitelist()
 	@frappe.read_only()
-	def ach_only(self: Self) -> bool:
+	def ach_only(self) -> bool:
 		transactions = json.loads(self.transactions) if self.transactions else []
 		ach_only = frappe._dict({"ach_only": True, "print_checks_only": True})
 		if not self.transactions:
@@ -273,7 +287,7 @@ class CheckRun(Document):
 			self.last_eta = eta
 		return self.last_eta
 
-	def create_payment_entries(self: Self, transactions: list[frappe._dict]) -> list[frappe._dict]:
+	def create_payment_entries(self, transactions: list[frappe._dict]) -> list[frappe._dict]:
 		settings = get_check_run_settings(self)
 		if not settings.secondary_print_format:
 			split = 5
@@ -418,7 +432,7 @@ class CheckRun(Document):
 		return _transactions
 
 	@frappe.whitelist()
-	def increment_print_count(self: Self, reprint_check_number: int | None = None) -> None:
+	def increment_print_count(self, reprint_check_number: int | None = None) -> None:
 		frappe.enqueue_doc(
 			self.doctype,
 			self.name,
@@ -429,7 +443,7 @@ class CheckRun(Document):
 		)
 
 	@frappe.whitelist()
-	def render_check_pdf(self: Self, reprint_check_number: int | None = None) -> None:
+	def render_check_pdf(self, reprint_check_number: int | None = None) -> None:
 		self.print_count = self.print_count + 1
 		self.set_status("Submitted")
 		if not frappe.db.exists("File", "Home/Check Run"):
@@ -458,7 +472,7 @@ class CheckRun(Document):
 			mode_of_payment, docstatus = frappe.db.get_value(
 				"Payment Entry", pe, ["mode_of_payment", "docstatus"]
 			) or (None, None)
-			if mode_of_payment == "Check":
+			if docstatus == 1 and mode_of_payment == "Check":
 				secondary_print_output = frappe.get_print(
 					"Payment Entry",
 					pe,
@@ -525,6 +539,56 @@ class CheckRun(Document):
 		frappe.db.commit()
 		frappe.publish_realtime("reload", "{}", doctype=self.doctype, docname=self.name)
 		return file_path
+
+	def create_and_attach_positive_pay(self):
+		settings = get_check_run_settings(self)
+		if not settings.attach_positive_pay:
+			return
+
+		csv_delimiter_map = {
+			"Minimal": 0,
+			"All": 1,
+			"Non-numeric": 2,
+			"None": 3,
+		}
+		filters = frappe._dict(
+			{
+				"bank_account": self.bank_account,
+				"start_date": self.posting_date,
+				"end_date": self.posting_date,
+			}
+		)
+		csv_params = pop_csv_params(
+			{
+				"csv_delimiter": settings.csv_delimiter,
+				"csv_quoting": csv_delimiter_map.get(settings.csv_quoting, 2),
+			}
+		)
+
+		data = run("Positive Pay", filters, are_default_filters=False)
+		data = frappe._dict(data)
+		if not data.columns:
+			return
+
+		format_duration_fields(data)
+		xlsx_data, column_widths = build_xlsx_data(
+			data, visible_idx=[], include_indentation=1, ignore_visible_idx=True
+		)
+		if settings.positive_pay_file_format == "CSV":
+			content = get_csv_bytes(xlsx_data, csv_params)
+			file_extension = "csv"
+		elif settings.positive_pay_file_format == "Excel":
+			file_extension = "xlsx"
+			content = make_xlsx(xlsx_data, "Query Report", column_widths=column_widths).getvalue()
+		save_file(
+			f"{self.name}_positive_pay.{file_extension}",
+			content,
+			"Check Run",
+			self.name,
+			"Home/Check Run",
+			False,
+			0,
+		)
 
 
 @frappe.whitelist()
@@ -630,6 +694,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 				f"{settings.purchase_invoice}" or "\n",
 			).as_("mode_of_payment"),
 			(payment_schedule.payment_term).as_("payment_term"),
+			purchase_invoices.on_hold,
 		)
 		.where(Coalesce(payment_schedule.due_date, purchase_invoices.due_date) <= end_date)
 		.where(stand_alone_debit_note_filter)
@@ -663,6 +728,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 				f"{settings.expense_claim}" or "\n",
 			).as_("mode_of_payment"),
 			ConstantColumn("").as_("payment_term"),
+			ConstantColumn(None).as_("on_hold"),
 		)
 		.where(exp_claims.grand_total > exp_claims.total_amount_reimbursed)
 		.where(exp_claims.company == company)
@@ -705,6 +771,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 				"mode_of_payment"
 			),
 			ConstantColumn("").as_("payment_term"),
+			ConstantColumn(None).as_("on_hold"),
 		)
 		.where(journal_entries.company == company)
 		.where(journal_entries.docstatus == 1)
@@ -728,7 +795,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 			if not query:
 				query = qb
 			else:
-				query = query.union(qb)
+				query = query.union(qb)  # type: ignore
 	if query:
 		query = query.orderby("due_date", "name").get_sql()
 
@@ -751,8 +818,10 @@ def get_entries(doc: CheckRun | str) -> dict:
 				{"file_name": doc_name, "file_url": f"/app/Form/{transaction.doctype}/{doc_name}"}
 			]
 
+		transaction["on_hold"] = transaction.get("on_hold") == "1"
+
 		if settings and settings.pre_check_overdue_items:
-			if transaction.due_date < doc.posting_date:  # type: ignore
+			if transaction.due_date < doc.posting_date and not transaction.get("on_hold"):  # type: ignore
 				transaction.pay = 1
 		if transaction.doctype == "Journal Entry":
 			if transaction.party_type == "Supplier":
@@ -766,18 +835,20 @@ def get_entries(doc: CheckRun | str) -> dict:
 				transaction.mode_of_payment = (
 					frappe.get_value("Employee", transaction.party, "mode_of_payment") or settings.journal_entry
 				)
-	# Process Unpaid Transaction
-	# start
+
+		if transaction.due_date and settings.show_due_date == "Show Days Past Due":
+			transaction.due_date = (getdate(nowdate()) - transaction.due_date).days
+
 	outstanding_transaction = []
 	if not isinstance(doc, CheckRun):
 		if db_doc:
 			doc = db_doc
 		else:
-			doc = frappe.get_doc("Check Run")
+			doc = frappe.get_doc("Check Run", doc.name)  # type: ignore
 	for row in transactions:
 		if not doc.not_outstanding_or_cancelled(row):  # type: ignore
 			outstanding_transaction.append(row)
-	# end
+
 	return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
 
 
@@ -915,11 +986,7 @@ def build_nacha_file_from_payment_entries(
 			discretionary_data="",
 			addenda_record_indicator=0,
 		)
-		if settings.allow_only_verified_accounts_in_nacha_generation:
-			if frappe.get_value(pe.party_type, pe.party, "account_details_validated"):
-				ach_entries.append(ach_entry)
-		else:
-			ach_entries.append(ach_entry)
+		ach_entries.append(ach_entry)
 
 	company_discretionary_data = (
 		doc.get("company_discretionary_data")

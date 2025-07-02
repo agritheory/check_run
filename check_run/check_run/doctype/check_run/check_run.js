@@ -51,7 +51,9 @@ frappe.ui.form.on('Check Run', {
 		set_queries(frm)
 		frappe.realtime.off('reload')
 		frappe.realtime.on('reload', message => {
-			frm.reload_doc()
+			window.setTimeout(() => {
+				frm.reload_doc()
+			}, 500)
 		})
 		if (frm.is_new()) {
 			get_balance(frm)

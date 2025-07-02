@@ -1,26 +1,45 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import path from 'path'
+import path, { resolve } from 'path'
+import { existsSync, readFileSync, writeFileSync } from 'fs'
 
-// https://vitejs.dev/config/
+function frappeAssetsPlugin() {
+	return {
+		name: 'frappe-assets',
+		writeBundle(_, bundle) {
+			const sitesDir = resolve(__dirname, '../../../../../sites')
+			const assetsJsonPath = resolve(sitesDir, 'assets', 'assets.json')
+			if (existsSync(assetsJsonPath)) {
+				const assetsJson = JSON.parse(readFileSync(assetsJsonPath, 'utf-8'))
+				for (const [filename, chunk] of Object.entries(bundle)) {
+					if (chunk.type === 'chunk' && chunk.isEntry) {
+						assetsJson[`${chunk.name}.bundle.js`] = `/assets/check_run/dist/js/${filename}`
+					}
+				}
+				writeFileSync(assetsJsonPath, JSON.stringify(assetsJson, null, 4))
+				console.log('Updated assets.json with new bundle paths')
+			}
+		},
+	}
+}
+
 export default defineConfig({
-	plugins: [vue()],
+	plugins: [vue(), frappeAssetsPlugin()],
 	build: {
-		lib: {
-			entry: path.resolve(__dirname, './check_run/check_run.js'),
-			name: 'check_run',
-			fileName: () => `check_run.js`, // creates module only output
+		rollupOptions: {
+			input: {
+				main: path.resolve(__dirname, './check_run/check_run.js'),
+			},
+			output: {
+				entryFileNames: '[name].[hash].js',
+				format: 'iife',
+			},
 		},
 		outDir: './check_run/public/dist/js',
 		root: './',
 		target: 'es2015',
 		emptyOutDir: false,
 		minify: false,
-		rollupOptions: {
-			output: {
-				chunkFileNames: 'chunks/[name].[hash].js',
-			},
-		},
 	},
 	optimizeDeps: {},
 	define: {

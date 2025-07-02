@@ -70,25 +70,39 @@ def test_process_check_run_on_hold_invoice_error(cr):
 	with pytest.raises(
 		frappe.exceptions.ValidationError, match=f"Purchase Invoice ACC-PINV-{year}-00020 is on hold"
 	):
-		# cr.flags.in_test = True
 		cr.process_check_run()
 
 
 @pytest.mark.order(12)
 def test_process_check_run_on_hold_invoice_auto_release(cr):
 	# Test Settings auto-release of on-hold invoices
-	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
+	crs = get_check_run_settings(cr)
+	crs.pre_check_overdue_items = True
+	crs.save()
+	cr.end_date = datetime.date(year, 12, 30)
+	cr.transactions = get_entries(cr).get("transactions")
 	for row in cr.transactions:
-		if row.get("party") == "Liu & Loewen Accountants LLP":
+		if row.get("party") == "Liu & Loewen Accountants LLP" and row.get("on_hold") == True:
+			assert not row.get("pay")  # test that on-hold invoices are not selected for payment
+			row["pay"] = True
+			row["mode_of_payment"] = "Credit Card"
+		else:
+			assert row["pay"]
+
+	crs = get_check_run_settings(cr)
+	crs.pre_check_overdue_items = False
+	crs.automatically_release_on_hold_invoices = True
+	crs.save()
+
+	cr.end_date = datetime.date(year, 12, 31)
+	cr.transactions = get_entries(cr).get("transactions")
+	for row in cr.transactions:
+		if row.get("party") == "Liu & Loewen Accountants LLP" and row.get("on_hold") == True:
 			row["pay"] = True
 			row["mode_of_payment"] = "Credit Card"
 	cr.transactions = frappe.as_json(cr.transactions)
 	cr.flags.in_test = True
 	cr.save()
-
-	crs = get_check_run_settings(cr)
-	crs.automatically_release_on_hold_invoices = True
-	crs.save()
 
 	try:
 		cr.process_check_run()
@@ -217,3 +231,24 @@ def test_pdf_length_and_mode_of_payment(cr):
 		payment_mode_pattern = re.compile(r"Mode of Payment:\s*(.*?)$", re.MULTILINE)
 		for i in range(number_of_pages):
 			page_text = pdf.pages[i].extract_text()
+
+
+@pytest.mark.order(31)
+def test_unique_pe_in_nacha(cr):
+	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
+	for row in cr.transactions:
+		if row["mode_of_payment"] == "ACH/EFT":
+			row["pay"] = 1
+		else:
+			row["pay"] = 0
+	cr.transactions = frappe.as_json(cr.transactions)
+	cr.flags.in_test = True
+	cr.save()
+	cr._process_check_run()
+	payment_entries = cr.get_ach_payment_entries()
+	assert len(payment_entries) == 3
+	crs = get_check_run_settings(cr)
+	crs.allow_only_verified_accounts_in_nacha_generation = True
+	crs.save()
+	payment_entries = cr.get_ach_payment_entries()
+	assert len(payment_entries) == 0
