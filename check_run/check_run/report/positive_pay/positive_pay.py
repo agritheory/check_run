@@ -28,6 +28,19 @@ def get_columns(filters):
 			"fieldtype": "Data",
 			"width": "400px",
 		},
+		{
+			"label": frappe._("Currency"),
+			"fieldname": "paid_to_account_currency",
+			"fieldtype": "Data",
+			"width": "100px",
+			"hidden": 1,
+		},
+		{
+			"label": frappe._("Paid Amount"),
+			"fieldname": "paid_amount",
+			"fieldtype": "Currency",
+			"width": "200px",
+		},
 	]
 
 
@@ -42,6 +55,8 @@ def get_data(filters):
 			(pe.reference_no).as_("check_number"),
 			(pe.reference_date).as_("check_date"),
 			pe.party_name,
+			pe.paid_amount,
+			pe.paid_to_account_currency,
 		)
 		.where(pe.reference_date >= filters.start_date)
 		.where(pe.reference_date <= filters.end_date)
