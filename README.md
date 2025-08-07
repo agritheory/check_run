@@ -203,9 +203,11 @@ Distributed under the MIT License. See `license.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
+Want to reach out? - [Contact Us](https://agritheory.com/contact)
+
 AgriTheory - [@agritheory](https://github.com/agritheory)
 
-Project Link: [https://github.com/agritheory/check_run](https://github.com/agritheory/check_run)
+Repo: [https://github.com/agritheory/check_run](https://github.com/agritheory/check_run)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
