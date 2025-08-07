@@ -75,7 +75,7 @@ The Check Run feature collects all outstanding payables for a given company and 
 
 ### Built With
 
-<div align="center"">
+<div align="left">
 
 [![Python][Python.py]][Python-url]
 [![Frappe][Frappe.io]][Frappe-url]
