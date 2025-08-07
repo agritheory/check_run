@@ -75,11 +75,15 @@ The Check Run feature collects all outstanding payables for a given company and 
 
 ### Built With
 
-* [![Python][Python.py]][Python-url]
-* [![Frappe][Frappe.io]][Frappe-url]
-* [![ERPNext][ERPNext.com]][ERPNext-url]
-* [![JavaScript][JavaScript.js]][JavaScript-url]
-* [![Vue][Vue.js]][Vue-url]
+<div align="center"">
+
+[![Python][Python.py]][Python-url]
+[![Frappe][Frappe.io]][Frappe-url]
+[![ERPNext][ERPNext.com]][ERPNext-url]
+[![JavaScript][JavaScript.js]][JavaScript-url]
+[![Vue][Vue.js]][Vue-url]
+
+</div>
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -149,16 +153,15 @@ _For detailed examples and configuration, please refer to the [Documentation](./
 <!-- FEATURES -->
 ## Features
 
-- **✅ Single-Page Payment Processing** - Process multiple payables in one streamlined operation
-- **✅ Professional Check Printing** - Customizable check formats with voucher support
-- **✅ ACH File Generation** - NACHA-compliant electronic payments
-- **✅ Bank-Friendly Reports** - Positive Pay reports for fraud prevention
-- **✅ Payment Scheduling** - Support for complex payment terms and schedules
-- **✅ Returns Handling** - Process debit notes against purchase invoices
-- **✅ Keyboard Navigation** - Full keyboard shortcuts for efficient data entry
-- **✅ Multi-Currency Support** - Handle international payments
-- **✅ Approval Workflows** - Configurable approval processes
-- **✅ Audit Trail** - Complete payment history and tracking
+- **Single-Page Payment Processing** - Process multiple payables in one streamlined operation
+- **Professional Check Printing** - Customizable check formats with voucher support
+- **ACH File Generation** - NACHA-compliant electronic payments
+- **Bank-Friendly Reports** - Positive Pay reports for fraud prevention
+- **Payment Scheduling** - Support for complex payment terms and schedules
+- **Returns Handling** - Process debit notes against purchase invoices
+- **Keyboard Navigation** - Full keyboard shortcuts for efficient data entry
+- **Multi-Currency Support** - Handle international payments
+- **Approval Workflows** - Configurable approval processes
 
 See the [official documentation](https://agritheory.com/documentation/check_run/) or [local docs](./docs/version-14/en/index.md) for complete details.
 
