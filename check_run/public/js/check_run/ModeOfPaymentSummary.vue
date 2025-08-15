@@ -30,6 +30,7 @@ function format_currency(v2, currency, decimals) {
 
 function calculate_totals() {
 	let modes_of_payments = aggregate(props.transactions, 'mode_of_payment', 'amount', 'pay')
+	console.log(modes_of_payments)
 	let results = []
 	if (!(frm.value.doc && frm.value.settings)) {
 		return
@@ -60,27 +61,25 @@ function calculate_totals() {
 	})
 }
 
-function aggregate(arr, on, who, filter) {
-	const agg = arr.reduce((a, b) => {
-		let whoValue = null
-		const onValue = b[on]
-		if (b[filter]) {
-			whoValue = b[who]
-		}
-		if (a[onValue]) {
-			a[onValue] = {
-				[on]: onValue,
-				[who]: [...a[onValue][who], whoValue],
+function aggregate(transactions, groupByField, valueField, filterField) {
+	const groups = transactions
+		.filter(transaction => transaction[filterField])
+		.reduce((accumulator, transaction) => {
+			let groupKey = transaction[groupByField]
+			const value = transaction[valueField]
+			if (!groupKey) {
+				groupKey = 'None'
 			}
-		} else {
-			a[onValue] = {
-				[on]: onValue,
-				[who]: [whoValue],
+			if (!accumulator[groupKey]) {
+				accumulator[groupKey] = {
+					[groupByField]: groupKey,
+					[valueField]: [],
+				}
 			}
-		}
-		return a
-	}, {})
-	return Object.values(agg)
+			accumulator[groupKey][valueField].push(value)
+			return accumulator
+		}, {})
+	return Object.values(groups)
 }
 </script>
 <style scoped>
