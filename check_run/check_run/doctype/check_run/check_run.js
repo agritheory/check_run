@@ -5,6 +5,7 @@ frappe.provide('check_run')
 
 frappe.ui.form.on('Check Run', {
 	setup: frm => {
+		frm.disable_save()
 		frappe.realtime.on('process_check_run_progress', data => {
 			show_progress_bar(frm, data, 'Processing')
 		})
@@ -29,9 +30,9 @@ frappe.ui.form.on('Check Run', {
 		}
 		frm.doc.transactions = JSON.stringify(check_run.transactions)
 	},
-	refresh: frm => {
+	refresh: async frm => {
+		frm.disable_save()
 		frm.layout.show_message('')
-		frm.trigger('update_primary_action')
 		if (frm.doc.__onload && frm.doc.__onload.errors) {
 			frm.set_intro(
 				__('<a href="" style="color: var(--red)" id="check-run-error">This Check Run has errors, click to view.</a>'),
@@ -68,7 +69,6 @@ frappe.ui.form.on('Check Run', {
 	onload_post_render: frm => {
 		frm.page.wrapper.find('.layout-side-section').hide()
 		permit_first_user(frm)
-		frm.trigger('update_primary_action')
 		$(frm.wrapper).on('dirty', () => {
 			frm.trigger('update_primary_action')
 		})
@@ -239,11 +239,24 @@ function set_queries(frm) {
 }
 
 function get_entries(frm) {
-	return new Promise(function (resolve, reject) {
-		if (!frm.doc.transactions && check_run.transactions) {
-			frm.dirty()
+	return new Promise(async (resolve, reject) => {
+		try {
+			if (!frm.doc.transactions && check_run.transactions) {
+				frm.dirty()
+			}
+
+			// Wait for mount to complete
+			await window.check_run.mount(frm)
+
+			// Wait an additional tick to ensure Vue rendering is complete
+			await new Promise(resolve => setTimeout(resolve, 0))
+
+			// Trigger update and resolve
+			frm.trigger('update_primary_action')
+			resolve()
+		} catch (error) {
+			reject(error)
 		}
-		resolve(window.check_run.mount(frm))
 	})
 }
 
