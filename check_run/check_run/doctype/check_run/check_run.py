@@ -645,15 +645,18 @@ def get_entries(doc: CheckRun | str) -> dict:
 		db_doc = frappe.get_doc("Check Run", doc.name)
 		if not doc.modified or get_datetime(doc.modified) < db_doc.modified:
 			doc = db_doc
+		# Only use cached transactions if they exist and are non-empty
 		if doc.end_date == db_doc.end_date and db_doc.transactions:  # type: ignore
-			if db_doc.docstatus == 0:
-				outstanding_transaction = []
-				for row in json.loads(db_doc.transactions):
-					if not db_doc.not_outstanding_or_cancelled(row):
-						outstanding_transaction.append(row)
-			else:
-				outstanding_transaction = json.loads(db_doc.transactions)
-			return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
+			cached_transactions = json.loads(db_doc.transactions)
+			if cached_transactions:
+				if db_doc.docstatus == 0:
+					outstanding_transaction = []
+					for row in cached_transactions:
+						if not db_doc.not_outstanding_or_cancelled(row):
+							outstanding_transaction.append(row)
+				else:
+					outstanding_transaction = cached_transactions
+				return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
 
 	company = doc.company  # type: ignore
 	pay_to_account = doc.pay_to_account  # type: ignore
