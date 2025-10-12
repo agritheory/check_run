@@ -6,7 +6,7 @@
 				<tr>
 					<th style="text-align: left" class="col col-sm-2" id="check-run-party-filter">
 						<div class="d-flex align-items-center justify-between gap-2">
-							<span class="party-onclick party-display"> Party </span>
+							<span @click="update_sort('party')" class="party-onclick party-display check-run-sort-indicator"> Party &#11021;</span>
 							<span class="filter-icon" style="cursor: pointer" @click="show_party_filter = !show_party_filter">
 								<svg class="icon icon-sm">
 									<use class="" href="#icon-filter"></use>
@@ -14,7 +14,7 @@
 							</span>
 						</div>
 						<div class="mt-2">
-							<input v-if="show_party_filter" type="text" class="form-control" v-model="filters.party" />
+							<input v-if="show_party_filter" type="text" class="form-control" v-model="filters.party_filter" />
 						</div>
 					</th>
 					<th class="col col-sm-2">Document</th>
@@ -262,7 +262,7 @@ function partyIsInFilter(party) {
 	if (!party) {
 		return
 	}
-	return filters.party.length < 1 || party.toLowerCase().includes(filters.party.toLowerCase())
+	return filters.party_filter.length < 1 || party.toLowerCase().includes(filters.party_filter.toLowerCase())
 }
 
 function transactionUrl(transaction) {
