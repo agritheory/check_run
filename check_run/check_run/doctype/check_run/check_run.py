@@ -75,7 +75,7 @@ class CheckRun(Document):
 				self.set_default_dates()
 		else:
 			if self.status in ("Draft", "Pending Approval", "Approved"):  # type: ignore # str or None
-				self.filter_transactions()
+				self.validate_transactions()
 
 	def on_cancel(self) -> None:
 		settings = get_check_run_settings(self)
@@ -126,7 +126,24 @@ class CheckRun(Document):
 			self.end_date = getdate()
 
 	@frappe.read_only()
+	def validate_transactions(self) -> None:
+		"""Validate transactions without modifying them to avoid deadlocks"""
+		if not self.get("transactions"):
+			return
+		_t = json.loads(self.get("transactions"))
+		transactions = [value for k, value in _t.items()] if isinstance(_t, dict) else _t
+
+		# Only validate selected transactions, don't modify self.transactions
+		selected = [t for t in transactions if t.get("pay")]
+		for t in selected:
+			if not t.get("mode_of_payment"):
+				frappe.throw(
+					frappe._(f"Mode of Payment Required: {t.get('party_name')} {t.get('ref_number')}")
+				)
+
+	@frappe.read_only()
 	def filter_transactions(self) -> None:
+		"""Filter out non-outstanding or cancelled transactions"""
 		if not self.get("transactions"):
 			return
 		_t = json.loads(self.get("transactions"))
