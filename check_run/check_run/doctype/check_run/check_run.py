@@ -44,7 +44,7 @@ class CheckRun(Document):
 			self.set_onload("settings_missing", True)
 		else:
 			self.set_onload("settings", json.loads(settings.as_json()))
-		errors = frappe.get_all("Error Log", {"method": ["like", f"%{self.name}%"]})
+		errors = frappe.get_all("Error Log", {"method": ["like", f"%{self.name}%"], "seen": 0})
 		if errors and self.docstatus == 0:
 			self.set_onload("errors", True)
 		check_run_submitting = frappe.defaults.get_global_default("check_run_submitting")
