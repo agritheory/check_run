@@ -42,6 +42,14 @@ def cr():  # return draft check run
 	return cr
 
 
+@pytest.mark.order(9)
+def test_check_number_increment(cr):
+	assert (
+		frappe.db.get_value("Bank Account", "Primary Checking - Local Bank", "check_number") == "2500"
+	)
+	assert cr.initial_check_number == 2501
+
+
 @pytest.mark.order(10)
 def test_get_entries(cr):
 	crs = get_check_run_settings(cr)
@@ -213,7 +221,10 @@ def test_use_cr_posting_date_config(cr):
 
 
 @pytest.mark.order(30)
-def test_pdf_length_and_mode_of_payment(cr):
+def test_pdf_length_and_mode_of_payment_and_check_number_increment(cr):
+	crs = get_check_run_settings(cr)
+	crs.print_format = "Example Voucher"
+	crs.save()
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
 	for row in cr.transactions:
 		if row["mode_of_payment"] == "Check":
@@ -222,15 +233,35 @@ def test_pdf_length_and_mode_of_payment(cr):
 			row["pay"] = 0
 	cr.transactions = frappe.as_json(cr.transactions)
 	cr.flags.in_test = True
+	account_check_number = int(
+		frappe.db.get_value("Bank Account", "Primary Checking - Local Bank", "check_number")
+	)
 	cr.save()
 	cr._process_check_run()
+	checks_paid = set()
+	transactions = frappe.utils.safe_json_loads(cr.transactions)
+	for row in transactions:
+		if row["mode_of_payment"] == "Check":
+			checks_paid.add(row["payment_entry"])
+
+	checks_paid = len(list(checks_paid))
 	file = cr.render_check_pdf()
+	assert cr.initial_check_number == account_check_number + 1
 	with pdfplumber.open(file.get_full_path()) as pdf:
 		number_of_pages = len(pdf.pages)
 		assert number_of_pages > 1
 		payment_mode_pattern = re.compile(r"Mode of Payment:\s*(.*?)$", re.MULTILINE)
 		for i in range(number_of_pages):
 			page_text = pdf.pages[i].extract_text()
+		new_account_check_number = int(
+			frappe.db.get_value("Bank Account", "Primary Checking - Local Bank", "check_number")
+		)
+		assert cr.final_check_number == account_check_number + checks_paid
+		assert new_account_check_number == cr.final_check_number
+
+		new_cr = frappe.copy_doc(cr)
+		new_cr.set_last_check_number()
+		assert new_cr.initial_check_number == cr.final_check_number + 1
 
 
 @pytest.mark.order(31)

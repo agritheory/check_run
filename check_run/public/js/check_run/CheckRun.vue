@@ -248,7 +248,7 @@ function showPreview(attachment) {
 }
 
 watch(selectAll, (val, oldVal) => {
-	Object.values(transactions).forEach(row => {
+	Object.values(orderedTransactions.value).forEach(row => {
 		row.pay = val
 	})
 	check_run.total(frm)
