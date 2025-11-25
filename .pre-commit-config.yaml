@@ -60,6 +60,14 @@ repos:
       - id: codespell
         additional_dependencies:
           - tomli
+        exclude: >
+          (?x)^(
+            CHANGELOG.md|
+            .*\.lock|
+            .*\.pyc|
+            \.tox
+            \.mypy_cache
+          )$
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.15.0
