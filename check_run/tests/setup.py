@@ -44,7 +44,7 @@ def before_test():
 
 def create_test_data():
 	today = frappe.utils.getdate()
-	setup_accounts()
+	setup_accounts_and_fiscal_years()
 	settings = frappe._dict(
 		{
 			"day": today.replace(month=1, day=1),
@@ -72,6 +72,33 @@ def create_test_data():
 		settings.day = settings.day.replace(month=month)
 		create_payroll_journal_entry(settings)
 	create_manual_payment_entry(settings)
+
+
+def setup_accounts_and_fiscal_years():
+	frappe.rename_doc(
+		"Account", "1000 - Application of Funds (Assets) - CFC", "1000 - Assets - CFC", force=True
+	)
+	frappe.rename_doc(
+		"Account", "2000 - Source of Funds (Liabilities) - CFC", "2000 - Liabilities - CFC", force=True
+	)
+	frappe.rename_doc(
+		"Account", "1310 - Debtors - CFC", "1310 - Accounts Receivable - CFC", force=True
+	)
+	frappe.rename_doc(
+		"Account", "2110 - Creditors - CFC", "2110 - Accounts Payable - CFC", force=True
+	)
+	update_account_number("1110 - Cash - CFC", "Petty Cash", account_number="1110")
+	update_account_number("Primary Checking - CFC", "Primary Checking", account_number="1201")
+
+	company = frappe.defaults.get_defaults().company
+	today = frappe.utils.getdate()
+	for year in [today.year - 1, today.year + 1]:
+		fy = frappe.new_doc("Fiscal Year")
+		fy.year = year
+		fy.year_start_date = datetime.date(year, 1, 1)
+		fy.year_end_date = datetime.date(year, 12, 31)
+		fy.append("companies", {"company": company})
+		fy.save()
 
 
 def create_company_address(settings):
@@ -162,23 +189,6 @@ def create_bank_and_bank_account(settings):
 	)
 	doc.save()
 	doc.submit()
-
-
-def setup_accounts():
-	frappe.rename_doc(
-		"Account", "1000 - Application of Funds (Assets) - CFC", "1000 - Assets - CFC", force=True
-	)
-	frappe.rename_doc(
-		"Account", "2000 - Source of Funds (Liabilities) - CFC", "2000 - Liabilities - CFC", force=True
-	)
-	frappe.rename_doc(
-		"Account", "1310 - Debtors - CFC", "1310 - Accounts Receivable - CFC", force=True
-	)
-	frappe.rename_doc(
-		"Account", "2110 - Creditors - CFC", "2110 - Accounts Payable - CFC", force=True
-	)
-	update_account_number("1110 - Cash - CFC", "Petty Cash", account_number="1110")
-	update_account_number("Primary Checking - CFC", "Primary Checking", account_number="1201")
 
 
 def create_payment_terms_templates(settings):

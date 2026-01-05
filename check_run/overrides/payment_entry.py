@@ -31,8 +31,10 @@ class CheckRunPaymentEntry(PaymentEntry):
 		self.set_transaction_currency_and_rate()
 
 		if self.status == "Voided":
+			# voided_date field is set via the dialog from the UI
+			voided_date = frappe.get_value(self.doctype, self.name, "voided_date") or getdate()
 			original_posting_date = self.posting_date
-			self.voided_date = self.posting_date = getdate()
+			self.voided_date = self.posting_date = voided_date
 
 		gl_entries = []
 		self.add_party_gl_entries(gl_entries)
@@ -345,3 +347,15 @@ def get_image_base64_data(file_url):
 	image, unused_filename, extn = get_local_image(file_url)
 	file_content = file_doc.get_content()
 	return f"data:image/{extn};base64,{safe_decode(base64.b64encode(file_content).decode('utf-8'))}"
+
+
+@frappe.whitelist()
+def set_voided_date(doctype, docname, voided_date):
+	voided_date = getdate(voided_date)
+	orig_posting_date = frappe.get_value(doctype, docname, "posting_date")
+	if voided_date < orig_posting_date:
+		frappe.throw(
+			msg=_("Void As Of Date cannot be before the Payment Entry's posting date."),
+			title=_("Invalid Void As Of Date"),
+		)
+	frappe.db.set_value(doctype, docname, "voided_date", voided_date)
