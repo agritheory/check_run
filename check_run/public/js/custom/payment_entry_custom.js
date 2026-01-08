@@ -58,15 +58,6 @@ async function set_void_as_of_date(frm) {
 	let values = await void_as_of_date_dialog(frm)
 	frm.set_value('voided_date', values.as_of_date)
 	cur_dialog.hide()
-	frappe
-		.xcall('check_run.overrides.payment_entry.set_voided_date', {
-			doctype: frm.doc.doctype,
-			docname: frm.doc.name,
-			voided_date: values.as_of_date,
-		})
-		.then(r => {
-			frm.reload_doc()
-		})
 }
 
 function void_as_of_date_dialog(frm) {
@@ -91,9 +82,17 @@ function void_as_of_date_dialog(frm) {
 					frappe.throw(__("Void As Of Date cannot be before the Payment Entry's posting date."))
 				}
 
-				resolve({
-					as_of_date: as_of_date,
-				})
+				frappe
+					.xcall('check_run.overrides.payment_entry.set_voided_date', {
+						doctype: frm.doc.doctype,
+						docname: frm.doc.name,
+						voided_date: as_of_date,
+					})
+					.then(r => {
+						resolve({
+							as_of_date: as_of_date,
+						})
+					})
 			},
 			primary_action_label: __('Set Date'),
 		})

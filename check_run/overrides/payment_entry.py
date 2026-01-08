@@ -351,11 +351,11 @@ def get_image_base64_data(file_url):
 
 @frappe.whitelist()
 def set_voided_date(doctype, docname, voided_date):
+	doc = frappe.get_doc(doctype, docname)
 	voided_date = getdate(voided_date)
-	orig_posting_date = frappe.get_value(doctype, docname, "posting_date")
-	if voided_date < orig_posting_date:
+	if voided_date < doc.posting_date:
 		frappe.throw(
 			msg=_("Void As Of Date cannot be before the Payment Entry's posting date."),
 			title=_("Invalid Void As Of Date"),
 		)
-	frappe.db.set_value(doctype, docname, "voided_date", voided_date)
+	frappe.db.set_value(doctype, docname, "voided_date", voided_date, update_modified=False)
