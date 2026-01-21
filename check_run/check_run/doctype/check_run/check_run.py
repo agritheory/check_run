@@ -75,7 +75,7 @@ class CheckRun(Document):
 				self.set_default_dates()
 		else:
 			if self.status in ("Draft", "Pending Approval", "Approved"):  # type: ignore # str or None
-				self.filter_transactions()
+				self.validate_transactions()
 
 	def on_cancel(self) -> None:
 		settings = get_check_run_settings(self)
@@ -126,7 +126,24 @@ class CheckRun(Document):
 			self.end_date = getdate()
 
 	@frappe.read_only()
+	def validate_transactions(self) -> None:
+		"""Validate transactions without modifying them to avoid deadlocks"""
+		if not self.get("transactions"):
+			return
+		_t = json.loads(self.get("transactions"))
+		transactions = [value for k, value in _t.items()] if isinstance(_t, dict) else _t
+
+		# Only validate selected transactions, don't modify self.transactions
+		selected = [t for t in transactions if t.get("pay")]
+		for t in selected:
+			if not t.get("mode_of_payment"):
+				frappe.throw(
+					frappe._(f"Mode of Payment Required: {t.get('party_name')} {t.get('ref_number')}")
+				)
+
+	@frappe.read_only()
 	def filter_transactions(self) -> None:
+		"""Filter out non-outstanding or cancelled transactions"""
 		if not self.get("transactions"):
 			return
 		_t = json.loads(self.get("transactions"))
@@ -645,15 +662,18 @@ def get_entries(doc: CheckRun | str) -> dict:
 		db_doc = frappe.get_doc("Check Run", doc.name)
 		if not doc.modified or get_datetime(doc.modified) < db_doc.modified:
 			doc = db_doc
+		# Only use cached transactions if they exist and are non-empty
 		if doc.end_date == db_doc.end_date and db_doc.transactions:  # type: ignore
-			if db_doc.docstatus == 0:
-				outstanding_transaction = []
-				for row in json.loads(db_doc.transactions):
-					if not db_doc.not_outstanding_or_cancelled(row):
-						outstanding_transaction.append(row)
-			else:
-				outstanding_transaction = json.loads(db_doc.transactions)
-			return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
+			cached_transactions = json.loads(db_doc.transactions)
+			if cached_transactions:
+				if db_doc.docstatus == 0:
+					outstanding_transaction = []
+					for row in cached_transactions:
+						if not db_doc.not_outstanding_or_cancelled(row):
+							outstanding_transaction.append(row)
+				else:
+					outstanding_transaction = cached_transactions
+				return {"transactions": outstanding_transaction, "modes_of_payment": modes_of_payment}
 
 	company = doc.company  # type: ignore
 	pay_to_account = doc.pay_to_account  # type: ignore

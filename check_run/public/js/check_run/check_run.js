@@ -15,7 +15,8 @@ check_run.filters = reactive({
 	mode_of_payment: 1,
 	amount: 1,
 	due_date: 1,
-	party: '',
+	party: 1,
+	party_filter: '',
 })
 
 check_run.get_entries = frm => {
@@ -45,7 +46,8 @@ check_run.mount = frm => {
 				mode_of_payment: 1,
 				amount: 1,
 				due_date: 1,
-				party: '',
+				party: 1,
+				party_filter: '',
 			})
 
 			if (frm.$check_run != undefined && frm.$check_run._isVue) {
