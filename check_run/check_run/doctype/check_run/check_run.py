@@ -211,7 +211,7 @@ class CheckRun(Document):
 
 	def _process_check_run(self, save: bool = False) -> None:
 		frappe.defaults.set_global_default("check_run_submitting", self.name)
-		frappe.db.sql("SAVEPOINT process_check_run")
+		frappe.db.sql("SAVEPOINT process_check_run")  # sql:ignore
 		try:
 			__transactions = self.transactions
 			_transactions = json.loads(__transactions)
@@ -233,7 +233,7 @@ class CheckRun(Document):
 		self.save()
 		self.submit()
 		self.create_and_attach_positive_pay()
-		frappe.db.sql("RELEASE SAVEPOINT process_check_run")
+		frappe.db.sql("RELEASE SAVEPOINT process_check_run")  # sql:ignore
 
 	def build_nacha_file(self, settings: CheckRunSettings) -> str:
 		electronic_mop = frappe.get_all(

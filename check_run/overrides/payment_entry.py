@@ -382,12 +382,10 @@ def make_reverse_gl_entries(
 				if not all(gle_names):
 					set_as_cancel(gl_entries[0]["voucher_type"], gl_entries[0]["voucher_no"])
 				else:
-					frappe.db.sql(
-						"""UPDATE `tabGL Entry` SET is_cancelled = 1,
-						modified=%s, modified_by=%s
-						where name in %s and is_cancelled = 0""",
-						(now(), frappe.session.user, tuple(gle_names)),
-					)
+					GLEntry = frappe.qb.DocType("GL Entry")
+					frappe.qb.update(GLEntry).set(GLEntry.is_cancelled, 1).set(GLEntry.modified, "now()").set(
+						GLEntry.modified_by, frappe.session.user
+					).where(GLEntry.name.isin([]) & (GLEntry.is_cancelled == 0)).run()
 
 		for entry in gl_entries:
 			new_gle = copy.deepcopy(entry)
