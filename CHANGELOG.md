@@ -1,3 +1,6 @@
+<!-- Copyright (c) 2026, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Changelog
 
 This changelog was automatically generated from GitHub releases and pull requests.

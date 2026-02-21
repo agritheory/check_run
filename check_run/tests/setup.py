@@ -1,3 +1,6 @@
+# Copyright (c) 2026, AgriTheory and contributors
+# For license information, please see license.txt
+
 import datetime
 import types
 
@@ -43,11 +46,10 @@ def before_test():
 
 
 def create_test_data():
-	today = frappe.utils.getdate()
 	setup_accounts()
 	settings = frappe._dict(
 		{
-			"day": today.replace(month=1, day=1),
+			"day": frappe.utils.getdate().replace(month=1, day=1),
 			"company": frappe.defaults.get_defaults().get("company"),
 			"company_account": frappe.get_value(
 				"Account",
@@ -60,6 +62,7 @@ def create_test_data():
 		}
 	)
 	create_company_address(settings)
+	create_previous_fiscal_year(settings)
 	create_bank_and_bank_account(settings)
 	create_payment_terms_templates(settings)
 	create_suppliers(settings)
@@ -85,6 +88,21 @@ def create_company_address(settings):
 	company_address.is_your_company_address = True
 	company_address.append("links", {"link_doctype": "Company", "link_name": settings.company})
 	company_address.save()
+
+
+def create_previous_fiscal_year(settings):
+	if frappe.db.exists("Fiscal Year", str(settings.day.year - 1)):
+		return
+	current_fiscal_year = frappe.get_doc("Fiscal Year", str(settings.day.year))
+	previous_fiscal_year = frappe.new_doc("Fiscal Year")
+	previous_fiscal_year.year_start_date = current_fiscal_year.year_start_date.replace(
+		year=current_fiscal_year.year_start_date.year - 1
+	)
+	previous_fiscal_year.year_end_date = current_fiscal_year.year_end_date.replace(
+		year=current_fiscal_year.year_end_date.year - 1
+	)
+	previous_fiscal_year.year = previous_fiscal_year.year_start_date.year
+	previous_fiscal_year.save()
 
 
 def create_bank_and_bank_account(settings):

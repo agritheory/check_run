@@ -1,3 +1,6 @@
+# Copyright (c) 2026, AgriTheory and contributors
+# For license information, please see license.txt
+
 from . import __version__ as app_version  # noqa: F401
 
 app_name = "check_run"

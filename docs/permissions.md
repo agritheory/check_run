@@ -1,4 +1,12 @@
+<!-- Copyright (c) 2026, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Default Permissions and Workflow
+
+<div class="byline">
+  AgriTheory 2025-09-10
+</div>
+
 
 It's strongly recommended that you set system permissions to limit which users can see and execute a Check Run. The only permission the application enforces is that a user must have a permission level in ERPNext to create payment entries in order to perform a Check Run. Additionally, only the first user to access a draft Check Run doctype can edit it. 
 

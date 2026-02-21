@@ -1,4 +1,12 @@
+<!-- Copyright (c) 2026, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Positive Pay Report
+
+<div class="byline">
+  AgriTheory 2025-09-10
+</div>
+
 
 The Check Run application includes a new Positive Pay report. This report generates a bank-friendly summary of check payments for a given bank account and period.
 

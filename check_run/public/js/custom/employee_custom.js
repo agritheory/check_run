@@ -1,3 +1,6 @@
+// Copyright (c) 2026, AgriTheory and contributors
+// For license information, please see license.txt
+
 frappe.ui.form.on('Employee', {
 	onload_post_render: frm => {
 		frm.fields_dict.bank_account.$wrapper

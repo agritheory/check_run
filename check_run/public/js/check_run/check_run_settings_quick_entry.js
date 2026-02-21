@@ -1,3 +1,6 @@
+// Copyright (c) 2026, AgriTheory and contributors
+// For license information, please see license.txt
+
 frappe.provide('check_run')
 frappe.provide('frappe.ui.form')
 
