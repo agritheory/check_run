@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import base64
+import copy
 
 import frappe
 from erpnext.accounts.doctype.payment_entry.payment_entry import (
@@ -9,10 +10,21 @@ from erpnext.accounts.doctype.payment_entry.payment_entry import (
 	add_regional_gl_entries,
 	get_outstanding_reference_documents,
 )
-from erpnext.accounts.general_ledger import make_gl_entries, process_gl_map
+from erpnext.accounts.general_ledger import (
+	check_freezing_date,
+	make_acc_dimensions_offsetting_entry,
+	make_entry,
+	process_gl_map,
+	save_entries,
+	set_as_cancel,
+	validate_accounting_period,
+	validate_against_pcv,
+	validate_disabled_accounts,
+)
+from erpnext.accounts.utils import get_payment_ledger_entries, is_immutable_ledger_enabled
 from frappe import _, safe_decode
 from frappe.core.doctype.file.utils import get_local_image
-from frappe.utils import flt, get_link_to_form
+from frappe.utils import flt, get_link_to_form, now
 from frappe.utils.data import getdate
 
 
@@ -30,9 +42,12 @@ class CheckRunPaymentEntry(PaymentEntry):
 			self.setup_party_account_field()
 		self.set_transaction_currency_and_rate()
 
+		voided_date = None
 		if self.status == "Voided":
+			# voided_date field is set via the dialog from the UI
+			voided_date = frappe.get_value(self.doctype, self.name, "voided_date") or getdate()
 			original_posting_date = self.posting_date
-			self.voided_date = self.posting_date = getdate()
+			self.voided_date = self.posting_date = voided_date
 
 		gl_entries = []
 		self.add_party_gl_entries(gl_entries)
@@ -42,7 +57,7 @@ class CheckRunPaymentEntry(PaymentEntry):
 		add_regional_gl_entries(gl_entries, self)
 
 		gl_entries = process_gl_map(gl_entries)
-		make_gl_entries(gl_entries, cancel=cancel, adv_adj=adv_adj)
+		make_gl_entries(gl_entries, cancel=cancel, adv_adj=adv_adj, voided_date=voided_date)
 
 		if self.status == "Voided":
 			self.posting_date = original_posting_date
@@ -242,6 +257,259 @@ class CheckRunPaymentEntry(PaymentEntry):
 					)
 
 
+def make_gl_entries(
+	gl_map,
+	cancel=False,
+	adv_adj=False,
+	merge_entries=True,
+	update_outstanding="Yes",
+	from_repost=False,
+	voided_date=None,  # CUSTOM CODE
+):
+	"""
+	HASH: a2b6e4a1c587ce2f7e017f39944899f76e3e2f7d
+	REPO: https://github.com/frappe/erpnext/
+	PATH: erpnext/accounts/general_ledger.py
+	METHOD: make_gl_entries
+	"""
+	if gl_map:
+		if not cancel:
+			make_acc_dimensions_offsetting_entry(gl_map)
+			validate_accounting_period(gl_map)
+			validate_disabled_accounts(gl_map)
+			gl_map = process_gl_map(gl_map, merge_entries, from_repost=from_repost)
+			if gl_map and len(gl_map) > 1:
+				if gl_map[0].voucher_type != "Period Closing Voucher":
+					create_payment_ledger_entry(
+						gl_map,
+						cancel=0,
+						adv_adj=adv_adj,
+						update_outstanding=update_outstanding,
+						from_repost=from_repost,
+						voided_date=voided_date,  # CUSTOM CODE
+					)
+				save_entries(gl_map, adv_adj, update_outstanding, from_repost)
+			# Post GL Map process there may no be any GL Entries
+			elif gl_map:
+				frappe.throw(
+					_(
+						"Incorrect number of General Ledger Entries found. You might have selected a wrong Account in the transaction."
+					)
+				)
+		else:
+			make_reverse_gl_entries(
+				gl_map, adv_adj=adv_adj, update_outstanding=update_outstanding, voided_date=voided_date
+			)  # CUSTOM CODE
+
+
+def make_reverse_gl_entries(
+	gl_entries=None,
+	voucher_type=None,
+	voucher_no=None,
+	adv_adj=False,
+	update_outstanding="Yes",
+	partial_cancel=False,
+	voided_date=None,  # CUSTOM CODE
+):
+	"""
+	HASH: a2b6e4a1c587ce2f7e017f39944899f76e3e2f7d
+	REPO: https://github.com/frappe/erpnext/
+	PATH: erpnext/accounts/general_ledger.py
+	METHOD: make_reverse_gl_entries
+
+	Get original gl entries of the voucher
+	and make reverse gl entries by swapping debit and credit
+	"""
+
+	immutable_ledger_enabled = is_immutable_ledger_enabled()
+
+	if not gl_entries:
+		gl_entry = frappe.qb.DocType("GL Entry")
+		gl_entries = (
+			frappe.qb.from_(gl_entry)
+			.select("*")
+			.where(gl_entry.voucher_type == voucher_type)
+			.where(gl_entry.voucher_no == voucher_no)
+			.where(gl_entry.is_cancelled == 0)
+			.for_update()
+		).run(as_dict=1)
+
+	if gl_entries:
+		create_payment_ledger_entry(
+			gl_entries,
+			cancel=1,
+			adv_adj=adv_adj,
+			update_outstanding=update_outstanding,
+			partial_cancel=partial_cancel,
+			voided_date=voided_date,  # CUSTOM CODE
+		)
+		validate_accounting_period(gl_entries)
+		check_freezing_date(gl_entries[0]["posting_date"], adv_adj)
+
+		is_opening = any(d.get("is_opening") == "Yes" for d in gl_entries)
+		validate_against_pcv(is_opening, gl_entries[0]["posting_date"], gl_entries[0]["company"])
+		if partial_cancel:
+			# Partial cancel is only used by `Advance` in separate account feature.
+			# Only cancel GL entries for unlinked reference using `voucher_detail_no`
+			gle = frappe.qb.DocType("GL Entry")
+			for x in gl_entries:
+				query = (
+					frappe.qb.update(gle)
+					.set(gle.modified, now())
+					.set(gle.modified_by, frappe.session.user)
+					.where(
+						(gle.company == x.company)
+						& (gle.account == x.account)
+						& (gle.party_type == x.party_type)
+						& (gle.party == x.party)
+						& (gle.voucher_type == x.voucher_type)
+						& (gle.voucher_no == x.voucher_no)
+						& (gle.against_voucher_type == x.against_voucher_type)
+						& (gle.against_voucher == x.against_voucher)
+						& (gle.voucher_detail_no == x.voucher_detail_no)
+					)
+				)
+
+				if not immutable_ledger_enabled:
+					query = query.set(gle.is_cancelled, True)
+
+				query.run()
+		else:
+			if not immutable_ledger_enabled:
+				gle_names = [x.get("name") for x in gl_entries]
+
+				# if names are available, cancel only that set of entries
+				if not all(gle_names):
+					set_as_cancel(gl_entries[0]["voucher_type"], gl_entries[0]["voucher_no"])
+				else:
+					frappe.db.sql(
+						"""UPDATE `tabGL Entry` SET is_cancelled = 1,
+						modified=%s, modified_by=%s
+						where name in %s and is_cancelled = 0""",
+						(now(), frappe.session.user, tuple(gle_names)),
+					)
+
+		for entry in gl_entries:
+			new_gle = copy.deepcopy(entry)
+			new_gle["name"] = None
+			debit = new_gle.get("debit", 0)
+			credit = new_gle.get("credit", 0)
+
+			debit_in_account_currency = new_gle.get("debit_in_account_currency", 0)
+			credit_in_account_currency = new_gle.get("credit_in_account_currency", 0)
+			debit_in_transaction_currency = new_gle.get("debit_in_transaction_currency", 0)
+			credit_in_transaction_currency = new_gle.get("credit_in_transaction_currency", 0)
+
+			new_gle["debit"] = credit
+			new_gle["credit"] = debit
+			new_gle["debit_in_account_currency"] = credit_in_account_currency
+			new_gle["credit_in_account_currency"] = debit_in_account_currency
+			new_gle["debit_in_transaction_currency"] = credit_in_transaction_currency
+			new_gle["credit_in_transaction_currency"] = debit_in_transaction_currency
+
+			new_gle["remarks"] = "On cancellation of " + new_gle["voucher_no"]
+			new_gle["is_cancelled"] = 1
+
+			if immutable_ledger_enabled:
+				new_gle["is_cancelled"] = 0
+				new_gle["posting_date"] = frappe.form_dict.get("posting_date") or getdate()
+
+			if new_gle["debit"] or new_gle["credit"]:
+				make_entry(new_gle, adv_adj, "Yes")
+
+
+def create_payment_ledger_entry(
+	gl_entries,
+	cancel=0,
+	adv_adj=0,
+	update_outstanding="Yes",
+	from_repost=0,
+	partial_cancel=False,
+	voided_date=None,  # CUSTOM CODE
+):
+	"""
+	HASH: f039bfe35a575272049534bac9aa771260691bde
+	REPO: https://github.com/frappe/erpnext/
+	PATH: erpnext/accounts/utils.py
+	METHOD: create_payment_ledger_entry
+	"""
+	if gl_entries:
+		ple_map = get_payment_ledger_entries(gl_entries, cancel=cancel)
+
+		for entry in ple_map:
+			ple = frappe.get_doc(entry)
+
+			if cancel:
+				delink_original_entry(ple, partial_cancel=partial_cancel, voided_date=voided_date)
+				if is_immutable_ledger_enabled():
+					ple.delinked = 0
+					ple.posting_date = frappe.form_dict.get("posting_date") or getdate()
+				elif voided_date:
+					ple.delinked = 0
+					ple.posting_date = voided_date
+
+			ple.flags.ignore_permissions = 1
+			ple.flags.adv_adj = adv_adj
+			ple.flags.from_repost = from_repost
+			ple.flags.update_outstanding = update_outstanding
+			ple.submit()
+
+
+def delink_original_entry(pl_entry, partial_cancel=False, voided_date=None):  # CUSTOM CODE
+	"""
+	HASH: f039bfe35a575272049534bac9aa771260691bde
+	REPO: https://github.com/frappe/erpnext/
+	PATH: erpnext/accounts/utils.py
+	METHOD: delink_original_entry
+	"""
+	if not pl_entry:
+		return
+
+	if pl_entry.doctype == "Advance Payment Ledger Entry":
+		adv = frappe.qb.DocType("Advance Payment Ledger Entry")
+
+		(
+			frappe.qb.update(adv)
+			.set(adv.delinked, 1)
+			.set(adv.event, "Cancel")
+			.set(adv.modified, now())
+			.set(adv.modified_by, frappe.session.user)
+			.where(adv.voucher_type == pl_entry.voucher_type)
+			.where(adv.voucher_no == pl_entry.voucher_no)
+			.where(adv.against_voucher_type == pl_entry.against_voucher_type)
+			.where(adv.against_voucher_no == pl_entry.against_voucher_no)
+			.where(adv.event == pl_entry.event)
+			.run()
+		)
+
+	else:
+		ple = frappe.qb.DocType("Payment Ledger Entry")
+		query = (
+			frappe.qb.update(ple)
+			.set(ple.modified, now())
+			.set(ple.modified_by, frappe.session.user)
+			.where(
+				(ple.company == pl_entry.company)
+				& (ple.account_type == pl_entry.account_type)
+				& (ple.account == pl_entry.account)
+				& (ple.party_type == pl_entry.party_type)
+				& (ple.party == pl_entry.party)
+				& (ple.voucher_type == pl_entry.voucher_type)
+				& (ple.voucher_no == pl_entry.voucher_no)
+				& (ple.against_voucher_type == pl_entry.against_voucher_type)
+				& (ple.against_voucher_no == pl_entry.against_voucher_no)
+			)
+		)
+
+		if partial_cancel:
+			query = query.where(ple.voucher_detail_no == pl_entry.voucher_detail_no)
+
+		if not (is_immutable_ledger_enabled() or voided_date):  # CUSTOM CODE
+			query = query.set(ple.delinked, True)
+
+		query.run()
+
+
 @frappe.whitelist()
 def update_check_number(doc: PaymentEntry, method: str | None = None) -> None:
 	mode_of_payment_type = frappe.db.get_value("Mode of Payment", doc.mode_of_payment, "type")
@@ -345,3 +613,15 @@ def get_image_base64_data(file_url):
 	image, unused_filename, extn = get_local_image(file_url)
 	file_content = file_doc.get_content()
 	return f"data:image/{extn};base64,{safe_decode(base64.b64encode(file_content).decode('utf-8'))}"
+
+
+@frappe.whitelist()
+def set_voided_date(doctype, docname, voided_date):
+	doc = frappe.get_doc(doctype, docname)
+	voided_date = getdate(voided_date)
+	if voided_date < doc.posting_date:
+		frappe.throw(
+			msg=_("Void As Of Date cannot be before the Payment Entry's posting date."),
+			title=_("Invalid Void As Of Date"),
+		)
+	frappe.db.set_value(doctype, docname, "voided_date", voided_date, update_modified=False)

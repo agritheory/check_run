@@ -71,7 +71,7 @@ doctype_js = {
 
 # before_install = "check_run.install.before_install"
 after_install = "check_run.customize.after_install"
-after_migrate = "check_run.customize.load_customizations"
+# after_migrate = "check_run.customize.load_customizations"
 
 # Uninstallation
 # ------------

@@ -4,7 +4,7 @@ For license information, please see license.txt-->
 # Check Run Documentation
 
 <div class="byline">
-  AgriTheory 2025-09-10
+  AgriTheory and Tyler Matteson 2026-02-21
 </div>
 
 
@@ -19,7 +19,7 @@ There is some required prerequisite setup to get the Check Run application up an
 - [Installation Guide](./installationguide.md)
 - [Configuration: Bank Accounts, Mode of Payment for Employees and Suppliers](./configuration.md)
 - [Check Run Settings](./settings.md)
-- [Default Permissions and Workflows](./permissions.md)
+- [Default Permissions and Workflows](./permissions.md), including an optional Voidable Payment Entry Workflow available with the Check Run app and how to activate it
 
 ## Check Run Quick Start
 
