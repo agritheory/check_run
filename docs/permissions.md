@@ -4,7 +4,7 @@ For license information, please see license.txt-->
 # Default Permissions and Workflow
 
 <div class="byline">
-  AgriTheory and Tyler Matteson 2026-02-21
+  AgriTheory, Heather Kusmierz, and Tyler Matteson 2026-02-21
 </div>
 
 
