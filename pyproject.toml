@@ -1,6 +1,6 @@
 [project]
 name = "check_run"
-version = "15.11.0"
+version = "15.12.0"
 description = "Payables utility for ERPNext"
 authors = [
     { name = "AgriTheory", email = "support@agritheory.dev"}
