@@ -46,6 +46,7 @@ bench get-app check_run "${GITHUB_WORKSPACE}" --skip-assets
 
 printf '%s\n' 'frappe' 'erpnext' 'hrms' 'check_run' > ~/frappe-bench/sites/apps.txt
 bench setup requirements --python
+bench setup requirements --dev
 bench use test_site
 
 bench start &> bench_run_logs.txt &

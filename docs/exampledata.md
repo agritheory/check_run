@@ -1,4 +1,12 @@
+<!-- Copyright (c) 2026, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Using the Example Data to Experiment with Check Run
+
+<div class="byline">
+  AgriTheory and Tyler Matteson 2026-02-21
+</div>
+
 
 The Check Run application comes with a `test_setup.py` script that is completely optional to use. If you execute the script, it populates your ERPNext site with demo business data for a fictitious company called Chelsea Fruit Co. The data enable you to experiment with and test the Check Run application's functionality before installing the app into your ERPNext site.
 

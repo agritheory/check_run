@@ -1,4 +1,12 @@
+<!-- Copyright (c) 2026, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Default Permissions and Workflow
+
+<div class="byline">
+  AgriTheory, Heather Kusmierz, and Tyler Matteson 2026-02-21
+</div>
+
 
 It's strongly recommended that you set system permissions to limit which users can see and execute a Check Run. The only permission the application enforces is that a user must have a permission level in ERPNext to create payment entries in order to perform a Check Run. Additionally, only the first user to access a draft Check Run doctype can edit it. 
 
@@ -31,9 +39,9 @@ These distinctions can be important in scenarios when the company sent a valid p
 
 For the Payment Ledger, the "Void" workflow follows abehavior is a hybrid between how ERPNext handles cancelled payments when the immutable ledger feature is enabled or not.
 
-- a "Cancel" workflow (without the immutable ledger feature enabled) will find the initial Payment Ledger Entry (PLE), use it to create an offsetting PLE with the same posting date, then "delink" both. Delinked PLEs don't show up in any ERPNext reports, so the Accounts Payable Report will show Invoice as outstanding for any report date between the original Invoice posting date and beyond, until another payment is recorded
+- a "Cancel" workflow (without the immutable ledger feature enabled) will find the initial Payment Ledger Entry (PLE), use it to create an offsetting PLE with the same posting date, then "unlink" both. Unlinked PLEs don't show up in any ERPNext reports, so the Accounts Payable Report will show Invoice as outstanding for any report date between the original Invoice posting date and beyond, until another payment is recorded
 - a "Cancel workflow" (with the immutable ledger feature enabled) will find the initial Payment Ledger Entry (PLE), use it to create an offsetting PLE with the the current date, then keep both PLEs linked. The Accounts Payable Report will show that the Invoice is paid using a report date up to the cancellation date (report dates after that show the Invoice as outstanding again with aging calculated against the Invoice's due date)
-- a "Void" workflow follows the immutable ledger pattern where it doesn't delink the entries, except that the offsetting PLE uses the user-provided void date for its posting date. This maintains the historical record in the Accounts Payable report that the Invoice were presumed paid from original payment date up to the void date, then report dates after than show the Invoice as outstanding
+- a "Void" workflow follows the immutable ledger pattern where it doesn't unlink the entries, except that the offsetting PLE uses the user-provided void date for its posting date. This maintains the historical record in the Accounts Payable report that the Invoice were presumed paid from original payment date up to the void date, then report dates after than show the Invoice as outstanding
 
 The following example demonstrates the differences in the accounting entries and the Accounts Payable report results between voiding a Payment Entry vs. cancelling it. It assumes the company doesn't have the immutable ledger feature enabled:
 

@@ -1,3 +1,6 @@
+# Copyright (c) 2026, AgriTheory and contributors
+# For license information, please see license.txt
+
 import datetime
 import types
 
@@ -43,11 +46,10 @@ def before_test():
 
 
 def create_test_data():
-	today = frappe.utils.getdate()
-	setup_accounts_and_fiscal_years()
+	setup_accounts()
 	settings = frappe._dict(
 		{
-			"day": today.replace(month=1, day=1),
+			"day": frappe.utils.getdate().replace(month=1, day=1),
 			"company": frappe.defaults.get_defaults().get("company"),
 			"company_account": frappe.get_value(
 				"Account",
@@ -60,6 +62,7 @@ def create_test_data():
 		}
 	)
 	create_company_address(settings)
+	create_previous_fiscal_year(settings)
 	create_bank_and_bank_account(settings)
 	create_payment_terms_templates(settings)
 	create_suppliers(settings)
@@ -74,33 +77,6 @@ def create_test_data():
 	create_manual_payment_entry(settings)
 
 
-def setup_accounts_and_fiscal_years():
-	frappe.rename_doc(
-		"Account", "1000 - Application of Funds (Assets) - CFC", "1000 - Assets - CFC", force=True
-	)
-	frappe.rename_doc(
-		"Account", "2000 - Source of Funds (Liabilities) - CFC", "2000 - Liabilities - CFC", force=True
-	)
-	frappe.rename_doc(
-		"Account", "1310 - Debtors - CFC", "1310 - Accounts Receivable - CFC", force=True
-	)
-	frappe.rename_doc(
-		"Account", "2110 - Creditors - CFC", "2110 - Accounts Payable - CFC", force=True
-	)
-	update_account_number("1110 - Cash - CFC", "Petty Cash", account_number="1110")
-	update_account_number("Primary Checking - CFC", "Primary Checking", account_number="1201")
-
-	company = frappe.defaults.get_defaults().company
-	today = frappe.utils.getdate()
-	for year in [today.year - 1, today.year + 1]:
-		fy = frappe.new_doc("Fiscal Year")
-		fy.year = year
-		fy.year_start_date = datetime.date(year, 1, 1)
-		fy.year_end_date = datetime.date(year, 12, 31)
-		fy.append("companies", {"company": company})
-		fy.save()
-
-
 def create_company_address(settings):
 	company_address = frappe.new_doc("Address")
 	company_address.title = settings.company
@@ -112,6 +88,21 @@ def create_company_address(settings):
 	company_address.is_your_company_address = True
 	company_address.append("links", {"link_doctype": "Company", "link_name": settings.company})
 	company_address.save()
+
+
+def create_previous_fiscal_year(settings):
+	if frappe.db.exists("Fiscal Year", str(settings.day.year - 1)):
+		return
+	current_fiscal_year = frappe.get_doc("Fiscal Year", str(settings.day.year))
+	previous_fiscal_year = frappe.new_doc("Fiscal Year")
+	previous_fiscal_year.year_start_date = current_fiscal_year.year_start_date.replace(
+		year=current_fiscal_year.year_start_date.year - 1
+	)
+	previous_fiscal_year.year_end_date = current_fiscal_year.year_end_date.replace(
+		year=current_fiscal_year.year_end_date.year - 1
+	)
+	previous_fiscal_year.year = previous_fiscal_year.year_start_date.year
+	previous_fiscal_year.save()
 
 
 def create_bank_and_bank_account(settings):
@@ -189,6 +180,23 @@ def create_bank_and_bank_account(settings):
 	)
 	doc.save()
 	doc.submit()
+
+
+def setup_accounts():
+	frappe.rename_doc(
+		"Account", "1000 - Application of Funds (Assets) - CFC", "1000 - Assets - CFC", force=True
+	)
+	frappe.rename_doc(
+		"Account", "2000 - Source of Funds (Liabilities) - CFC", "2000 - Liabilities - CFC", force=True
+	)
+	frappe.rename_doc(
+		"Account", "1310 - Debtors - CFC", "1310 - Accounts Receivable - CFC", force=True
+	)
+	frappe.rename_doc(
+		"Account", "2110 - Creditors - CFC", "2110 - Accounts Payable - CFC", force=True
+	)
+	update_account_number("1110 - Cash - CFC", "Petty Cash", account_number="1110")
+	update_account_number("Primary Checking - CFC", "Primary Checking", account_number="1201")
 
 
 def create_payment_terms_templates(settings):

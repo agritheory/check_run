@@ -3,6 +3,11 @@ For license information, please see license.txt-->
 
 # Configuration
 
+<div class="byline">
+  AgriTheory and Tyler Matteson 2026-02-21
+</div>
+
+
 ## Banks and Bank Accounts
 
 The Check Run feature requires at least one `Bank` and `Bank Account` defined for the Company. These can be set up under `Accounting > Bank` and `Accounting > Bank Account`, respectively.

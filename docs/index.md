@@ -1,4 +1,12 @@
+<!-- Copyright (c) 2026, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Check Run Documentation
+
+<div class="byline">
+  AgriTheory, Heather Kusmierz, and Tyler Matteson 2026-02-21
+</div>
+
 
 The Check Run application extends ERPNext[^1] with several payables-related utilities. These include Check Run (a single-page payment mechanism), check printing, and a bank-friendly report.
 

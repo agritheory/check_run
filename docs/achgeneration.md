@@ -1,4 +1,12 @@
+<!-- Copyright (c) 2026, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # ACH Generation
+
+<div class="byline">
+  AgriTheory and Tyler Matteson 2026-02-21
+</div>
+
 
 For electronic bank transfers, banking institutions require specifically-formatted plain-text files to encode all necessary information. This includes data about the type of payment, the parties, their bank accounts, and payment amounts. These files conform to Automated Clearing House (ACH) standards, which is an electronic-funds transfer system run by the National Automated Clearing House Association (NACHA). ACH files are intended to represent electronic inter-bank transactions.
 

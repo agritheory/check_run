@@ -1,3 +1,6 @@
+// Copyright (c) 2026, AgriTheory and contributors
+// For license information, please see license.txt
+
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { getProxyOptions } from 'frappe-ui/src/utils/vite-dev-server'
