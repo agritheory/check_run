@@ -5,6 +5,7 @@ frappe.provide('check_run')
 frappe.provide('frappe.ui.form')
 
 frappe.ui.form.CheckRunQuickEntryForm = class CheckRunQuickEntryForm extends frappe.ui.form.QuickEntryForm {
+	/* jscpd:ignore-start */
 	constructor(doctype, after_insert, init_callback, doc, force) {
 		super(doctype, after_insert, init_callback, doc, force)
 	}
@@ -75,6 +76,7 @@ frappe.ui.form.CheckRunQuickEntryForm = class CheckRunQuickEntryForm extends fra
 				})
 		}
 	}
+	/* jscpd:ignore-end */
 	register_primary_action() {
 		const me = this
 		this.dialog.set_primary_action(__('Start Check Run'), () => {

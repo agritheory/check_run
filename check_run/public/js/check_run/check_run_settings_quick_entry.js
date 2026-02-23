@@ -4,7 +4,10 @@
 frappe.provide('check_run')
 frappe.provide('frappe.ui.form')
 
-frappe.ui.form.CheckRunSettingsQuickEntryForm = class CheckRunQuickEntryForm extends frappe.ui.form.QuickEntryForm {
+frappe.ui.form.CheckRunSettingsQuickEntryForm = class CheckRunSettingsQuickEntryForm extends (
+	frappe.ui.form.QuickEntryForm
+) {
+	/* jscpd:ignore-start */
 	constructor(doctype, after_insert, init_callback, doc, force) {
 		super(doctype, after_insert, init_callback, doc, force)
 	}
@@ -75,4 +78,5 @@ frappe.ui.form.CheckRunSettingsQuickEntryForm = class CheckRunQuickEntryForm ext
 				})
 		}
 	}
+	/* jscpd:ignore-end */
 }
