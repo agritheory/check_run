@@ -4,7 +4,7 @@ For license information, please see license.txt-->
 # Check Run Installation Guide
 
 <div class="byline">
-  AgriTheory and Tyler Matteson 2026-02-21
+  Tyler Matteson 2026-02-21
 </div>
 
 

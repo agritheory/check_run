@@ -4,7 +4,7 @@ For license information, please see license.txt-->
 # Payment Entry
 
 <div class="byline">
-  AgriTheory and Tyler Matteson 2026-02-21
+  Tyler Matteson 2026-02-21
 </div>
 
 ## Auto-Increment Check Number
