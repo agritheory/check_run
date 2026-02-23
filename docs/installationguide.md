@@ -1,4 +1,12 @@
+<!-- Copyright (c) 2026, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Check Run Installation Guide
+
+<div class="byline">
+  AgriTheory and Tyler Matteson 2026-02-21
+</div>
+
 
 ## Developer Setup
 First, set up a new bench and substitute a path to the python version to use. Python should be 3.8 latest for V13 and 3.10 latest for V14. These instructions use [pyenv](https://github.com/pyenv/pyenv) for managing environments.

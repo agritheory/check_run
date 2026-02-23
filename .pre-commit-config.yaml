@@ -9,14 +9,23 @@ repos:
       - id: trailing-whitespace
         files: 'check_run.*'
         exclude: '.*json$|.*txt$|.*csv|.*md|.*svg'
+      - id: check-yaml
       - id: no-commit-to-branch
-        args: ['--branch', 'version-15']
+        args: ['--branch', 'version-15', '--branch', 'version-16']
       - id: check-merge-conflict
       - id: check-ast
       - id: check-json
       - id: check-toml
-      - id: check-yaml
       - id: debug-statements
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+        args: ['--ignore-words-list', 'notin']
+        exclude: 'yarn.lock|poetry.lock'
+        additional_dependencies:
+          - tomli
 
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.20.0
@@ -54,17 +63,6 @@ repos:
         additional_dependencies:
           - tomli
 
-  - repo: https://github.com/agritheory/test_utils
-    rev: v1.0.0
-    hooks:
-      - id: update_pre_commit_config
-      - id: validate_copyright
-        files: '\.(js|ts|py|md)$'
-        args: ['--app', 'check_run']
-      - id: clean_customized_doctypes
-        args: ['--app', 'check_run']
-      - id: validate_customizations
-
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.16.0
     hooks:
@@ -78,6 +76,24 @@ repos:
         name: prettier
         entry: npx prettier -w . --config .prettierrc.js --ignore-path .prettierignore
         language: system
+
+  - repo: https://github.com/agritheory/test_utils
+    rev: v1.16.0
+    hooks:
+      - id: update_pre_commit_config
+      - id: validate_frappe_project
+      - id: validate_copyright
+        files: '\.(js|ts|py|md)$'
+        args: ['--app', 'check_run']
+      - id: bylines
+        exclude: 'README.md|CHANGELOG.md'
+      - id: clean_customized_doctypes
+        args: ['--app', 'check_run']
+      - id: validate_customizations
+      - id: patch_linters
+        args: ['--app', 'check_run']
+      - id: track_overrides
+        args: ['--directory', '.', '--app', 'check_run', '--base-branch', 'version-15']
 
 ci:
   autoupdate_schedule: weekly

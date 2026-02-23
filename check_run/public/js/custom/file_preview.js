@@ -1,3 +1,6 @@
+// Copyright (c) 2026, AgriTheory and contributors
+// For license information, please see license.txt
+
 frappe.provide('frappe.ui.form')
 
 $(document).on('page-change', function (e) {

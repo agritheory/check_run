@@ -1,4 +1,12 @@
+<!-- Copyright (c) 2026, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Check Run Documentation
+
+<div class="byline">
+  AgriTheory, Heather Kusmierz, and Tyler Matteson 2026-02-21
+</div>
+
 
 The Check Run application extends ERPNext[^1] with several payables-related utilities. These include Check Run (a single-page payment mechanism), check printing, and a bank-friendly report.
 
@@ -11,7 +19,7 @@ There is some required prerequisite setup to get the Check Run application up an
 - [Installation Guide](./installationguide.md)
 - [Configuration: Bank Accounts, Mode of Payment for Employees and Suppliers](./configuration.md)
 - [Check Run Settings](./settings.md)
-- [Default Permissions and Workflows](./permissions.md)
+- [Default Permissions and Workflows](./permissions.md), including an optional Voidable Payment Entry Workflow available with the Check Run app and how to activate it
 
 ## Check Run Quick Start
 

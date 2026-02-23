@@ -1,3 +1,6 @@
+# Copyright (c) 2026, AgriTheory and contributors
+# For license information, please see license.txt
+
 from . import __version__ as app_version  # noqa: F401
 
 app_name = "check_run"
@@ -67,8 +70,8 @@ doctype_js = {
 # ------------
 
 # before_install = "check_run.install.before_install"
-after_install = "check_run.customize.after_install"
-after_migrate = "check_run.customize.load_customizations"
+after_install = "check_run.install.after_install"
+# after_migrate = "check_run.customize.load_customizations"
 
 # Uninstallation
 # ------------

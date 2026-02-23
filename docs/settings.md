@@ -3,6 +3,11 @@ For license information, please see license.txt-->
 
 # Check Run Settings
 
+<div class="byline">
+  AgriTheory and Tyler Matteson 2026-02-21
+</div>
+
+
 A `Check Run Setting` entry determines the behavior in a Check Run for a specific bank account/payable account combination. You will need to confirm separate settings for every bank account-payable account combination that you plan to use in a Check Run.
 
 ![Screen shot of the Check Run Settings listview with two entries - one for the Local Bank and Payroll Payable combination and the other for the Local Bank and Accounts Payable combination.](./assets/SettingsList.png)

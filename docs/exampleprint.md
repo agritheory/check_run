@@ -1,4 +1,12 @@
+<!-- Copyright (c) 2026, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Example Print Format: Voucher Check
+
+<div class="byline">
+  AgriTheory and Tyler Matteson 2026-02-21
+</div>
+
 
 To take advantage of Check Run's check printing functionality, you'll need to set up a print format in ERPNext. Print formats are as unique as the organizations using ERPNext, so a voucher check print format serves as an example template. It can be a starting point from which to customize to suit your needs.
 

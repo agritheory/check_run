@@ -1,4 +1,12 @@
+<!-- Copyright (c) 2026, AgriTheory and contributors
+For license information, please see license.txt-->
+
 # Payment Entry
+
+<div class="byline">
+  AgriTheory and Tyler Matteson 2026-02-21
+</div>
+
 ## Auto-Increment Check Number
 The Check Run application will automatically fetch and increment check numbers, the latest number is stored in the Bank Account doctype. Both Mode of Payment and Company Bank Account are required fields to fetch the data. As long as the number provided is an integer it will save it to the linked Bank Account record.
 

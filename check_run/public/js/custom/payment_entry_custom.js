@@ -1,3 +1,6 @@
+// Copyright (c) 2026, AgriTheory and contributors
+// For license information, please see license.txt
+
 frappe.ui.form.on('Payment Entry', {
 	mode_of_payment: frm => {
 		get_next_check_number(frm)
@@ -7,6 +10,12 @@ frappe.ui.form.on('Payment Entry', {
 	},
 	onload: frm => {
 		load_supplier_default_mode_of_payment(frm)
+	},
+	before_workflow_action: async frm => {
+		if (frm.selected_workflow_action == 'Void') {
+			await set_void_as_of_date(frm)
+		}
+		return
 	},
 })
 
@@ -46,4 +55,51 @@ function load_supplier_default_mode_of_payment(frm) {
 					}
 				})
 		})
+}
+
+async function set_void_as_of_date(frm) {
+	let values = await void_as_of_date_dialog(frm)
+	frm.set_value('voided_date', values.as_of_date)
+	cur_dialog.hide()
+}
+
+function void_as_of_date_dialog(frm) {
+	return new Promise(resolve => {
+		let dialog = new frappe.ui.Dialog({
+			title: __('Select the As-Of Date to Void Payment Entry'),
+			fields: [
+				{
+					fieldtype: 'Date',
+					label: __('Void As-Of Date'),
+					fieldname: 'as_of_date',
+					default: moment(),
+				},
+			],
+			primary_action: function () {
+				let as_of_date = dialog.get_value('as_of_date')
+				if (!as_of_date) {
+					as_of_date = moment()
+				}
+
+				if (as_of_date < frm.doc.posting_date) {
+					frappe.throw(__("Void As Of Date cannot be before the Payment Entry's posting date."))
+				}
+
+				frappe
+					.xcall('check_run.overrides.payment_entry.set_voided_date', {
+						doctype: frm.doc.doctype,
+						docname: frm.doc.name,
+						voided_date: as_of_date,
+					})
+					.then(r => {
+						resolve({
+							as_of_date: as_of_date,
+						})
+					})
+			},
+			primary_action_label: __('Set Date'),
+		})
+		dialog.show()
+		frappe.dom.unfreeze()
+	})
 }
