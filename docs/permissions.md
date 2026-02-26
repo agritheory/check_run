@@ -4,7 +4,7 @@ For license information, please see license.txt-->
 # Default Permissions and Workflow
 
 <div class="byline">
-  Heather Kusmierz and Tyler Matteson 2026-02-21
+  Heather Kusmierz and Tyler Matteson 2026-02-23
 </div>
 
 
@@ -37,7 +37,7 @@ These distinctions can be important in scenarios when the company sent a valid p
 - a physical check arrives, but is then misplaced or damaged
 - there's an error in the routing/account information given for an electronic transfer and the transfer goes to the wrong account
 
-For the Payment Ledger, the "Void" workflow follows abehavior is a hybrid between how ERPNext handles cancelled payments when the immutable ledger feature is enabled or not.
+For the Payment Ledger, the "Void" workflow behavior is a hybrid between how ERPNext handles cancelled payments when the immutable ledger feature is enabled and when it's not.
 
 - a "Cancel" workflow (without the immutable ledger feature enabled) will find the initial Payment Ledger Entry (PLE), use it to create an offsetting PLE with the same posting date, then "unlink" both. Unlinked PLEs don't show up in any ERPNext reports, so the Accounts Payable Report will show Invoice as outstanding for any report date between the original Invoice posting date and beyond, until another payment is recorded
 - a "Cancel workflow" (with the immutable ledger feature enabled) will find the initial Payment Ledger Entry (PLE), use it to create an offsetting PLE with the the current date, then keep both PLEs linked. The Accounts Payable Report will show that the Invoice is paid using a report date up to the cancellation date (report dates after that show the Invoice as outstanding again with aging calculated against the Invoice's due date)
