@@ -2,23 +2,24 @@ name: Pytest CI
 
 on:
   push:
-    branches: [ version-14, version-15 ]
+    branches:
+      - version-14
+      - version-15
   pull_request:
-    branches: [ version-14, version-15 ]
-env:
-    BRANCH_NAME: ${{ github.base_ref || github.ref_name }}
+
+permissions:
+  contents: write
+  checks: write
+  issues: write
+  pull-requests: write
 
 jobs:
   tests:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-      fail-fast: false
     name: Server
+    runs-on: ubuntu-latest
 
     services:
-      mysql:
+      mariadb:
         image: mariadb:10.6
         env:
           MYSQL_ALLOW_EMPTY_PASSWORD: YES
@@ -29,25 +30,25 @@ jobs:
 
     steps:
       - name: Clone
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           check-latest: true
-          cache: 'yarn'  # Replaces `Get yarn cache directory path` and `yarn-cache` steps
+          cache: 'yarn'
 
       - name: Add to Hosts
         run: echo "127.0.0.1 test_site" | sudo tee -a /etc/hosts
 
       - name: Cache pip
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt', '**/pyproject.toml', '**/setup.py', '**/setup.cfg') }}
@@ -55,42 +56,27 @@ jobs:
             ${{ runner.os }}-pip-
             ${{ runner.os }}-
 
-      - name: Cache node modules
-        uses: actions/cache@v4
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-
       - name: Install JS Dependencies
         run: yarn --prefer-offline
 
       - name: Install App Dependencies
-        run: bash ${{github.workspace}}/.github/helper/install_dependencies.sh
+        run: bash ${{ github.workspace }}/.github/helper/install_dependencies.sh
 
       - name: Install Bench Site and Apps
         env:
           MYSQL_HOST: 'localhost'
           MYSQL_PWD: 'admin'
-          BRANCH_NAME: ${{ env.BRANCH_NAME}}
-        run: |
-          bash ${{ github.workspace }}/.github/helper/install.sh
+        run: bash ${{ github.workspace }}/.github/helper/install.sh
 
       - name: Run Tests
         working-directory: /home/runner/frappe-bench
         run: |
           source env/bin/activate
           cd apps/check_run
-          poetry install
           pytest check_run/tests/ --disable-warnings -s | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-coverage-path: /home/runner/frappe-bench/apps/check_run/pytest-coverage.txt
-          pytest-xml-coverage-path: /home/runner/frappe-bench/apps/check_run/coverage.xml
+          junitxml-path: /home/runner/frappe-bench/apps/check_run/coverage.xml
