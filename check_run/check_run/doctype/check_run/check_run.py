@@ -32,6 +32,41 @@ from check_run.check_run.doctype.check_run_settings.check_run_settings import (
 
 
 class CheckRun(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		ach_file_generated: DF.Check
+		amended_from: DF.Link | None
+		amount_check_run: DF.Currency
+		bank_account: DF.Link
+		beg_balance: DF.Currency
+		company: DF.Link
+		company_discretionary_data: DF.Data | None
+		end_date: DF.Date | None
+		final_check_number: DF.Int
+		initial_check_number: DF.Int
+		pay_to_account: DF.Link
+		posting_date: DF.Date | None
+		print_count: DF.Int
+		status: DF.Literal[
+			"Draft",
+			"Pending Approval",
+			"Approved",
+			"Submitting",
+			"Submitted",
+			"Ready to Print",
+			"Confirm Print",
+			"Printed",
+		]
+		transactions: DF.LongText | None
+
+	# end: auto-generated types
+
 	@frappe.read_only()
 	def onload(self) -> None:
 		if self.is_new():
@@ -201,7 +236,7 @@ class CheckRun(Document):
 		self.filter_transactions()
 		transactions = [
 			t
-			for t in json.loads(self.transactions)
+			for t in json.loads(self.transactions or "[]")
 			if t.get("pay") and not self.not_outstanding_or_cancelled(t)
 		]
 		if not len(transactions):
@@ -224,7 +259,7 @@ class CheckRun(Document):
 		frappe.db.sql("SAVEPOINT process_check_run")  # sql:ignore
 		try:
 			__transactions = self.transactions
-			_transactions = json.loads(__transactions)
+			_transactions = json.loads(__transactions or "[]")
 			transactions = sorted(
 				(frappe._dict(item) for item in _transactions if item.get("pay")), key=lambda x: x.party
 			)
@@ -252,7 +287,7 @@ class CheckRun(Document):
 		ach_payment_entries = list(
 			{
 				e.get("payment_entry")
-				for e in json.loads(self.transactions)
+				for e in json.loads(self.transactions or "[]")
 				if e.get("mode_of_payment") in electronic_mop
 			}
 		)
@@ -478,7 +513,7 @@ class CheckRun(Document):
 		if reprint_check_number and reprint_check_number != "undefined":
 			self.initial_check_number = int(reprint_check_number)
 		output = PdfWriter()
-		transactions = json.loads(self.transactions)
+		transactions = json.loads(self.transactions or "[]")
 		check_increment = 0
 		_transactions = []
 		idx = 0

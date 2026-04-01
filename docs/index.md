@@ -4,7 +4,7 @@ For license information, please see license.txt-->
 # Check Run Documentation
 
 <div class="byline">
-  Heather Kusmierz and Tyler Matteson 2026-02-21
+  Heather Kusmierz and Tyler Matteson 2026-02-23
 </div>
 
 
@@ -63,6 +63,7 @@ Follow the links below for more information about Check Run's features:
 - [ACH Generation](./achgeneration.md)
 - [Render PDF Sequence](./renderpdfsequence.md)
 - [Positive Pay Report](./positivepay.md)
+- [Sales Tax Remittance Report](./sales_tax_remittance_report.md)
 - [Example Print Format: Voucher Check](./exampleprint.md)
 - [Example Data: Experimenting with Check Run Using Demo Data](./exampledata.md)
 - [Translations](./translations.md)

@@ -38,7 +38,7 @@ pytest-order = "~=1.2.1"
 skip = "CHANGELOG.md"
 
 [tool.pytest.ini_options]
-addopts = "-s --disable-warnings"
+addopts = "--cov=check_run --cov-report=xml -s --disable-warnings"
 
 [tool.black]
 line-length = 99

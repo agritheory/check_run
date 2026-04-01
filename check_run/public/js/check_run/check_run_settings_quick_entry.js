@@ -79,4 +79,21 @@ frappe.ui.form.CheckRunSettingsQuickEntryForm = class CheckRunSettingsQuickEntry
 		}
 	}
 	/* jscpd:ignore-end */
+	register_primary_action() {
+		const me = this
+		this.dialog.set_primary_action(__('Save'), () => {
+			let values = me.dialog.get_values()
+			if (!values) return
+			frappe
+				.xcall('check_run.check_run.doctype.check_run_settings.check_run_settings.create', {
+					company: values.company,
+					bank_account: values.bank_account,
+					pay_to_account: values.pay_to_account,
+				})
+				.then(r => {
+					me.dialog.hide()
+					frappe.set_route('Form', 'Check Run Settings', r.name)
+				})
+		})
+	}
 }

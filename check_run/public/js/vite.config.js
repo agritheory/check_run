@@ -3,7 +3,6 @@
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { getProxyOptions } from 'frappe-ui/src/utils/vite-dev-server'
 import path, { resolve } from 'path'
 import { existsSync, readFileSync, writeFileSync } from 'fs'
 
@@ -29,10 +28,6 @@ function frappeAssetsPlugin() {
 
 export default defineConfig({
 	plugins: [vue(), frappeAssetsPlugin()],
-	server: {
-		port: 8080,
-		proxy: getProxyOptions({ port: 8003 }),
-	},
 	build: {
 		rollupOptions: {
 			input: {

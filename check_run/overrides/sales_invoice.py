@@ -13,6 +13,12 @@ from frappe.utils.data import cint, flt
 
 class CheckRunSalesInvoice(SalesInvoice):
 	def validate(self):
+		"""
+		HASH: f8ab56ecc96ae7c28b9f7b8e79488ff2c47cc810
+		REPO: https://github.com/frappe/erpnext/
+		PATH: erpnext/accounts/doctype/sales_invoice/sales_invoice.py
+		METHOD: validate
+		"""
 		for row in self.taxes:
 			if not row.party:
 				continue
@@ -22,6 +28,12 @@ class CheckRunSalesInvoice(SalesInvoice):
 		super().validate()
 
 	def on_submit(self):
+		"""
+		HASH: f8ab56ecc96ae7c28b9f7b8e79488ff2c47cc810
+		REPO: https://github.com/frappe/erpnext/
+		PATH: erpnext/accounts/doctype/sales_invoice/sales_invoice.py
+		METHOD: on_submit
+		"""
 		if self.is_return and self.return_against:
 			self._reduce_original_tax_outstanding()
 		super().on_submit()
@@ -54,6 +66,12 @@ class CheckRunSalesInvoice(SalesInvoice):
 			)
 
 	def make_tax_gl_entries(self, gl_entries):
+		"""
+		HASH: f8ab56ecc96ae7c28b9f7b8e79488ff2c47cc810
+		REPO: https://github.com/frappe/erpnext/
+		PATH: erpnext/accounts/doctype/sales_invoice/sales_invoice.py
+		METHOD: make_tax_gl_entries
+		"""
 		enable_discount_accounting = cint(
 			frappe.db.get_single_value("Selling Settings", "enable_discount_accounting")
 		)
