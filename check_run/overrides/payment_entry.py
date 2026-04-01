@@ -270,69 +270,69 @@ class CheckRunPaymentEntry(PaymentEntry):
 					).format(frappe.bold(d.reference_name), frappe.bold(idx))
 				)
 
-				# if no payment template is used by invoice and has a custom term(no `payment_term`), then invoice outstanding will be in 'None' key
-				latest = latest.get(d.payment_term) or latest.get(None)
-				# The reference has already been fully paid
-				if not latest:
-					frappe.throw(
-						_("{0} {1} has already been fully paid.").format(_(d.reference_doctype), d.reference_name)
-					)
-				# The reference has already been partly paid
-				elif (
-					latest.outstanding_amount < latest.invoice_amount
-					and flt(d.outstanding_amount, d.precision("outstanding_amount"))
-					!= flt(latest.outstanding_amount, d.precision("outstanding_amount"))
-					and d.payment_term == ""
-				):
-					frappe.throw(
-						_(
-							"{0} {1} has already been partly paid. Please use the 'Get Outstanding Invoice' or the 'Get Outstanding Orders' button to get the latest outstanding amounts."
-						).format(_(d.reference_doctype), d.reference_name)
-					)
-
-				fail_message = _(
-					"<b>Row #{1}</b> {0} / {2}: Allocated Amount of {3} cannot be greater than outstanding amount of {4}."
+			# if no payment template is used by invoice and has a custom term(no `payment_term`), then invoice outstanding will be in 'None' key
+			latest = latest.get(d.payment_term) or latest.get(None)
+			# The reference has already been fully paid
+			if not latest:
+				frappe.throw(
+					_("{0} {1} has already been fully paid.").format(_(d.reference_doctype), d.reference_name)
+				)
+			# The reference has already been partly paid
+			elif (
+				latest.outstanding_amount < latest.invoice_amount
+				and flt(d.outstanding_amount, d.precision("outstanding_amount"))
+				!= flt(latest.outstanding_amount, d.precision("outstanding_amount"))
+				and d.payment_term == ""
+			):
+				frappe.throw(
+					_(
+						"{0} {1} has already been partly paid. Please use the 'Get Outstanding Invoice' or the 'Get Outstanding Orders' button to get the latest outstanding amounts."
+					).format(_(d.reference_doctype), d.reference_name)
 				)
 
-				if (
-					d.payment_term
-					and (
-						(flt(d.allocated_amount)) > 0
-						and latest.payment_term_outstanding
-						and (flt(d.allocated_amount) > flt(latest.payment_term_outstanding))
-					)
-					and self.term_based_allocation_enabled_for_reference(d.reference_doctype, d.reference_name)
-				):
-					frappe.throw(
-						_(
-							"Row #{0}: Allocated amount:{1} is greater than outstanding amount:{2} for Payment Term {3}"
-						).format(
-							d.idx, d.allocated_amount, latest.payment_term_outstanding, d.payment_term
-						)
-					)
+			fail_message = _(
+				"<b>Row #{1}</b> {0} / {2}: Allocated Amount of {3} cannot be greater than outstanding amount of {4}."
+			)
 
-				if (flt(d.allocated_amount)) > 0 and flt(d.allocated_amount) > flt(latest.outstanding_amount):
-					frappe.throw(
-						fail_message.format(
-							self.party_name,
-							d.idx,
-							get_link_to_form(d.reference_doctype, d.reference_name),
-							d.allocated_amount,
-							d.outstanding_amount,
-						)
+			if (
+				d.payment_term
+				and (
+					(flt(d.allocated_amount)) > 0
+					and latest.payment_term_outstanding
+					and (flt(d.allocated_amount) > flt(latest.payment_term_outstanding))
+				)
+				and self.term_based_allocation_enabled_for_reference(d.reference_doctype, d.reference_name)
+			):
+				frappe.throw(
+					_(
+						"Row #{0}: Allocated amount:{1} is greater than outstanding amount:{2} for Payment Term {3}"
+					).format(
+						d.idx, d.allocated_amount, latest.payment_term_outstanding, d.payment_term
 					)
+				)
 
-				# Check for negative outstanding invoices as well
-				if flt(d.allocated_amount) < 0 and flt(d.allocated_amount) < flt(latest.outstanding_amount):
-					frappe.throw(
-						fail_message.format(
-							self.party_name,
-							d.idx,
-							get_link_to_form(d.reference_doctype, d.reference_name),
-							d.allocated_amount,
-							d.outstanding_amount,
-						)
+			if (flt(d.allocated_amount)) > 0 and flt(d.allocated_amount) > flt(latest.outstanding_amount):
+				frappe.throw(
+					fail_message.format(
+						self.party_name,
+						d.idx,
+						get_link_to_form(d.reference_doctype, d.reference_name),
+						d.allocated_amount,
+						d.outstanding_amount,
 					)
+				)
+
+			# Check for negative outstanding invoices as well
+			if flt(d.allocated_amount) < 0 and flt(d.allocated_amount) < flt(latest.outstanding_amount):
+				frappe.throw(
+					fail_message.format(
+						self.party_name,
+						d.idx,
+						get_link_to_form(d.reference_doctype, d.reference_name),
+						d.allocated_amount,
+						d.outstanding_amount,
+					)
+				)
 
 
 def make_gl_entries(

@@ -14,9 +14,9 @@ from frappe.utils.data import add_days, flt
 from check_run.tests.fixtures import (
 	customers,
 	employees,
+	sales_tax_authorities,
 	sales_tax_templates,
 	suppliers,
-	tax_authority,
 )
 
 
@@ -81,6 +81,10 @@ def create_test_data():
 		settings.day = settings.day.replace(month=month)
 		create_payroll_journal_entry(settings)
 	create_manual_payment_entry(settings)
+	settings.day = frappe.utils.getdate().replace(month=1, day=1)
+	create_customers(settings)
+	modify_tax_templates(settings)
+	create_sales_invoices(settings)
 
 
 def create_company_address(settings):
@@ -203,6 +207,25 @@ def setup_accounts():
 	)
 	update_account_number("1110 - Cash - CFC", "Petty Cash", account_number="1110")
 	update_account_number("Primary Checking - CFC", "Primary Checking", account_number="1201")
+	create_sales_tax_payable_account()
+
+
+def create_sales_tax_payable_account():
+	company = frappe.defaults.get_defaults().get("company")
+	if frappe.db.exists("Account", "2320 - Sales Tax Payable - CFC"):
+		return
+	ap_parent = frappe.db.get_value(
+		"Account",
+		{"account_number": "2110", "company": company},
+		"parent_account",
+	)
+	account = frappe.new_doc("Account")
+	account.account_name = "Sales Tax Payable"
+	account.account_number = "2320"
+	account.account_type = "Payable"
+	account.company = company
+	account.parent_account = ap_parent
+	account.save()
 
 
 def create_payment_terms_templates(settings):
@@ -429,7 +452,7 @@ def create_payment_terms_templates(settings):
 
 def create_suppliers(settings):
 	addresses = frappe._dict({})
-	for supplier in suppliers + tax_authority:
+	for supplier in suppliers + sales_tax_authorities:
 		biz = frappe.new_doc("Supplier")
 		biz.supplier_name = supplier[0]
 		biz.supplier_group = "Services"
@@ -469,7 +492,7 @@ def create_suppliers(settings):
 
 
 def create_items(settings):
-	for supplier in suppliers + tax_authority:
+	for supplier in suppliers + sales_tax_authorities:
 		if frappe.db.exists("Item", supplier[1]):
 			continue
 		item = frappe.new_doc("Item")
@@ -983,7 +1006,7 @@ def create_payroll_journal_entry(settings):
 			"account": payable_account,
 			"cost_center": cost_center,
 			"party_type": "Supplier",
-			"party": tax_authority[0][0],
+			"party": sales_tax_authorities[0][0],
 			"account_currency": "USD",
 			"credit": total_payroll * 0.15,
 			"credit_in_account_currency": total_payroll * 0.15,

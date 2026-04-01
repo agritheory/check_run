@@ -142,6 +142,16 @@ class CheckRun(Document):
 
 	@frappe.read_only()
 	def not_outstanding_or_cancelled(self, transaction: dict) -> bool:
+		if transaction["doctype"] == "Sales Invoice":
+			# Tax payable: "name" is a Sales Taxes and Charges row, "ref_number" is the parent SI
+			si_docstatus = frappe.get_value("Sales Invoice", transaction.get("ref_number"), "docstatus")
+			if si_docstatus != 1:
+				return True
+			tax_outstanding = frappe.db.get_value(
+				"Sales Taxes and Charges", transaction["name"], "outstanding_amount"
+			)
+			return flt(tax_outstanding) == 0.0
+
 		filters = {
 			"name": transaction["name"]
 			if transaction["doctype"] != "Journal Entry"
@@ -370,8 +380,11 @@ class CheckRun(Document):
 						discount_amount, has_discount = calculate_payment_term_discount(reference, self.posting_date)
 						total_discount_amount += discount_amount
 
-					if reference.doctype in ("Journal Entry", "Sales Invoice"):
+					if reference.doctype == "Journal Entry":
 						reference_name = reference.ref_number
+					elif reference.doctype == "Sales Invoice":
+						# Tax payable: "name" is the Sales Taxes and Charges row name
+						reference_name = reference.name
 					else:
 						reference_name = reference.name or reference.ref_number
 
@@ -831,7 +844,11 @@ def get_entries(doc: CheckRun | str) -> dict:
 		.where(sales_invoice.docstatus == 1)
 		.where(sales_taxes.account_head == pay_to_account)
 		.where(sales_invoice.posting_date <= end_date)
-		.where(sales_taxes.outstanding_amount > 0.0)
+		.where(
+			sales_taxes.outstanding_amount > 0.0
+			if settings and settings.allow_stand_alone_debit_notes == "No"
+			else sales_taxes.outstanding_amount != 0.0
+		)
 	)
 
 	if not settings:

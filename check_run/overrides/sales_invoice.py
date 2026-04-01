@@ -22,10 +22,36 @@ class CheckRunSalesInvoice(SalesInvoice):
 		super().validate()
 
 	def on_submit(self):
-		for row in self.taxes:
-			if row.party and row.party_type:
-				row.outstanding_amount = row.tax_amount
-		super().validate()
+		if self.is_return and self.return_against:
+			self._reduce_original_tax_outstanding()
+		super().on_submit()
+
+	def _reduce_original_tax_outstanding(self):
+		for return_row in self.taxes:
+			if not (return_row.party and return_row.party_type):
+				continue
+			orig_row_name = frappe.db.get_value(
+				"Sales Taxes and Charges",
+				{
+					"parent": self.return_against,
+					"account_head": return_row.account_head,
+					"party": return_row.party,
+				},
+				"name",
+			)
+			if not orig_row_name:
+				continue
+			orig_outstanding = flt(
+				frappe.db.get_value("Sales Taxes and Charges", orig_row_name, "outstanding_amount")
+			)
+			reduction = flt(abs(return_row.tax_amount))
+			new_outstanding = flt(orig_outstanding - reduction, return_row.precision("tax_amount"))
+			frappe.db.set_value(
+				"Sales Taxes and Charges",
+				orig_row_name,
+				"outstanding_amount",
+				max(0.0, new_outstanding),
+			)
 
 	def make_tax_gl_entries(self, gl_entries):
 		enable_discount_accounting = cint(
@@ -40,7 +66,7 @@ class CheckRunSalesInvoice(SalesInvoice):
 				is_payable_account = bool(
 					frappe.get_value("Account", tax.account_head, "account_type") == "Payable"
 				)
-				dimensions = {d: tax.get(d) for d in accounting_dimensions}
+				dimensions = {d: tax.get(d) for d in accounting_dimensions if d != "cost_center"}
 				gl_entries.append(
 					self.get_gl_dict(
 						{

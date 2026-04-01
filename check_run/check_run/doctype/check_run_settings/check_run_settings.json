@@ -17,6 +17,7 @@
 		"include_purchase_invoices",
 		"include_journal_entries",
 		"include_expense_claims",
+		"include_tax_payable",
 		"pre_check_overdue_items",
 		"automatically_release_on_hold_invoices",
 		"allow_cancellation",
@@ -34,6 +35,7 @@
 		"journal_entry",
 		"column_break_21",
 		"expense_claim",
+		"tax_payable",
 		"ach_settings_section",
 		"allow_only_verified_accounts_in_nacha_generation",
 		"ach_file_extension",
@@ -88,6 +90,12 @@
 			"fieldname": "include_expense_claims",
 			"fieldtype": "Check",
 			"label": "Include Expense Claims"
+		},
+		{
+			"default": "0",
+			"fieldname": "include_tax_payable",
+			"fieldtype": "Check",
+			"label": "Include Tax Payable from Sales Invoices"
 		},
 		{
 			"default": "0",
@@ -223,6 +231,12 @@
 			"fieldname": "expense_claim",
 			"fieldtype": "Link",
 			"label": "Expense Claim",
+			"options": "Mode of Payment"
+		},
+		{
+			"fieldname": "tax_payable",
+			"fieldtype": "Link",
+			"label": "Sales Tax Payable",
 			"options": "Mode of Payment"
 		},
 		{

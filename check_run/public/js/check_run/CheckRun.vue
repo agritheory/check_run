@@ -106,7 +106,7 @@
 						<td style="text-align: left">{{ item.party_name || item.party }}</td>
 						<td style="text-align: left; white-space: nowrap">
 							<a :href="transactionUrl(item)" target="_blank">
-								{{ item.doctype != 'Sales Invoice' ? item.ref_number : item.name }}
+								{{ item.ref_number }}
 							</a>
 							<div v-if="item.attachments && item.attachments.length > 1" style="float: right" class="dropdown show">
 								<a
@@ -273,17 +273,11 @@ function partyIsInFilter(party) {
 }
 
 function transactionUrl(transaction) {
-	if (transaction.doctype !== 'Journal Entry') {
-		return encodeURI(
-			`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${transaction.name}`
-		)
-	} else {
-		return encodeURI(
-			`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${
-				transaction.ref_number
-			}`
-		)
-	}
+	return encodeURI(
+		`${frappe.urllib.get_base_url()}/app/${transaction.doctype.toLowerCase().replace(' ', '-')}/${
+			transaction.ref_number
+		}`
+	)
 }
 
 function onPayChange(event, rowName) {

@@ -116,19 +116,47 @@ suppliers = [
 	),
 ]
 
-tax_authority = [
+sales_tax_authorities = [
 	(
-		"Local Tax Authority",
-		"Payroll Taxes",
+		"Massachusetts Department of Revenue",
+		"Sales Taxes",
 		None,
 		0.00,
-		"Due on Receipt",
+		"Due After Month End",
 		{
-			"address_line1": "18 Spooner Stravenue",
-			"city": "Danbury",
+			"address_line1": "100 Cambridge Street",
+			"city": "Boston",
+			"state": "MA",
+			"country": "United States",
+			"pincode": "02114",
+		},
+	),
+	(
+		"Vermont Department of Taxes",
+		"Sales Taxes",
+		None,
+		0.00,
+		"Due After Month End",
+		{
+			"address_line1": "133 State Street",
+			"city": "Montpelier",
+			"state": "VT",
+			"country": "United States",
+			"pincode": "05633",
+		},
+	),
+	(
+		"Rhode Island Division of Taxation",
+		"Sales Taxes",
+		None,
+		0.00,
+		"Due After Month End",
+		{
+			"address_line1": "One Capitol Hill",
+			"city": "Providence",
 			"state": "RI",
 			"country": "United States",
-			"pincode": "07165",
+			"pincode": "02908",
 		},
 	),
 ]

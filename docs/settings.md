@@ -4,7 +4,7 @@ For license information, please see license.txt-->
 # Check Run Settings
 
 <div class="byline">
-  Tyler Matteson 2026-02-21
+  Heather Kusmierz, Tyler Matteson, and Francisco Roldán 2026-02-23
 </div>
 
 
@@ -56,6 +56,10 @@ graph TD
     - This setting is an upper limit for the number of invoices per party to group into each voucher to that party
     - The screen shot below shows the output of a submitted Check Run where the Number of Invoices per Voucher setting was set to 2. Out of the four invoices paid to Exceptional Grid, they are grouped so two are paid under one voucher, then the other two are paid under a different voucher
     - This can also be set per-Supplier in the "Number  of Invoices Per Check Voucher" field. Per-supplier configuration overrides the number in Check Run Settings
+- **Allow stand-alone debit notes?**
+    - Default is **No**
+    - When set to **No**, only items with a positive outstanding amount appear in the Check Run. Debit notes (purchase invoice returns) and tax credit rows from sales invoice returns are excluded unless they are being netted against a positive invoice for the same party in the same run.
+    - When set to **Yes**, items with any non-zero outstanding amount — positive or negative — are included. This is the recommended setting for any Check Run whose payable account is a Sales Tax Payable account, so that credits arising from sales invoice returns are available for remittance or netting against future tax payments. See the [Sales Tax Payable](./sales_tax_payable.md) page for details.
 - **Secondary Print Format:**
     - Allows for payments with more than the configured split number to cascade onto a separate print format that details that all the linked documents.
 - **Split Invoices By Address:**
