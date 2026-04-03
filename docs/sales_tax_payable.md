@@ -4,7 +4,7 @@ For license information, please see license.txt-->
 # Sales Tax Payable
 
 <div class="byline">
-  Tyler Matteson 2024-04-01
+  Tyler Matteson 2026-04-01
 </div>
 
 
@@ -26,3 +26,7 @@ When a sales invoice is returned after the tax liability has already been paid v
 - The return invoice's tax row carries a **negative** outstanding amount equal to the original tax, representing the credit owed back from the tax authority.
 
 This credit row will appear in the next Check Run (with **Allow stand-alone debit notes?** set to **Yes**), where it can be selected to net against other tax remittances or processed as a standalone refund.
+
+## Supported Remittance Path
+
+Tax remittance is only supported through the Check Run workflow. Using the standard **Create → Payment Entry** button on a Sales Invoice that has tax payable rows will produce a Payment Entry for the receivable rather than the Sales tax Payable amount.

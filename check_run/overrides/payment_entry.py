@@ -231,20 +231,28 @@ class CheckRunPaymentEntry(PaymentEntry):
 		METHOD: validate_allocated_amount_with_latest_data
 		"""
 		if self.references:
-			unique_vouchers = {(x.reference_doctype, x.reference_name) for x in self.references}
+			unique_vouchers = {
+				(x.reference_doctype, x.reference_name)
+				for x in self.references
+				if x.reference_doctype != "Sales Taxes and Charges"
+			}
 			vouchers = [frappe._dict({"voucher_type": x[0], "voucher_no": x[1]}) for x in unique_vouchers]
-			latest_references = get_outstanding_reference_documents(
-				{
-					"posting_date": self.posting_date,
-					"company": self.company,
-					"party_type": self.party_type,
-					"payment_type": self.payment_type,
-					"party": self.party,
-					"party_account": self.paid_from if self.payment_type == "Receive" else self.paid_to,
-					"get_outstanding_invoices": True,
-					"get_orders_to_be_billed": True,
-					"vouchers": vouchers,
-				}
+			latest_references = (
+				get_outstanding_reference_documents(
+					{
+						"posting_date": self.posting_date,
+						"company": self.company,
+						"party_type": self.party_type,
+						"payment_type": self.payment_type,
+						"party": self.party,
+						"party_account": self.paid_from if self.payment_type == "Receive" else self.paid_to,
+						"get_outstanding_invoices": True,
+						"get_orders_to_be_billed": True,
+						"vouchers": vouchers,
+					}
+				)
+				if vouchers
+				else []
 			)
 
 			# Group latest_references by (voucher_type, voucher_no)

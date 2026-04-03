@@ -49,7 +49,7 @@ def tax_payable_cr():
 	return cr
 
 
-@pytest.mark.order(30)
+@pytest.mark.order(40)
 def test_tax_payable_gl():
 	"""
 	| Account                 |   Debit  |  Credit  | Party                               |
@@ -83,7 +83,7 @@ def test_tax_payable_gl():
 	assert gl1.party == "Massachusetts Department of Revenue"
 
 
-@pytest.mark.order(31)
+@pytest.mark.order(41)
 def test_tax_payable_check_run(tax_payable_cr):
 	"""
 	Processing the Sales Tax Payable Check Run creates a single Payment Entry
@@ -104,7 +104,7 @@ def test_tax_payable_check_run(tax_payable_cr):
 	assert all(t.get("payment_entry") == pe_name for t in processed)
 
 
-@pytest.mark.order(32)
+@pytest.mark.order(42)
 def test_tax_payable_due_date_from_supplier_terms():
 	"""
 	Verify that the due_date on a Sales Taxes and Charges row is computed from
@@ -137,7 +137,7 @@ def test_tax_payable_due_date_from_supplier_terms():
 		)
 
 
-@pytest.mark.order(40)
+@pytest.mark.order(43)
 def test_sales_invoice_return_reduces_payable():
 	"""
 	Verify that submitting a return Sales Invoice reduces the outstanding_amount
@@ -193,7 +193,7 @@ def test_sales_invoice_return_reduces_payable():
 	), f"Outstanding should be 0 after full return, got {reduced_outstanding}"
 
 
-@pytest.mark.order(50)
+@pytest.mark.order(44)
 def test_return_after_payable_remitted():
 	"""
 	Verify that creating a return SI after the tax payable has already been
@@ -263,7 +263,12 @@ def test_return_after_payable_remitted():
 		},
 	)
 	pe.save()
+	frappe.clear_messages()
 	pe.submit()
+	assert not any("No outstanding" in str(m) for m in frappe.get_message_log()), (
+		"validate_allocated_amount_with_latest_data should not emit a 'No outstanding' message "
+		f"for a Sales Taxes and Charges-only Payment Entry: {frappe.get_message_log()}"
+	)
 
 	outstanding_after_payment = flt(
 		frappe.db.get_value("Sales Taxes and Charges", tax_row_name, "outstanding_amount")
@@ -299,7 +304,7 @@ def test_return_after_payable_remitted():
 	), "Original outstanding should remain 0 after the return (it was already paid)"
 
 
-@pytest.mark.order(55)
+@pytest.mark.order(45)
 def test_reversed_payable_in_check_run():
 	"""
 	Verify that a return SI's negative outstanding tax row (created by
@@ -337,7 +342,7 @@ def test_reversed_payable_in_check_run():
 		assert t.get("party") == "Massachusetts Department of Revenue"
 
 
-@pytest.mark.order(60)
+@pytest.mark.order(46)
 def test_multiple_tax_authorities_single_invoice():
 	"""
 	Verify that an SI with tax rows pointing to two different tax authorities
@@ -416,7 +421,7 @@ def test_multiple_tax_authorities_single_invoice():
 	assert this_si_vt, f"SI {si.name} should appear in Check Run for Vermont Department of Taxes"
 
 
-@pytest.mark.order(70)
+@pytest.mark.order(47)
 def test_accounting_dimensions_in_tax_gl_entries():
 	"""
 	Verify that the cost_center from the Sales Taxes and Charges row flows
