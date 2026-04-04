@@ -30,7 +30,6 @@ function format_currency(v2, currency, decimals) {
 
 function calculate_totals() {
 	let modes_of_payments = aggregate(props.transactions, 'mode_of_payment', 'amount', 'pay')
-	console.log(modes_of_payments)
 	let results = []
 	if (!(frm.value.doc && frm.value.settings)) {
 		return

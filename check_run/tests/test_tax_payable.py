@@ -49,6 +49,38 @@ def tax_payable_cr():
 	return cr
 
 
+def tax_gl_query(si_name, tax_row_names, account, is_cancelled=0):
+	"""
+	Helper function to find GL Entries for Sales Taxes and Charges in given Sales Invoice.
+
+	:param si_name: str; name of the parent Sales Invoice taxes are for
+	:param tax_row_names: str | list[str]; names of the row in Sales Taxes and Charges
+	:param account: str; the tax row's account head
+	:param is_cancelled: int (0|1); whether the GL Entry is cancelled or not
+	:return: query results
+	"""
+	gl = frappe.qb.DocType("GL Entry")
+	si = frappe.qb.DocType("Sales Invoice")
+	stc = frappe.qb.DocType("Sales Taxes and Charges")
+
+	if isinstance(tax_row_names, str):
+		tax_row_names = [tax_row_names]
+
+	q = (
+		frappe.qb.from_(gl)
+		.inner_join(stc)
+		.on(gl.voucher_no == stc.name)
+		.inner_join(si)
+		.on(stc.parent == si.name)
+		.select(gl.name)
+		.where(si.name == si_name)
+		.where(stc.name.isin(tax_row_names))
+		.where(gl.account == account)
+		.where(gl.is_cancelled == is_cancelled)
+	)
+	return q.run(as_dict=True, pluck="name")
+
+
 @pytest.mark.order(40)
 def test_tax_payable_gl():
 	"""
@@ -76,9 +108,9 @@ def test_tax_payable_gl():
 	expected_due_date = get_due_date(doc.posting_date, ma_row.party_type, ma_row.party, doc.company)
 	assert ma_row.due_date == getdate(expected_due_date or doc.posting_date)
 
-	gl1 = frappe.get_doc(
-		"GL Entry", {"voucher_no": doc.name, "account": "2320 - Sales Tax Payable - CFC"}
-	)
+	gl_entries = tax_gl_query(si_name, ma_row.name, "2320 - Sales Tax Payable - CFC")
+	assert len(gl_entries) == 1, f"Expected 1 GL entry for tax payable, got {len(gl_entries)}"
+	gl1 = frappe.get_doc("GL Entry", gl_entries[0])
 	assert flt(gl1.credit, precision) == flt(doc.total_taxes_and_charges, precision)
 	assert gl1.party == "Massachusetts Department of Revenue"
 
@@ -378,15 +410,12 @@ def test_multiple_tax_authorities_single_invoice():
 	si.save()
 	si.submit()
 
-	gl_entries = frappe.get_all(
-		"GL Entry",
-		{"voucher_no": si.name, "account": "2320 - Sales Tax Payable - CFC", "is_cancelled": 0},
-		["name", "credit", "party"],
-	)
+	tax_row_names = [tax.name for tax in si.taxes]
+	gl_entries = tax_gl_query(si.name, tax_row_names, "2320 - Sales Tax Payable - CFC")
 	assert (
 		len(gl_entries) == 2
 	), f"Expected 2 GL entries for tax payable (one per authority), got {len(gl_entries)}"
-	parties = {g.party for g in gl_entries}
+	parties = {frappe.get_value("GL Entry", gl_name, "party") for gl_name in gl_entries}
 	assert "Massachusetts Department of Revenue" in parties
 	assert "Vermont Department of Taxes" in parties
 
@@ -455,14 +484,9 @@ def test_accounting_dimensions_in_tax_gl_entries():
 	si.submit()
 
 	tax_row = next(row for row in si.taxes if row.party == "Massachusetts Department of Revenue")
-	gl_entry = frappe.get_doc(
-		"GL Entry",
-		{
-			"voucher_no": si.name,
-			"account": "2320 - Sales Tax Payable - CFC",
-			"is_cancelled": 0,
-		},
-	)
+	gl_entries = tax_gl_query(si.name, tax_row.name, "2320 - Sales Tax Payable - CFC")
+	assert len(gl_entries) == 1, f"Expected 1 GL entry for tax payable, got {len(gl_entries)}"
+	gl_entry = frappe.get_doc("GL Entry", gl_entries[0])
 	assert gl_entry.cost_center == tax_row.cost_center, (
 		f"GL Entry cost_center '{gl_entry.cost_center}' should match "
 		f"tax row cost_center '{tax_row.cost_center}'"

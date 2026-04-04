@@ -847,7 +847,7 @@ def get_entries(doc: CheckRun | str) -> dict:
 		.where(journal_entries.docstatus == 1)
 		.where(je_accounts.account == pay_to_account)
 		.where(journal_entries.due_date <= end_date)
-		.where((journal_entries.name).notin(sub_q))  # codespell:ignore
+		.where((journal_entries.name).notin(sub_q))
 	)
 
 	# build Sales Taxes and Charges query
@@ -862,8 +862,8 @@ def get_entries(doc: CheckRun | str) -> dict:
 		.select(
 			ConstantColumn("Sales Invoice").as_("doctype"),
 			sales_taxes.party_type,
-			sales_taxes.parent.as_("ref_number"),
 			sales_taxes.name,
+			sales_taxes.parent.as_("ref_number"),
 			sales_taxes.party,
 			(sales_taxes.party).as_("party_name"),
 			(sales_taxes.tax_amount_after_discount_amount).as_("amount"),
