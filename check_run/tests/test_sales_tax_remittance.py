@@ -275,7 +275,7 @@ def test_remittance_report_return_shows_credit():
 	| Account                |   Debit  |  Credit  | Party                       |
 	| ---------------------- | --------:| --------:| --------------------------- |
 	| 2320 Sales Tax Payable |   $7.80  |          | Vermont Department of Taxes |
-	| Sales                  |   $7.80  |          |                             |
+	| Sales                  | $130.00  |          |                             |
 	| Accounts Receivable    |          | $138.78  | Downtown Deli               |
 	"""
 	posting_date = datetime.date(year, 11, 20)
