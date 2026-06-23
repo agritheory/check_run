@@ -4,13 +4,13 @@ For license information, please see license.txt-->
 # Sales Tax Payable
 
 <div class="byline">
-  Tyler Matteson 2026-04-01
+  Tyler Matteson 2026-04-03
 </div>
 
 
-By noting the Party Type and Party in the Sales Taxes and Charges table of a Sales Invoice, the user can opt to record the Sales Tax as payable and note the party. An Outstanding Amount will be created on submit to track which rows have been satisfied.
+In Check Run Settings, configure the bank account / Sales Tax Payable account combination and enable **Include Tax Payable from Sales Invoices**. Tax rows on that payable account then require Party Type and Party on the Sales Taxes and Charges table, and an Outstanding Amount is created on submit to track which rows have been satisfied. Tax rows on other accounts are unaffected.
 
-In Check Run Settings, set the "Include Tax Payable from Sales Invoices" to create a Check Run with these options. Given the large number of rows that may be included in a given period, enabling the secondary print format feature is recommended.
+Given the large number of rows that may be included in a given period, enabling the secondary print format feature is recommended.
 
 ## Recommended Settings for the Sales Tax Payable Check Run
 

@@ -7,6 +7,13 @@ from erpnext.accounts.doctype.payment_ledger_entry.payment_ledger_entry import P
 
 class CheckRunPaymentLedgerEntry(PaymentLedgerEntry):
 	def validate_account(self):
-		if frappe.get_cached_value("Account", self.account, "account_type") == "Tax":
+		if frappe.db.exists(
+			"Check Run Settings",
+			{
+				"company": self.company,
+				"pay_to_account": self.account,
+				"include_tax_payable": 1,
+			},
+		):
 			return
 		super().validate_account()

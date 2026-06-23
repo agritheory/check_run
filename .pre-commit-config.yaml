@@ -53,7 +53,8 @@ repos:
         files: '\.(js|ts|py|md)$'
         args: ['--app', 'check_run']
       - id: bylines
-        exclude: 'README.md|CHANGELOG.md'
+        exclude: '(?i)(README|CHANGELOG)\.md$'
+        args: ['--skip', 'CHANGELOG.md', '--skip', 'README.md']
       - id: clean_customized_doctypes
         args: ['--app', 'check_run']
       - id: validate_customizations

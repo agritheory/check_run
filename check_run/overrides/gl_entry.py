@@ -12,7 +12,14 @@ class CheckRunGLEntry(GLEntry):
 		if (
 			self.party_type
 			and self.party
-			and frappe.get_cached_value("Account", self.account, "account_type") == "Tax"
+			and frappe.db.exists(
+				"Check Run Settings",
+				{
+					"company": self.company,
+					"pay_to_account": self.account,
+					"include_tax_payable": 1,
+				},
+			)
 		):
 			return
 		validate_account_party_type(self)

@@ -84,6 +84,7 @@ def create_test_data():
 	settings.day = frappe.utils.getdate().replace(month=1, day=1)
 	create_customers(settings)
 	modify_tax_templates(settings)
+	create_tax_payable_check_run_settings(settings)
 	create_sales_invoices(settings)
 
 
@@ -208,6 +209,24 @@ def setup_accounts():
 	update_account_number("1110 - Cash - CFC", "Petty Cash", account_number="1110")
 	update_account_number("Primary Checking - CFC", "Primary Checking", account_number="1201")
 	create_sales_tax_payable_account()
+
+
+def create_tax_payable_check_run_settings(settings):
+	bank_account = "Primary Checking - Local Bank"
+	pay_to_account = "2320 - Sales Tax Payable - CFC"
+	crs_name = frappe.db.get_value(
+		"Check Run Settings",
+		{"bank_account": bank_account, "pay_to_account": pay_to_account},
+	)
+	if crs_name:
+		crs = frappe.get_doc("Check Run Settings", crs_name)
+	else:
+		crs = frappe.new_doc("Check Run Settings")
+		crs.company = settings.company
+		crs.bank_account = bank_account
+		crs.pay_to_account = pay_to_account
+	crs.include_tax_payable = 1
+	crs.save()
 
 
 def create_sales_tax_payable_account():

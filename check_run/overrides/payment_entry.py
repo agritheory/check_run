@@ -510,28 +510,40 @@ def make_reverse_gl_entries(
 				make_entry(new_gle, adv_adj, "Yes")
 
 
-def tax_payable_gl_entries(gl_entries):
+def tax_payable_gl_entries(gl_entries, company=None):
+	if not gl_entries:
+		return []
 	return [
 		gle
 		for gle in gl_entries
 		if gle.party_type
 		and gle.party
-		and frappe.get_cached_value("Account", gle.account, "account_type") == "Tax"
+		and frappe.db.exists(
+			"Check Run Settings",
+			{
+				"company": company or gle.get("company"),
+				"pay_to_account": gle.account,
+				"include_tax_payable": 1,
+			},
+		)
 	]
 
 
 def get_tax_payable_gl_entries_for_voucher(voucher_type, voucher_no):
+	crs = frappe.qb.DocType("Check Run Settings")
 	gle = frappe.qb.DocType("GL Entry")
-	account = frappe.qb.DocType("Account")
 	return (
 		frappe.qb.from_(gle)
-		.inner_join(account)
-		.on(gle.account == account.name)
+		.inner_join(crs)
+		.on(
+			(gle.account == crs.pay_to_account)
+			& (gle.company == crs.company)
+			& (crs.include_tax_payable == 1)
+		)
 		.select(gle.star)
 		.where(gle.voucher_type == voucher_type)
 		.where(gle.voucher_no == voucher_no)
 		.where(gle.is_cancelled == 0)
-		.where(account.account_type == "Tax")
 		.where(gle.party.isnotnull())
 		.where(gle.party_type.isnotnull())
 	).run(as_dict=True)

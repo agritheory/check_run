@@ -16,6 +16,17 @@ from check_run.overrides.payment_entry import (
 from frappe.utils.data import cint, flt
 
 
+def is_tax_payable_account(company, account):
+	return bool(
+		company
+		and account
+		and frappe.db.exists(
+			"Check Run Settings",
+			{"company": company, "pay_to_account": account, "include_tax_payable": 1},
+		)
+	)
+
+
 class CheckRunSalesInvoice(SalesInvoice):
 	def validate(self):
 		"""
@@ -25,19 +36,15 @@ class CheckRunSalesInvoice(SalesInvoice):
 		METHOD: validate
 		"""
 		for row in self.taxes:
-			if (
-				row.account_head
-				and frappe.get_cached_value("Account", row.account_head, "account_type") == "Tax"
-			):
-				if not (row.party_type and row.party):
-					frappe.throw(
-						frappe._("Party Type and Party are required on tax row {0}").format(
-							row.description or row.account_head
-						)
-					)
-				row.outstanding_amount = row.tax_amount
-			if not row.party:
+			if not is_tax_payable_account(self.company, row.account_head):
 				continue
+			if not (row.party_type and row.party):
+				frappe.throw(
+					frappe._("Party Type and Party are required on tax row {0} when using account {1}").format(
+						row.description or row.idx, row.account_head
+					)
+				)
+			row.outstanding_amount = row.tax_amount
 			due_date = get_due_date(self.posting_date, row.party_type, row.party, self.company)
 			row.due_date = due_date or self.posting_date
 		super().validate()
@@ -86,7 +93,7 @@ class CheckRunSalesInvoice(SalesInvoice):
 		else:
 			if not gl_entries:
 				gl_entries = self.get_gl_entries()
-			tax_gl = tax_payable_gl_entries(gl_entries)
+			tax_gl = tax_payable_gl_entries(gl_entries, company=self.company)
 
 		super().make_gl_entries(gl_entries, from_repost=from_repost)
 
@@ -124,7 +131,7 @@ class CheckRunSalesInvoice(SalesInvoice):
 			amount, base_amount = self.get_tax_amounts(tax, enable_discount_accounting)
 			if flt(tax.base_tax_amount_after_discount_amount):
 				account_currency = get_account_currency(tax.account_head)
-				on_tax_account = frappe.get_cached_value("Account", tax.account_head, "account_type") == "Tax"
+				track_tax_payable = is_tax_payable_account(self.company, tax.account_head)
 				dimensions = {d: tax.get(d) for d in accounting_dimensions if d != "cost_center"}
 				gl_entries.append(
 					self.get_gl_dict(
@@ -138,10 +145,10 @@ class CheckRunSalesInvoice(SalesInvoice):
 								else flt(amount, tax.precision("tax_amount_after_discount_amount"))
 							),
 							"cost_center": tax.cost_center,
-							"party_type": tax.party_type if on_tax_account else None,
-							"party": tax.party if on_tax_account else None,
-							"against_voucher": tax.name if on_tax_account else None,
-							"against_voucher_type": "Sales Taxes and Charges" if on_tax_account else None,
+							"party_type": tax.party_type if track_tax_payable else None,
+							"party": tax.party if track_tax_payable else None,
+							"against_voucher": tax.name if track_tax_payable else None,
+							"against_voucher_type": ("Sales Taxes and Charges" if track_tax_payable else None),
 							**dimensions,
 						},
 						account_currency,
