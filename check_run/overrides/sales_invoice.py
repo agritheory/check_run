@@ -8,28 +8,43 @@ from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import (
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import SalesInvoice
 from erpnext.accounts.party import get_due_date
 from erpnext.accounts.utils import get_account_currency
+from check_run.overrides.payment_entry import (
+	create_payment_ledger_entry,
+	get_tax_payable_gl_entries_for_voucher,
+	tax_payable_gl_entries,
+)
 from frappe.utils.data import cint, flt
 
 
 class CheckRunSalesInvoice(SalesInvoice):
 	def validate(self):
 		"""
-		HASH: f8ab56ecc96ae7c28b9f7b8e79488ff2c47cc810
+		HASH: 0e64acb0fa04042268805e11fa4f7b4a082708aa
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/sales_invoice/sales_invoice.py
 		METHOD: validate
 		"""
 		for row in self.taxes:
+			if (
+				row.account_head
+				and frappe.get_cached_value("Account", row.account_head, "account_type") == "Tax"
+			):
+				if not (row.party_type and row.party):
+					frappe.throw(
+						frappe._("Party Type and Party are required on tax row {0}").format(
+							row.description or row.account_head
+						)
+					)
+				row.outstanding_amount = row.tax_amount
 			if not row.party:
 				continue
 			due_date = get_due_date(self.posting_date, row.party_type, row.party, self.company)
 			row.due_date = due_date or self.posting_date
-			row.outstanding_amount = row.tax_amount
 		super().validate()
 
 	def on_submit(self):
 		"""
-		HASH: f8ab56ecc96ae7c28b9f7b8e79488ff2c47cc810
+		HASH: 0e64acb0fa04042268805e11fa4f7b4a082708aa
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/sales_invoice/sales_invoice.py
 		METHOD: on_submit
@@ -65,9 +80,37 @@ class CheckRunSalesInvoice(SalesInvoice):
 				max(0.0, new_outstanding),
 			)
 
+	def make_gl_entries(self, gl_entries=None, from_repost=False):
+		if self.docstatus == 2 and not gl_entries:
+			tax_gl = get_tax_payable_gl_entries_for_voucher(self.doctype, self.name)
+		else:
+			if not gl_entries:
+				gl_entries = self.get_gl_entries()
+			tax_gl = tax_payable_gl_entries(gl_entries)
+
+		super().make_gl_entries(gl_entries, from_repost=from_repost)
+
+		if not tax_gl:
+			return
+
+		update_outstanding = "Yes"
+		if self.docstatus == 1:
+			update_outstanding = (
+				"No"
+				if (cint(self.is_pos) or self.write_off_account or cint(self.redeem_loyalty_points))
+				else "Yes"
+			)
+
+		create_payment_ledger_entry(
+			tax_gl,
+			cancel=(self.docstatus == 2),
+			from_repost=from_repost,
+			update_outstanding=update_outstanding,
+		)
+
 	def make_tax_gl_entries(self, gl_entries):
 		"""
-		HASH: f8ab56ecc96ae7c28b9f7b8e79488ff2c47cc810
+		HASH: 0e64acb0fa04042268805e11fa4f7b4a082708aa
 		REPO: https://github.com/frappe/erpnext/
 		PATH: erpnext/accounts/doctype/sales_invoice/sales_invoice.py
 		METHOD: make_tax_gl_entries
@@ -81,9 +124,7 @@ class CheckRunSalesInvoice(SalesInvoice):
 			amount, base_amount = self.get_tax_amounts(tax, enable_discount_accounting)
 			if flt(tax.base_tax_amount_after_discount_amount):
 				account_currency = get_account_currency(tax.account_head)
-				is_payable_account = bool(
-					frappe.get_value("Account", tax.account_head, "account_type") == "Payable"
-				)
+				on_tax_account = frappe.get_cached_value("Account", tax.account_head, "account_type") == "Tax"
 				dimensions = {d: tax.get(d) for d in accounting_dimensions if d != "cost_center"}
 				gl_entries.append(
 					self.get_gl_dict(
@@ -97,12 +138,10 @@ class CheckRunSalesInvoice(SalesInvoice):
 								else flt(amount, tax.precision("tax_amount_after_discount_amount"))
 							),
 							"cost_center": tax.cost_center,
-							"party_type": tax.party_type if is_payable_account else None,
-							"party": tax.party if is_payable_account else None,
-							"voucher_type": "Sales Taxes and Charges" if is_payable_account else None,
-							"voucher_no": tax.name if is_payable_account else None,
-							"against_voucher": tax.name if is_payable_account else None,
-							"against_voucher_type": "Sales Taxes and Charges" if is_payable_account else None,
+							"party_type": tax.party_type if on_tax_account else None,
+							"party": tax.party if on_tax_account else None,
+							"against_voucher": tax.name if on_tax_account else None,
+							"against_voucher_type": "Sales Taxes and Charges" if on_tax_account else None,
 							**dimensions,
 						},
 						account_currency,

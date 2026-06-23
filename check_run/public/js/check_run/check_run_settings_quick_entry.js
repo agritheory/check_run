@@ -27,7 +27,7 @@ frappe.ui.form.CheckRunSettingsQuickEntryForm = class CheckRunSettingsQuickEntry
 			return {
 				filters: {
 					company: this.dialog.get_field('company').value,
-					account_type: 'Payable',
+					account_type: ['in', ['Payable', 'Tax']],
 				},
 			}
 		}

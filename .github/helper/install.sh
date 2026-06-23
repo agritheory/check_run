@@ -55,6 +55,8 @@ bench setup requirements --python
 bench setup requirements --dev
 bench use test_site
 
+CI=Yes bench build --app frappe
+
 bench start &> bench_run_logs.txt &
 CI=Yes &
 bench --site test_site reinstall --yes --admin-password admin

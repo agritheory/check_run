@@ -199,7 +199,7 @@
       "insert_after": "base_tax_amount_after_discount_amount",
       "is_system_generated": 0,
       "is_virtual": 0,
-      "label": "Outstanding Amount",
+      "label": "Outstanding Payable Amount",
       "length": 0,
       "module": "Check Run",
       "name": "Sales Taxes and Charges-outstanding_amount",

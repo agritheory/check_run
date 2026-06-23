@@ -2,6 +2,7 @@
 # For license information, please see license.txt
 
 import json
+import os
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -39,7 +40,17 @@ def db_instance():
 	if (sites / "common_site_config.json").is_file():
 		currentsite = json.loads((sites / "common_site_config.json").read_text()).get("default_site")
 
+	# frappe.read_file("assets/assets.json") resolves relative to process cwd, not sites_path
+	os.chdir(sites)
+
 	frappe.init(site=currentsite, sites_path=sites)
+
+	common_site_config = {}
+	if (sites / "common_site_config.json").is_file():
+		common_site_config = json.loads((sites / "common_site_config.json").read_text())
+	port = common_site_config.get("webserver_port") or common_site_config.get("http_port") or 8000
+	if not frappe.conf.host_name:
+		frappe.conf.host_name = f"http://127.0.0.1:{port}"
 	frappe.connect()
 	frappe.db.commit = MagicMock()
 	yield frappe.db

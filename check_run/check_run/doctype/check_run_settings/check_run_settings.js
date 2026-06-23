@@ -7,7 +7,7 @@ frappe.ui.form.on('Check Run Settings', {
 			return {
 				filters: {
 					company: frm.doc.company,
-					account_type: 'Payable',
+					account_type: ['in', ['Payable', 'Tax']],
 				},
 			}
 		})

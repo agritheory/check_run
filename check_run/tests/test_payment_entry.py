@@ -247,7 +247,7 @@ def test_voided_payment_entry(cr):
 
 	# Create a Payment Entry 1 month ago using Check
 	company = frappe.defaults.get_defaults().company
-	bank_account = frappe.get_value("Bank Account", {"company": company})
+	bank_account = "Primary Checking - Local Bank"
 	gl_account = frappe.get_value("Bank Account", bank_account, "account")
 	gl_account_currency = frappe.db.get_value("Account", gl_account, "account_currency")
 	last_check_no = frappe.get_value("Bank Account", bank_account, "check_number")

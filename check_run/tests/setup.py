@@ -212,7 +212,9 @@ def setup_accounts():
 
 def create_sales_tax_payable_account():
 	company = frappe.defaults.get_defaults().get("company")
-	if frappe.db.exists("Account", "2320 - Sales Tax Payable - CFC"):
+	account_name = "2320 - Sales Tax Payable - CFC"
+	if frappe.db.exists("Account", account_name):
+		frappe.db.set_value("Account", account_name, "account_type", "Tax")
 		return
 	ap_parent = frappe.db.get_value(
 		"Account",
@@ -222,7 +224,7 @@ def create_sales_tax_payable_account():
 	account = frappe.new_doc("Account")
 	account.account_name = "Sales Tax Payable"
 	account.account_number = "2320"
-	account.account_type = "Payable"
+	account.account_type = "Tax"
 	account.company = company
 	account.parent_account = ap_parent
 	account.save()
@@ -1120,11 +1122,17 @@ def create_customers(settings=None):
 
 
 def modify_tax_templates(settings=None):
-	frappe.db.sql_ddl("truncate `tabSales Taxes and Charges Template`")
-	frappe.db.sql_ddl("truncate `tabPurchase Taxes and Charges Template`")
-	frappe.db.sql_ddl("truncate `tabItem Tax Template`")
-	# frappe.delete_doc("Account", "ST 6.25% - CFC")
-	# frappe.delete_doc("Account", "ST 4% - CFC")
+	for doctype in (
+		"Sales Taxes and Charges",
+		"Purchase Taxes and Charges",
+		"Item Tax Template Detail",
+		"Sales Taxes and Charges Template",
+		"Purchase Taxes and Charges Template",
+		"Item Tax Template",
+	):
+		frappe.db.truncate(doctype)
+	for account in ("ST 6.25% - CFC", "ST 4% - CFC", "ST 6% - CFC"):
+		frappe.delete_doc_if_exists("Account", account)
 	for st in sales_tax_templates:
 		frappe.get_doc(**st).insert()
 

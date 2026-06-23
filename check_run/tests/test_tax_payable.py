@@ -6,8 +6,11 @@ import json
 
 import frappe
 import pytest
-from erpnext.controllers.sales_and_purchase_return import make_return_doc
+from erpnext.accounts.doctype.payment_entry.payment_entry import (
+	get_outstanding_reference_documents,
+)
 from erpnext.accounts.party import get_due_date
+from erpnext.controllers.sales_and_purchase_return import make_return_doc
 from frappe.utils import flt, getdate
 
 from check_run.check_run.doctype.check_run.check_run import (
@@ -15,8 +18,78 @@ from check_run.check_run.doctype.check_run.check_run import (
 	get_check_run_settings,
 	get_entries,
 )
+from check_run.tests.tax_payable_helpers import (
+	COMPANY,
+	TAX_PAYABLE_ACCOUNT,
+	process_tax_payable_check_run_for_rows,
+	tax_payable_check_run_entries,
+)
 
 year = datetime.date.today().year
+MA_AUTHORITY = "Massachusetts Department of Revenue"
+MA_TAX_TEMPLATE = "MA Sales Tax - CFC"
+
+
+def make_taxed_si(customer, template_name, posting_date, qty=100, rate=1.30):
+	si = frappe.new_doc("Sales Invoice")
+	si.customer = customer
+	si.set_posting_time = 1
+	si.company = COMPANY
+	si.posting_date = posting_date
+	si.append("items", {"item_code": "Cloudberry", "qty": qty, "rate": rate})
+	si.taxes_and_charges = template_name
+	taxes = frappe.call(
+		"erpnext.controllers.accounts_controller.get_taxes_and_charges",
+		master_doctype="Sales Taxes and Charges Template",
+		master_name=template_name,
+	)
+	for tax in taxes:
+		si.append("taxes", tax)
+	si.save()
+	si.submit()
+	return si
+
+
+def general_ledger_rows(company, posting_date, voucher_no):
+	from erpnext.accounts.report.general_ledger.general_ledger import (
+		execute as general_ledger_execute,
+	)
+
+	_, rows = general_ledger_execute(
+		frappe._dict(
+			{
+				"company": company,
+				"from_date": posting_date,
+				"to_date": posting_date,
+				"voucher_no": voucher_no,
+			}
+		)
+	)
+	return [
+		row
+		for row in rows
+		if row.get("account")
+		and not str(row.get("account", "")).startswith("'")
+		and not str(row.get("account", "")).startswith(("Opening", "Total", "Closing"))
+	]
+
+
+def accounts_payable_rows(company, report_date, party):
+	from erpnext.accounts.report.accounts_payable.accounts_payable import (
+		execute as accounts_payable_execute,
+	)
+
+	rows = accounts_payable_execute(
+		frappe._dict(
+			{
+				"company": company,
+				"report_date": report_date,
+				"party_type": "Supplier",
+				"party": [party],
+			}
+		)
+	)[1]
+	return [row for row in rows if not row.get("bold")]
 
 
 @pytest.fixture
@@ -49,6 +122,47 @@ def tax_payable_cr():
 	return cr
 
 
+def make_tax_remittance_payment_entry(tax_row, posting_date, reference_no):
+	bank_account = frappe.get_value(
+		"Account",
+		{"account_type": "Bank", "company": COMPANY, "is_group": 0},
+	)
+	currency = frappe.db.get_value("Account", bank_account, "account_currency")
+	tax_amount = flt(tax_row.tax_amount)
+	pe = frappe.new_doc("Payment Entry")
+	pe.payment_type = "Pay"
+	pe.posting_date = posting_date
+	pe.mode_of_payment = "Check"
+	pe.company = COMPANY
+	pe.bank_account = "Primary Checking - Local Bank"
+	pe.paid_from = bank_account
+	pe.paid_to = TAX_PAYABLE_ACCOUNT
+	pe.paid_from_account_currency = currency
+	pe.paid_to_account_currency = currency
+	pe.reference_no = reference_no
+	pe.reference_date = pe.posting_date
+	pe.party_type = "Supplier"
+	pe.party = tax_row.party
+	pe.paid_amount = tax_amount
+	pe.received_amount = tax_amount
+	pe.base_paid_amount = tax_amount
+	pe.base_received_amount = tax_amount
+	pe.base_grand_total = tax_amount
+	pe.append(
+		"references",
+		{
+			"reference_doctype": "Sales Taxes and Charges",
+			"reference_name": tax_row.name,
+			"due_date": tax_row.due_date,
+			"total_amount": tax_amount,
+			"outstanding_amount": tax_amount,
+			"allocated_amount": tax_amount,
+		},
+	)
+	pe.save()
+	return pe
+
+
 def tax_gl_query(si_name, tax_row_names, account, is_cancelled=0):
 	"""
 	Helper function to find GL Entries for Sales Taxes and Charges in given Sales Invoice.
@@ -69,11 +183,12 @@ def tax_gl_query(si_name, tax_row_names, account, is_cancelled=0):
 	q = (
 		frappe.qb.from_(gl)
 		.inner_join(stc)
-		.on(gl.voucher_no == stc.name)
+		.on(gl.against_voucher == stc.name)
 		.inner_join(si)
 		.on(stc.parent == si.name)
 		.select(gl.name)
 		.where(si.name == si_name)
+		.where(gl.voucher_no == si_name)
 		.where(stc.name.isin(tax_row_names))
 		.where(gl.account == account)
 		.where(gl.is_cancelled == is_cancelled)
@@ -81,7 +196,69 @@ def tax_gl_query(si_name, tax_row_names, account, is_cancelled=0):
 	return q.run(as_dict=True, pluck="name")
 
 
+@pytest.mark.order(39)
+def test_tax_payable_si_outstanding_is_grand_total():
+	"""
+	Submitting an SI with tax payable must not corrupt outstanding_amount to only
+	the tax liability (Heather's "Partly Paid" regression).
+
+	| Account                 |   Debit  |  Credit  | Party                               |
+	| ----------------------- | --------:| --------:| ----------------------------------- |
+	| Accounts Receivable     |  $13.81  |          | Almacs Food Group                   |
+	| Sales                   |          |  $13.00  |                                     |
+	| 2320 Sales Tax Payable  |          |   $0.81  | Massachusetts Department of Revenue |
+	"""
+	posting_date = datetime.date(year, 10, 5)
+	si = make_taxed_si("Almacs Food Group", MA_TAX_TEMPLATE, posting_date, qty=10, rate=1.30)
+	si.reload()
+	precision = frappe.get_precision(si.doctype, "grand_total")
+	assert flt(si.outstanding_amount, precision) == flt(si.grand_total, precision), (
+		f"SI outstanding {si.outstanding_amount} should equal grand_total {si.grand_total}, "
+		"not the tax payable amount alone"
+	)
+	assert si.status != "Partly Paid"
+
+
 @pytest.mark.order(40)
+def test_tax_payable_general_ledger_taccount_by_voucher():
+	"""
+	General Ledger filtered by Sales Invoice voucher must show the complete
+	T-account including the tax payable credit (Tyler's GL report regression).
+
+	| Account                 |   Debit  |  Credit  | Party                               |
+	| ----------------------- | --------:| --------:| ----------------------------------- |
+	| Accounts Receivable     |  $13.81  |          | Almacs Food Group                   |
+	| Sales                   |          |  $13.00  |                                     |
+	| 2320 Sales Tax Payable  |          |   $0.81  | Massachusetts Department of Revenue |
+	"""
+	posting_date = datetime.date(year, 10, 6)
+	si = make_taxed_si("Almacs Food Group", MA_TAX_TEMPLATE, posting_date, qty=10, rate=1.30)
+	ma_tax_row = next(row for row in si.taxes if row.party == MA_AUTHORITY)
+	precision = frappe.get_precision(si.doctype, "grand_total")
+
+	rows = general_ledger_rows(COMPANY, posting_date, si.name)
+	accounts = {row.get("account") for row in rows}
+	assert len(rows) == 3, f"Expected 3 GL detail rows for SI {si.name}, got {len(rows)}: {accounts}"
+	assert "1310 - Accounts Receivable - CFC" in accounts
+	assert "4110 - Sales - CFC" in accounts
+	assert TAX_PAYABLE_ACCOUNT in accounts
+
+	tax_rows = [row for row in rows if row.get("account") == TAX_PAYABLE_ACCOUNT]
+	assert len(tax_rows) == 1
+	tax_row = tax_rows[0]
+	assert tax_row.get("voucher_type") == "Sales Invoice"
+	assert tax_row.get("voucher_no") == si.name
+	assert tax_row.get("party") == MA_AUTHORITY
+	assert tax_row.get("against_voucher_type") == "Sales Taxes and Charges"
+	assert tax_row.get("against_voucher") == ma_tax_row.name
+
+	total_debit = sum(flt(row.get("debit")) for row in rows)
+	total_credit = sum(flt(row.get("credit")) for row in rows)
+	assert flt(total_debit, precision) == flt(si.grand_total, precision)
+	assert flt(total_credit, precision) == flt(si.grand_total, precision)
+
+
+@pytest.mark.order(41)
 def test_tax_payable_gl():
 	"""
 	| Account                 |   Debit  |  Credit  | Party                               |
@@ -111,11 +288,15 @@ def test_tax_payable_gl():
 	gl_entries = tax_gl_query(si_name, ma_row.name, "2320 - Sales Tax Payable - CFC")
 	assert len(gl_entries) == 1, f"Expected 1 GL entry for tax payable, got {len(gl_entries)}"
 	gl1 = frappe.get_doc("GL Entry", gl_entries[0])
+	assert gl1.voucher_type == "Sales Invoice"
+	assert gl1.voucher_no == si_name
+	assert gl1.against_voucher_type == "Sales Taxes and Charges"
+	assert gl1.against_voucher == ma_row.name
 	assert flt(gl1.credit, precision) == flt(doc.total_taxes_and_charges, precision)
 	assert gl1.party == "Massachusetts Department of Revenue"
 
 
-@pytest.mark.order(41)
+@pytest.mark.order(42)
 def test_tax_payable_check_run(tax_payable_cr):
 	"""
 	Processing the Sales Tax Payable Check Run creates a single Payment Entry
@@ -136,7 +317,7 @@ def test_tax_payable_check_run(tax_payable_cr):
 	assert all(t.get("payment_entry") == pe_name for t in processed)
 
 
-@pytest.mark.order(42)
+@pytest.mark.order(43)
 def test_tax_payable_due_date_from_supplier_terms():
 	"""
 	Verify that the due_date on a Sales Taxes and Charges row is computed from
@@ -169,7 +350,7 @@ def test_tax_payable_due_date_from_supplier_terms():
 		)
 
 
-@pytest.mark.order(43)
+@pytest.mark.order(44)
 def test_sales_invoice_return_reduces_payable():
 	"""
 	Verify that submitting a return Sales Invoice reduces the outstanding_amount
@@ -225,7 +406,7 @@ def test_sales_invoice_return_reduces_payable():
 	), f"Outstanding should be 0 after full return, got {reduced_outstanding}"
 
 
-@pytest.mark.order(44)
+@pytest.mark.order(45)
 def test_return_after_payable_remitted():
 	"""
 	Verify that creating a return SI after the tax payable has already been
@@ -336,7 +517,7 @@ def test_return_after_payable_remitted():
 	), "Original outstanding should remain 0 after the return (it was already paid)"
 
 
-@pytest.mark.order(45)
+@pytest.mark.order(46)
 def test_reversed_payable_in_check_run():
 	"""
 	Verify that a return SI's negative outstanding tax row (created by
@@ -374,7 +555,7 @@ def test_reversed_payable_in_check_run():
 		assert t.get("party") == "Massachusetts Department of Revenue"
 
 
-@pytest.mark.order(46)
+@pytest.mark.order(47)
 def test_multiple_tax_authorities_single_invoice():
 	"""
 	Verify that an SI with tax rows pointing to two different tax authorities
@@ -450,7 +631,7 @@ def test_multiple_tax_authorities_single_invoice():
 	assert this_si_vt, f"SI {si.name} should appear in Check Run for Vermont Department of Taxes"
 
 
-@pytest.mark.order(47)
+@pytest.mark.order(48)
 def test_accounting_dimensions_in_tax_gl_entries():
 	"""
 	Verify that the cost_center from the Sales Taxes and Charges row flows
@@ -499,3 +680,266 @@ def test_accounting_dimensions_in_tax_gl_entries():
 		assert actual == expected, (
 			f"Accounting dimension '{dimension}': GL Entry has '{actual}', " f"tax row has '{expected}'"
 		)
+
+
+@pytest.mark.order(49)
+def test_check_run_tax_rows_with_journal_entries_union():
+	"""
+	When Check Run unions Journal Entries with tax payable rows, name must remain
+	the STC child row and ref_number the parent SI (Heather's union column-order bug).
+
+	| Account                 |   Debit  |  Credit  | Party                               |
+	| ----------------------- | --------:| --------:| ----------------------------------- |
+	| Accounts Receivable     |  $13.81  |          | Downtown Deli                       |
+	| Sales                   |          |  $13.00  |                                     |
+	| 2320 Sales Tax Payable  |          |   $0.81  | Massachusetts Department of Revenue |
+	"""
+	posting_date = datetime.date(year, 10, 7)
+	si = make_taxed_si("Downtown Deli", MA_TAX_TEMPLATE, posting_date, qty=10, rate=1.30)
+	ma_tax_row = next(row for row in si.taxes if row.party == MA_AUTHORITY)
+
+	je = frappe.new_doc("Journal Entry")
+	je.company = COMPANY
+	je.posting_date = posting_date
+	je.due_date = posting_date
+	expense_account = frappe.get_value(
+		"Account", {"account_name": "Travel Expenses", "company": COMPANY, "is_group": 0}
+	)
+	assert expense_account, "Travel Expenses account required from before_test fixtures"
+	je.append(
+		"accounts",
+		{
+			"account": expense_account,
+			"debit_in_account_currency": 50.0,
+			"cost_center": "Main - CFC",
+		},
+	)
+	je.append(
+		"accounts",
+		{
+			"account": TAX_PAYABLE_ACCOUNT,
+			"credit_in_account_currency": 50.0,
+			"party_type": "Supplier",
+			"party": MA_AUTHORITY,
+			"cost_center": "Main - CFC",
+		},
+	)
+	je.save()
+	je.submit()
+
+	_, transactions = tax_payable_check_run_entries(
+		include_tax_payable=1,
+		include_journal_entries=1,
+		include_purchase_invoices=0,
+		include_expense_claims=0,
+	)
+
+	tax_rows = [
+		t for t in transactions if t.get("party") == MA_AUTHORITY and t.get("ref_number") == si.name
+	]
+	assert tax_rows, f"Expected tax payable row for SI {si.name} in Check Run entries"
+	row = tax_rows[0]
+	assert row.get("name") == ma_tax_row.name
+	assert row.get("name") != row.get("ref_number")
+	assert frappe.db.exists("Sales Taxes and Charges", row.get("name"))
+	assert frappe.db.get_value("Sales Taxes and Charges", row.get("name"), "parent") == si.name
+	assert flt(row.get("amount")) == flt(ma_tax_row.tax_amount_after_discount_amount)
+
+
+@pytest.mark.order(50)
+def test_customer_payment_reference_shows_full_si_outstanding():
+	"""
+	Creating a Payment Entry against a Sales Invoice must reference the full
+	invoice outstanding, not only the tax payable amount (Heather's Apr 3 bug).
+	"""
+	posting_date = datetime.date(year, 10, 8)
+	si = make_taxed_si("Cafe 27 Cafeteria", MA_TAX_TEMPLATE, posting_date, qty=10, rate=1.30)
+	precision = frappe.get_precision(si.doctype, "grand_total")
+
+	references = get_outstanding_reference_documents(
+		frappe._dict(
+			{
+				"posting_date": posting_date,
+				"company": COMPANY,
+				"party_type": "Customer",
+				"payment_type": "Receive",
+				"party": si.customer,
+				"party_account": si.debit_to,
+				"get_outstanding_invoices": True,
+				"vouchers": [frappe._dict({"voucher_type": "Sales Invoice", "voucher_no": si.name})],
+			}
+		)
+	)
+	si_ref = next((row for row in references if row.get("voucher_no") == si.name), None)
+	assert si_ref, f"Expected outstanding reference for SI {si.name}"
+	assert flt(si_ref.outstanding_amount, precision) == flt(si.grand_total, precision), (
+		f"PE reference outstanding {si_ref.outstanding_amount} should equal "
+		f"grand_total {si.grand_total}, not tax amount {si.total_taxes_and_charges}"
+	)
+
+
+@pytest.mark.order(51)
+def test_accounts_payable_excludes_tax_remittance_liability():
+	"""
+	Tax remittance on Tax accounts must not appear on Accounts Payable; PLE still
+	records the STC accrual for paid-on-account reconciliation.
+	"""
+	posting_date = datetime.date(year, 10, 9)
+	report_date = datetime.date(year, 12, 31)
+	si = make_taxed_si("Beans and Dreams Roasters", MA_TAX_TEMPLATE, posting_date, qty=10, rate=1.30)
+	ma_tax_row = next(row for row in si.taxes if row.party == MA_AUTHORITY)
+
+	before_rows = accounts_payable_rows(COMPANY, report_date, MA_AUTHORITY)
+	si_rows_before = [row for row in before_rows if row.get("voucher_no") == si.name]
+	assert not si_rows_before, f"Tax liability for SI {si.name} must not appear on Accounts Payable"
+
+	ple_rows = frappe.get_all(
+		"Payment Ledger Entry",
+		filters={
+			"against_voucher_type": "Sales Taxes and Charges",
+			"against_voucher_no": ma_tax_row.name,
+			"party": MA_AUTHORITY,
+			"account": TAX_PAYABLE_ACCOUNT,
+			"delinked": 0,
+		},
+		pluck="name",
+	)
+	assert ple_rows, f"Expected PLE for STC row {ma_tax_row.name} after SI submit"
+
+	process_tax_payable_check_run_for_rows([ma_tax_row.name], end_date=report_date)
+
+	assert (
+		flt(frappe.db.get_value("Sales Taxes and Charges", ma_tax_row.name, "outstanding_amount")) == 0.0
+	)
+
+	after_rows = accounts_payable_rows(COMPANY, report_date, MA_AUTHORITY)
+	si_rows_after = [row for row in after_rows if row.get("voucher_no") == si.name]
+	assert (
+		not si_rows_after
+	), f"Tax liability for SI {si.name} must not appear on Accounts Payable after remittance"
+
+
+@pytest.mark.order(52)
+def test_remittance_report_after_check_run_remittance():
+	"""
+	After Check Run remittance, the Sales Tax Remittance report must show the
+	tax row as fully remitted with a linked Payment Entry.
+	"""
+	posting_date = datetime.date(year, 10, 10)
+	report_date = datetime.date(year, 12, 31)
+	si = make_taxed_si(
+		"Capital Grille Restaurant Group", MA_TAX_TEMPLATE, posting_date, qty=10, rate=1.30
+	)
+	ma_tax_row = next(row for row in si.taxes if row.party == MA_AUTHORITY)
+	tax_amount = flt(ma_tax_row.tax_amount)
+
+	process_tax_payable_check_run_for_rows([ma_tax_row.name], end_date=report_date)
+
+	from check_run.check_run.report.sales_tax_remittance.sales_tax_remittance import (
+		execute as remittance_execute,
+	)
+
+	detail = remittance_execute(
+		{
+			"company": COMPANY,
+			"to_date": report_date,
+			"tax_authority": MA_AUTHORITY,
+			"show_detail": 1,
+		}
+	)[1]
+	customer_rows = [
+		row
+		for row in detail
+		if row.get("customer") == si.customer and row.get("sales_invoice") == si.name
+	]
+	assert customer_rows, f"Expected remittance detail row for SI {si.name}"
+	row = customer_rows[0]
+	assert flt(row["outstanding_amount"], 2) == 0.00
+	assert flt(row["amount_remitted"], 2) == flt(tax_amount, 2)
+	assert row["remittance_voucher"]
+	assert row["remittance_date"] is not None
+
+
+@pytest.mark.order(53)
+def test_cancel_sales_tax_remittance_payment_entry():
+	"""
+	Cancelling a tax remittance Payment Entry must restore the Sales Taxes and
+	Charges outstanding and show the liability as unremitted again on the report.
+
+	Timeline:
+	  1. Submit SI → STC outstanding = tax_amount
+	  2. Submit remittance PE → STC outstanding = 0, remittance report shows paid
+	  3. Cancel PE → STC outstanding = tax_amount, remittance report shows outstanding
+
+	Remittance Payment Entry GL:
+	| Account                |   Debit  |  Credit  | Party                               |
+	| ---------------------- | --------:| --------:| ----------------------------------- |
+	| 2320 Sales Tax Payable |   $0.81  |          | Massachusetts Department of Revenue |
+	| Primary Checking       |          |   $0.81  |                                     |
+	"""
+	posting_date = datetime.date(year, 10, 11)
+	remittance_date = datetime.date(year, 10, 25)
+	report_date = datetime.date(year, 12, 31)
+	si = make_taxed_si("Downtown Deli", MA_TAX_TEMPLATE, posting_date, qty=10, rate=1.30)
+	ma_tax_row = next(row for row in si.taxes if row.party == MA_AUTHORITY)
+	tax_amount = flt(ma_tax_row.tax_amount)
+
+	pe = make_tax_remittance_payment_entry(ma_tax_row, remittance_date, "Test-Tax-Remit-Cancel-52")
+	pe.submit()
+
+	assert (
+		flt(frappe.db.get_value("Sales Taxes and Charges", ma_tax_row.name, "outstanding_amount")) == 0.0
+	)
+
+	from check_run.check_run.report.sales_tax_remittance.sales_tax_remittance import (
+		execute as remittance_execute,
+	)
+
+	remitted = remittance_execute(
+		{
+			"company": COMPANY,
+			"to_date": report_date,
+			"tax_authority": MA_AUTHORITY,
+			"show_detail": 1,
+		}
+	)[1]
+	row = next(r for r in remitted if r.get("sales_invoice") == si.name)
+	assert flt(row["outstanding_amount"], 2) == 0.00
+	assert row["remittance_voucher"] == pe.name
+
+	pe.cancel()
+
+	stc_outstanding = flt(
+		frappe.db.get_value("Sales Taxes and Charges", ma_tax_row.name, "outstanding_amount")
+	)
+	assert (
+		stc_outstanding == tax_amount
+	), f"STC outstanding should restore to {tax_amount} after PE cancel, got {stc_outstanding}"
+
+	si.reload()
+	assert flt(si.outstanding_amount, 2) == flt(
+		si.grand_total, 2
+	), "SI outstanding must remain full invoice amount after tax remittance PE cancel"
+
+	detail = remittance_execute(
+		{
+			"company": COMPANY,
+			"to_date": report_date,
+			"tax_authority": MA_AUTHORITY,
+			"show_detail": 1,
+		}
+	)[1]
+	row = next(r for r in detail if r.get("sales_invoice") == si.name)
+	assert flt(row["outstanding_amount"], 2) == flt(tax_amount, 2)
+	assert not row.get("remittance_voucher")
+
+	outstanding_filter = remittance_execute(
+		{
+			"company": COMPANY,
+			"to_date": report_date,
+			"tax_authority": MA_AUTHORITY,
+			"show_detail": 1,
+			"remittance_status": "Outstanding",
+		}
+	)[1]
+	assert any(r.get("sales_invoice") == si.name for r in outstanding_filter)

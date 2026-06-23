@@ -231,7 +231,7 @@ function set_queries(frm) {
 	frm.set_query('pay_to_account', function () {
 		return {
 			filters: {
-				account_type: 'Payable',
+				account_type: ['in', ['Payable', 'Tax']],
 				is_group: 0,
 			},
 		}

@@ -25,7 +25,9 @@ from erpnext.accounts.general_ledger import (
 	validate_against_pcv,
 	validate_disabled_accounts,
 )
-from erpnext.accounts.utils import get_payment_ledger_entries, is_immutable_ledger_enabled
+from erpnext.accounts.doctype.accounting_dimension.accounting_dimension import get_dimensions
+from erpnext.accounts import utils as accounts_utils
+from erpnext.accounts.utils import is_immutable_ledger_enabled
 from frappe import _, safe_decode, scrub
 from frappe.core.doctype.file.utils import get_local_image
 from frappe.utils import comma_and, comma_or, flt, get_link_to_form, now
@@ -395,10 +397,11 @@ def make_reverse_gl_entries(
 	adv_adj=False,
 	update_outstanding="Yes",
 	partial_cancel=False,
+	posting_date=None,
 	voided_date=None,  # CUSTOM CODE
 ):
 	"""
-	HASH: a2b6e4a1c587ce2f7e017f39944899f76e3e2f7d
+	HASH: 4436585aa07a82ab3704d8091fd99482854aa854
 	REPO: https://github.com/frappe/erpnext/
 	PATH: erpnext/accounts/general_ledger.py
 	METHOD: make_reverse_gl_entries
@@ -433,7 +436,12 @@ def make_reverse_gl_entries(
 		check_freezing_date(gl_entries[0]["posting_date"], adv_adj)
 
 		is_opening = any(d.get("is_opening") == "Yes" for d in gl_entries)
-		validate_against_pcv(is_opening, gl_entries[0]["posting_date"], gl_entries[0]["company"])
+
+		# For reverse entries, use the posting_date parameter if provided and valid
+		# Otherwise fall back to original posting_date
+		validation_date = posting_date if posting_date else gl_entries[0]["posting_date"]
+		validate_against_pcv(is_opening, validation_date, gl_entries[0]["company"])
+
 		if partial_cancel:
 			# Partial cancel is only used by `Advance` in separate account feature.
 			# Only cancel GL entries for unlinked reference using `voucher_detail_no`
@@ -502,6 +510,79 @@ def make_reverse_gl_entries(
 				make_entry(new_gle, adv_adj, "Yes")
 
 
+def tax_payable_gl_entries(gl_entries):
+	return [
+		gle
+		for gle in gl_entries
+		if gle.party_type
+		and gle.party
+		and frappe.get_cached_value("Account", gle.account, "account_type") == "Tax"
+	]
+
+
+def get_tax_payable_gl_entries_for_voucher(voucher_type, voucher_no):
+	gle = frappe.qb.DocType("GL Entry")
+	account = frappe.qb.DocType("Account")
+	return (
+		frappe.qb.from_(gle)
+		.inner_join(account)
+		.on(gle.account == account.name)
+		.select(gle.star)
+		.where(gle.voucher_type == voucher_type)
+		.where(gle.voucher_no == voucher_no)
+		.where(gle.is_cancelled == 0)
+		.where(account.account_type == "Tax")
+		.where(gle.party.isnotnull())
+		.where(gle.party_type.isnotnull())
+	).run(as_dict=True)
+
+
+def build_tax_payment_ledger_entries(gl_entries, cancel=0):
+	ple_map = []
+	for gle in gl_entries:
+		dr_or_cr = gle.credit - gle.debit
+		dr_or_cr_account_currency = gle.credit_in_account_currency - gle.debit_in_account_currency
+		if cancel:
+			dr_or_cr *= -1
+			dr_or_cr_account_currency *= -1
+
+		against_voucher_type = gle.against_voucher_type if gle.against_voucher_type else gle.voucher_type
+		against_voucher_no = gle.against_voucher if gle.against_voucher else gle.voucher_no
+
+		ple = frappe._dict(
+			doctype="Payment Ledger Entry",
+			posting_date=gle.posting_date,
+			company=gle.company,
+			account_type="Payable",
+			account=gle.account,
+			party_type=gle.party_type,
+			party=gle.party,
+			project=gle.project,
+			cost_center=gle.cost_center,
+			finance_book=gle.finance_book,
+			due_date=gle.due_date,
+			voucher_type=gle.voucher_type,
+			voucher_no=gle.voucher_no,
+			voucher_detail_no=gle.voucher_detail_no,
+			against_voucher_type=against_voucher_type,
+			against_voucher_no=against_voucher_no,
+			account_currency=gle.account_currency,
+			amount=dr_or_cr,
+			amount_in_account_currency=dr_or_cr_account_currency,
+			delinked=cancel,
+			remarks=gle.remarks,
+		)
+
+		dimensions_and_defaults = get_dimensions()
+		if dimensions_and_defaults:
+			for dimension in dimensions_and_defaults[0]:
+				ple[dimension.fieldname] = gle.get(dimension.fieldname)
+
+		ple_map.append(ple)
+
+	return ple_map
+
+
 def create_payment_ledger_entry(
 	gl_entries,
 	cancel=0,
@@ -512,25 +593,29 @@ def create_payment_ledger_entry(
 	voided_date=None,  # CUSTOM CODE
 ):
 	"""
-	HASH: f039bfe35a575272049534bac9aa771260691bde
+	HASH: 8c7a313a38dfe38c9e35ca41e91389bcfaed2404
 	REPO: https://github.com/frappe/erpnext/
 	PATH: erpnext/accounts/utils.py
 	METHOD: create_payment_ledger_entry
 	"""
 	if gl_entries:
-		ple_map = get_payment_ledger_entries(gl_entries, cancel=cancel)
+		ple_map = accounts_utils.get_payment_ledger_entries(gl_entries, cancel=cancel)
+		ple_map.extend(
+			build_tax_payment_ledger_entries(tax_payable_gl_entries(gl_entries), cancel=cancel)
+		)
 
 		for entry in ple_map:
 			ple = frappe.get_doc(entry)
 
 			if cancel:
-				delink_original_entry(ple, partial_cancel=partial_cancel, voided_date=voided_date)
-				if is_immutable_ledger_enabled():
+				if not is_immutable_ledger_enabled():
+					delink_original_entry(ple, partial_cancel=partial_cancel, voided_date=voided_date)
+					if voided_date:
+						ple.delinked = 0
+						ple.posting_date = voided_date
+				else:
 					ple.delinked = 0
 					ple.posting_date = frappe.form_dict.get("posting_date") or getdate()
-				elif voided_date:
-					ple.delinked = 0
-					ple.posting_date = voided_date
 
 			ple.flags.ignore_permissions = 1
 			ple.flags.adv_adj = adv_adj
@@ -541,7 +626,7 @@ def create_payment_ledger_entry(
 
 def delink_original_entry(pl_entry, partial_cancel=False, voided_date=None):  # CUSTOM CODE
 	"""
-	HASH: f039bfe35a575272049534bac9aa771260691bde
+	HASH: 8c7a313a38dfe38c9e35ca41e91389bcfaed2404
 	REPO: https://github.com/frappe/erpnext/
 	PATH: erpnext/accounts/utils.py
 	METHOD: delink_original_entry
@@ -588,7 +673,7 @@ def delink_original_entry(pl_entry, partial_cancel=False, voided_date=None):  # 
 		if partial_cancel:
 			query = query.where(ple.voucher_detail_no == pl_entry.voucher_detail_no)
 
-		if not (is_immutable_ledger_enabled() or voided_date):  # CUSTOM CODE
+		if not voided_date:  # CUSTOM CODE
 			query = query.set(ple.delinked, True)
 
 		query.run()
@@ -741,13 +826,20 @@ def validate_add_payment_term(doc: PaymentEntry, method: str | None = None):
 @frappe.whitelist()
 def update_sales_tax_payable_outstanding(doc, method=None):
 	for r in doc.get("references"):
-		if r.reference_doctype == "Sales Taxes and Charges":
-			currently_outstanding = frappe.db.get_value(
-				"Sales Taxes and Charges", r.reference_name, "outstanding_amount"
-			)
-			frappe.db.set_value(
-				"Sales Taxes and Charges",
-				r.reference_name,
-				"outstanding_amount",
-				flt(currently_outstanding - r.allocated_amount),
-			)
+		if r.reference_doctype != "Sales Taxes and Charges":
+			continue
+		currently_outstanding = flt(
+			frappe.db.get_value("Sales Taxes and Charges", r.reference_name, "outstanding_amount")
+		)
+		if method == "on_submit":
+			new_outstanding = currently_outstanding - r.allocated_amount
+		elif method == "on_cancel":
+			new_outstanding = currently_outstanding + r.allocated_amount
+		else:
+			continue
+		frappe.db.set_value(
+			"Sales Taxes and Charges",
+			r.reference_name,
+			"outstanding_amount",
+			new_outstanding,
+		)

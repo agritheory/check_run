@@ -102,7 +102,10 @@ after_install = "check_run.install.after_install"
 # Override standard doctype classes
 
 override_doctype_class = {
+	"GL Entry": "check_run.overrides.gl_entry.CheckRunGLEntry",
+	"Journal Entry": "check_run.overrides.journal_entry.CheckRunJournalEntry",
 	"Payment Entry": "check_run.overrides.payment_entry.CheckRunPaymentEntry",
+	"Payment Ledger Entry": "check_run.overrides.payment_ledger_entry.CheckRunPaymentLedgerEntry",
 	"Sales Invoice": "check_run.overrides.sales_invoice.CheckRunSalesInvoice",
 	"Sales Taxes and Charges": "check_run.overrides.sales_taxes_and_charges.CheckRunSalesTaxesandCharges",
 }
@@ -124,6 +127,7 @@ doc_events = {
 		],
 		"on_cancel": [
 			"check_run.overrides.payment_entry.update_outstanding_amount",
+			"check_run.overrides.payment_entry.update_sales_tax_payable_outstanding",
 		],
 	},
 	"Purchase Invoice": {

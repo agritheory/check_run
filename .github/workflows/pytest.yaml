@@ -73,10 +73,10 @@ jobs:
         run: |
           source env/bin/activate
           cd apps/check_run
-          pytest check_run/tests/ --disable-warnings -s | tee pytest-coverage.txt
+          pytest check_run/tests/ --cov=check_run --cov-report=xml --disable-warnings -s | tee pytest-coverage.txt
 
       - name: Pytest coverage comment
         uses: MishaKav/pytest-coverage-comment@main
         with:
           pytest-coverage-path: /home/runner/frappe-bench/apps/check_run/pytest-coverage.txt
-          junitxml-path: /home/runner/frappe-bench/apps/check_run/coverage.xml
+          pytest-xml-coverage-path: /home/runner/frappe-bench/apps/check_run/coverage.xml
