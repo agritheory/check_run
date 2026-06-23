@@ -1,13 +1,16 @@
 name: Publish to Frappe Cloud Marketplace
 
 on:
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
       - version-15
   workflow_dispatch:
 
 jobs:
   publish:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     concurrency: fc-publish-${{ github.repository }}
     steps:
