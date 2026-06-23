@@ -309,10 +309,11 @@ def make_reverse_gl_entries(
 	adv_adj=False,
 	update_outstanding="Yes",
 	partial_cancel=False,
+	posting_date=None,
 	voided_date=None,  # CUSTOM CODE
 ):
 	"""
-	HASH: a2b6e4a1c587ce2f7e017f39944899f76e3e2f7d
+	HASH: 4436585aa07a82ab3704d8091fd99482854aa854
 	REPO: https://github.com/frappe/erpnext/
 	PATH: erpnext/accounts/general_ledger.py
 	METHOD: make_reverse_gl_entries
@@ -347,7 +348,12 @@ def make_reverse_gl_entries(
 		check_freezing_date(gl_entries[0]["posting_date"], adv_adj)
 
 		is_opening = any(d.get("is_opening") == "Yes" for d in gl_entries)
-		validate_against_pcv(is_opening, gl_entries[0]["posting_date"], gl_entries[0]["company"])
+
+		# For reverse entries, use the posting_date parameter if provided and valid
+		# Otherwise fall back to original posting_date
+		validation_date = posting_date if posting_date else gl_entries[0]["posting_date"]
+		validate_against_pcv(is_opening, validation_date, gl_entries[0]["company"])
+
 		if partial_cancel:
 			# Partial cancel is only used by `Advance` in separate account feature.
 			# Only cancel GL entries for unlinked reference using `voucher_detail_no`
@@ -426,7 +432,7 @@ def create_payment_ledger_entry(
 	voided_date=None,  # CUSTOM CODE
 ):
 	"""
-	HASH: f039bfe35a575272049534bac9aa771260691bde
+	HASH: 8c7a313a38dfe38c9e35ca41e91389bcfaed2404
 	REPO: https://github.com/frappe/erpnext/
 	PATH: erpnext/accounts/utils.py
 	METHOD: create_payment_ledger_entry
@@ -438,13 +444,14 @@ def create_payment_ledger_entry(
 			ple = frappe.get_doc(entry)
 
 			if cancel:
-				delink_original_entry(ple, partial_cancel=partial_cancel, voided_date=voided_date)
-				if is_immutable_ledger_enabled():
+				if not is_immutable_ledger_enabled():
+					delink_original_entry(ple, partial_cancel=partial_cancel, voided_date=voided_date)
+					if voided_date:
+						ple.delinked = 0
+						ple.posting_date = voided_date
+				else:
 					ple.delinked = 0
 					ple.posting_date = frappe.form_dict.get("posting_date") or getdate()
-				elif voided_date:
-					ple.delinked = 0
-					ple.posting_date = voided_date
 
 			ple.flags.ignore_permissions = 1
 			ple.flags.adv_adj = adv_adj
@@ -455,7 +462,7 @@ def create_payment_ledger_entry(
 
 def delink_original_entry(pl_entry, partial_cancel=False, voided_date=None):  # CUSTOM CODE
 	"""
-	HASH: f039bfe35a575272049534bac9aa771260691bde
+	HASH: 8c7a313a38dfe38c9e35ca41e91389bcfaed2404
 	REPO: https://github.com/frappe/erpnext/
 	PATH: erpnext/accounts/utils.py
 	METHOD: delink_original_entry
@@ -502,7 +509,7 @@ def delink_original_entry(pl_entry, partial_cancel=False, voided_date=None):  # 
 		if partial_cancel:
 			query = query.where(ple.voucher_detail_no == pl_entry.voucher_detail_no)
 
-		if not (is_immutable_ledger_enabled() or voided_date):  # CUSTOM CODE
+		if not voided_date:  # CUSTOM CODE
 			query = query.set(ple.delinked, True)
 
 		query.run()
