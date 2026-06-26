@@ -41,7 +41,7 @@ def test_remittance_report_summary_unremitted():
 
 	| Account                |   Debit  |  Credit  | Party                       |
 	| ---------------------- | --------:| --------:| --------------------------- |
-	| Accounts Receivable    | $138.78  |          | Almacs Food Group           |
+	| Accounts Receivable    | $137.80  |          | Almacs Food Group           |
 	| Sales                  |          | $130.00  |                             |
 	| 2320 Sales Tax Payable |          |   $7.80  | Vermont Department of Taxes |
 
@@ -267,7 +267,7 @@ def test_remittance_report_return_shows_credit():
 	Original SI:
 	| Account                |   Debit  |  Credit  | Party                       |
 	| ---------------------- | --------:| --------:| --------------------------- |
-	| Accounts Receivable    | $138.78  |          | Downtown Deli               |
+	| Accounts Receivable    | $137.80  |          | Downtown Deli               |
 	| Sales                  |          | $130.00  |                             |
 	| 2320 Sales Tax Payable |          |   $7.80  | Vermont Department of Taxes |
 
@@ -276,7 +276,7 @@ def test_remittance_report_return_shows_credit():
 	| ---------------------- | --------:| --------:| --------------------------- |
 	| 2320 Sales Tax Payable |   $7.80  |          | Vermont Department of Taxes |
 	| Sales                  | $130.00  |          |                             |
-	| Accounts Receivable    |          | $138.78  | Downtown Deli               |
+	| Accounts Receivable    |          | $137.80  | Downtown Deli               |
 	"""
 	posting_date = datetime.date(year, 11, 20)
 	si = make_taxed_si("Downtown Deli", "VT Sales Tax - CFC", posting_date)
