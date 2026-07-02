@@ -14,3 +14,6 @@ wget -O /tmp/wkhtmltox.tar.xz https://github.com/frappe/wkhtmltopdf/raw/master/w
 tar -xf /tmp/wkhtmltox.tar.xz -C /tmp
 sudo mv /tmp/wkhtmltox/bin/wkhtmltopdf /usr/local/bin/wkhtmltopdf
 sudo chmod o+x /usr/local/bin/wkhtmltopdf
+if [ "${DB:-mariadb}" = "postgres" ]; then
+  sudo apt install -y postgresql-client libpq-dev
+fi
