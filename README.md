@@ -13,10 +13,10 @@ See the [installation guide](./docs/installationguide.md) for detailed instructi
 
 #### Developer Setup
 
-First, set up a new bench and substitute a path to the python version to use. Python should be 3.10 latest for V14. These instructions use [pyenv](https://github.com/pyenv/pyenv) for managing environments.
+First, set up a new bench and substitute a path to the python version to use. Python should be 3.14 latest for V14. These instructions use [pyenv](https://github.com/pyenv/pyenv) for managing environments.
 ```shell
 # Version 14
-bench init --frappe-branch version-14 {{ bench name }} --python ~/.pyenv/versions/3.10.3/bin/python3
+bench init --frappe-branch version-14 {{ bench name }} --python ~/.pyenv/versions/3.14/bin/python3
 ```
 
 Create a new site in that bench
