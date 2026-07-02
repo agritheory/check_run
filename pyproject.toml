@@ -2,69 +2,19 @@
 name = "check_run"
 version = "15.14.0"
 description = "Payables utility for ERPNext"
-authors = [
-    { name = "AgriTheory", email = "support@agritheory.dev"}
-]
 readme = "README.md"
-requires-python = ">=3.10"
-dynamic = ["dependencies"]
-
-[tool.poetry.dependencies]
-python = "^3.10"
-atnacha = { git = "https://github.com/AgriTheory/atnacha.git" }
-pdfplumber = "*"
+requires-python = ">=3.14,<3.15"
+dynamic = [ "dependencies",]
+[[project.authors]]
+name = "AgriTheory"
+email = "support@agritheory.dev"
 
 [build-system]
-requires = ["poetry-core"]
+requires = [ "poetry-core",]
 build-backend = "poetry.core.masonry.api"
-
-[tool.bench.frappe-dependencies]
-frappe = ">=15.0.0,<16.0.0"
-erpnext = ">=15.0.0,<16.0.0"
-hrms = ">=15.0.0,<16.0.0"
-
-[tool.bench.dev-dependencies]
-pytest = "~=8.2.2"
-pytest-cov = "~=6.3.0"
-coverage = ">=7.2.0"
-pytest-order = "~=1.2.1"
-test_utils = "@git+https://github.com/agritheory/test_utils.git#egg=test_utils"
 
 [tool.codespell]
 skip = "CHANGELOG.md"
-
-[tool.pytest.ini_options]
-addopts = "--cov=check_run --cov-report term-missing"
-
-[tool.coverage.report]
-skip_covered = true
-skip_empty = true
-omit = [
-    "*/boot.py",
-    "*/customize.py",
-    "*/hooks.py",
-    "*/install.py",
-    "*/patches/*",
-    "*/test_*.py",
-    "*/tests/*",
-]
-# exclude_also requires coverage >=7.2 (see [tool.bench.dev-dependencies] above).
-# Pair with test_utils validate_doctype_python_types: Frappe auto-generated TYPE_CHECKING blocks.
-# https://coverage.readthedocs.io/en/latest/excluding.html#advanced-exclusion
-exclude_also = [
-    "def __repr__",
-    "if self.debug:",
-    "if settings.DEBUG",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if 0:",
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
-    "class .*\\bProtocol\\):",
-    "@(abc\\.)?abstractmethod",
-    "# begin: auto-generated types",
-    "from typing import TYPE_CHECKING",
-]
 
 [tool.black]
 line-length = 99
@@ -79,11 +29,37 @@ ensure_newline_before_comments = true
 indent = "\t"
 
 [tool.semantic_release]
-version_toml = ["pyproject.toml:project.version"]
-version_variables = [
-    "check_run/__init__.py:__version__"
-]
+version_toml = [ "pyproject.toml:project.version",]
+version_variables = [ "check_run/__init__.py:__version__",]
 build_command = "echo 1"
 
+[tool.poetry.dependencies]
+python = ">=3.14,<3.15"
+pdfplumber = "*"
+
+[tool.bench.frappe-dependencies]
+frappe = ">=16.0.0-dev,<17.0.0"
+erpnext = ">=15.0.0,<16.0.0"
+hrms = ">=15.0.0,<16.0.0"
+
+[tool.bench.dev-dependencies]
+pytest = "~=8.2.2"
+pytest-cov = "~=6.3.0"
+coverage = ">=7.2.0"
+pytest-order = "~=1.2.1"
+test_utils = "@git+https://github.com/agritheory/test_utils.git#egg=test_utils"
+
+[tool.pytest.ini_options]
+addopts = "--cov=check_run --cov-report term-missing"
+
+[tool.coverage.report]
+skip_covered = true
+skip_empty = true
+omit = [ "*/boot.py", "*/customize.py", "*/hooks.py", "*/install.py", "*/patches/*", "*/test_*.py", "*/tests/*",]
+exclude_also = [ "def __repr__", "if self.debug:", "if settings.DEBUG", "raise AssertionError", "raise NotImplementedError", "if 0:", "if __name__ == .__main__.:", "if TYPE_CHECKING:", "class .*\\bProtocol\\):", "@(abc\\.)?abstractmethod", "# begin: auto-generated types", "from typing import TYPE_CHECKING",]
+
+[tool.poetry.dependencies.atnacha]
+git = "https://github.com/AgriTheory/atnacha.git"
+
 [tool.semantic_release.branches.version]
-match = "version-(14|15)"
+match = "version-(14|15|16)"
