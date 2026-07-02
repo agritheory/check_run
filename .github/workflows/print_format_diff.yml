@@ -5,6 +5,10 @@ on:
     branches:
       - version-14
       - version-15
+      - version-16
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   diff_print_format:
