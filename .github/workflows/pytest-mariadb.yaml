@@ -1,0 +1,11 @@
+name: Pytest CI (MariaDB)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    uses: ./.github/workflows/_base-pytest.yml
+    with:
+      db: mariadb
+      branch-name: version-16

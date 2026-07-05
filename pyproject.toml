@@ -1,6 +1,6 @@
 [project]
 name = "check_run"
-version = "15.15.0"
+version = "16.0.0"
 description = "Payables utility for ERPNext"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
@@ -61,5 +61,11 @@ exclude_also = [ "def __repr__", "if self.debug:", "if settings.DEBUG", "raise A
 [tool.poetry.dependencies.atnacha]
 git = "https://github.com/AgriTheory/atnacha.git"
 
-[tool.semantic_release.branches.version]
-match = "version-(14|15|16)"
+[tool.semantic_release.branches.version-16]
+match = "version-16"
+
+[tool.semantic_release.branches.version-15]
+match = "version-15"
+
+[tool.semantic_release.branches.version-14]
+match = "version-14"

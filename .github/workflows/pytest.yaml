@@ -8,79 +8,22 @@ on:
       - version-16
   pull_request:
 
-permissions:
-  contents: write
-  checks: write
-  issues: write
-  pull-requests: write
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+concurrency:
+  group: check_run-${{ github.event.number }}
+  cancel-in-progress: true
 
 jobs:
-  tests:
-    name: Server
-    runs-on: ubuntu-latest
+  mariadb:
+    name: MariaDB
+    uses: ./.github/workflows/_base-pytest.yml
+    with:
+      db: mariadb
+      branch-name: ${{ github.base_ref || github.ref_name }}
 
-    services:
-      mariadb:
-        image: mariadb:10.6
-        env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: YES
-          MYSQL_ROOT_PASSWORD: 'admin'
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=2s --health-retries=3
-
-    steps:
-      - name: Clone
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.14'
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          check-latest: true
-          cache: 'yarn'
-
-      - name: Add to Hosts
-        run: echo "127.0.0.1 test_site" | sudo tee -a /etc/hosts
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/*requirements.txt', '**/pyproject.toml', '**/setup.py', '**/setup.cfg') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
-
-      - name: Install JS Dependencies
-        run: yarn --prefer-offline
-
-      - name: Install App Dependencies
-        run: bash ${{ github.workspace }}/.github/helper/install_dependencies.sh
-
-      - name: Install Bench Site and Apps
-        env:
-          MYSQL_HOST: 'localhost'
-          MYSQL_PWD: 'admin'
-        run: bash ${{ github.workspace }}/.github/helper/install.sh
-
-      - name: Run Tests
-        working-directory: /home/runner/frappe-bench
-        run: |
-          source env/bin/activate
-          cd apps/check_run
-          pytest check_run/tests/ --cov=check_run --cov-report=xml --disable-warnings -s | tee pytest-coverage.txt
-
-      - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@main
-        with:
-          pytest-coverage-path: /home/runner/frappe-bench/apps/check_run/pytest-coverage.txt
-          pytest-xml-coverage-path: /home/runner/frappe-bench/apps/check_run/coverage.xml
+  postgres:
+    name: Postgres
+    if: false # Enable when ERPNext postgres parity lands
+    uses: ./.github/workflows/_base-pytest.yml
+    with:
+      db: postgres
+      branch-name: ${{ github.base_ref || github.ref_name }}
