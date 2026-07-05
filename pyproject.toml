@@ -1,6 +1,6 @@
 [project]
 name = "check_run"
-version = "15.14.0"
+version = "15.15.0"
 description = "Payables utility for ERPNext"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
