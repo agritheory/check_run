@@ -1,0 +1,21 @@
+name: Publish to Frappe Cloud Marketplace
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - version-15
+  workflow_dispatch:
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    concurrency: fc-publish-${{ github.repository }}
+    steps:
+      - uses: agritheory/test_utils/actions/frappe_cloud_publish@c44a3e254d3e3d2247c7e6c2443be6884a9e37f2
+        with:
+          fc-api-key: ${{ secrets.FC_API_KEY }}
+          fc-api-secret: ${{ secrets.FC_API_SECRET }}
+          branch: version-15
