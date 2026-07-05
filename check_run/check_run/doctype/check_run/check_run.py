@@ -15,7 +15,6 @@ from frappe.desk.form.load import get_attachments
 from frappe.desk.query_report import build_xlsx_data, format_fields, run
 from frappe.desk.utils import get_csv_bytes, pop_csv_params
 from frappe.model.document import Document
-from frappe.permissions import has_permission
 from frappe.query_builder.custom import ConstantColumn
 from frappe.query_builder.functions import Coalesce, NullIf, Sum
 from frappe.utils.data import add_months, flt, get_datetime, get_last_day, getdate, now, nowdate
@@ -69,9 +68,9 @@ class CheckRun(Document):
 
 	@frappe.read_only()
 	def onload(self) -> None:
-		if self.is_new():
-			return
-		settings = get_check_run_settings(self)
+		settings = None
+		if self.bank_account and self.pay_to_account and self.company:
+			settings = get_check_run_settings(self)
 		if not settings:
 			self.set_onload("settings_missing", True)
 		else:
@@ -90,11 +89,16 @@ class CheckRun(Document):
 			)
 			self.set_onload("pay_to_account_currency", pay_to_account_currency)
 
-		self.set_onload("approver_role", settings.approver_role)
-		self.set_onload(
-			"is_approver_user", settings.approver_role in frappe.get_roles(frappe.session.user)
-		)
-		self.set_onload("payment_discount_account", getattr(settings, "payment_discount_account", None))
+		if settings:
+			self.set_onload("approver_role", settings.approver_role)
+			self.set_onload(
+				"is_approver_user", settings.approver_role in frappe.get_roles(frappe.session.user)
+			)
+			self.set_onload("payment_discount_account", getattr(settings, "payment_discount_account", None))
+		else:
+			self.set_onload("approver_role", None)
+			self.set_onload("is_approver_user", False)
+			self.set_onload("payment_discount_account", None)
 
 	def validate(self) -> None:
 		gl_account = frappe.get_value("Bank Account", self.bank_account, "account")
@@ -106,6 +110,8 @@ class CheckRun(Document):
 				self.set_last_check_number()
 				self.set_default_payable_account()
 				self.set_default_dates()
+			if self.bank_account and self.pay_to_account and self.company:
+				get_check_run_settings(self)
 		else:
 			if self.status in ("Draft", "Pending Approval", "Approved"):  # type: ignore # str or None
 				self.filter_transactions()
@@ -604,8 +610,8 @@ class CheckRun(Document):
 			return
 
 		format_fields(data)
-		xlsx_data, column_widths = build_xlsx_data(
-			data, visible_idx=[], include_indentation=1, include_filters=False, ignore_visible_idx=True
+		xlsx_data, column_widths, _styles = build_xlsx_data(
+			data, include_indentation=1, include_filters=False
 		)
 		if settings.positive_pay_file_format == "CSV":
 			content = get_csv_bytes(xlsx_data, csv_params)
@@ -681,6 +687,7 @@ def check_for_draft_check_run(company: str, bank_account: str, payable_account: 
 	cr.bank_account = bank_account
 	cr.pay_to_account = payable_account
 	cr.save()
+	get_check_run_settings(cr)
 	return cr.name
 
 
@@ -698,20 +705,15 @@ def confirm_print(docname: str) -> None:
 
 @frappe.whitelist()
 @frappe.read_only()
-def get_entries(doc: CheckRun | str) -> dict:
-	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc  # type: ignore
+def get_entries(doc: CheckRun | str | dict) -> dict:
+	if isinstance(doc, str):
+		doc = frappe._dict(json.loads(doc))  # type: ignore
+	elif isinstance(doc, dict):
+		doc = frappe._dict(doc)  # type: ignore
 	if isinstance(doc.end_date, str):
 		doc.end_date = getdate(doc.end_date)  # type: ignore
 		doc.posting_date = getdate(doc.posting_date)  # type: ignore
 	modes_of_payment = [""] + frappe.get_all("Mode of Payment", order_by="name", pluck="name")
-	if frappe.db.exists(
-		"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
-	):
-		settings = frappe.get_doc(
-			"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
-		)
-	else:
-		settings = None
 	db_doc = None
 	if frappe.db.exists("Check Run", doc.name):
 		db_doc = frappe.get_doc("Check Run", doc.name)
@@ -730,6 +732,11 @@ def get_entries(doc: CheckRun | str) -> dict:
 	company = doc.company  # type: ignore
 	pay_to_account = doc.pay_to_account  # type: ignore
 	end_date = doc.end_date  # type: ignore
+
+	if not company or not doc.bank_account or not pay_to_account or not end_date:
+		return {"transactions": [], "modes_of_payment": modes_of_payment}
+
+	settings = resolve_check_run_settings(doc)
 
 	# Build purchase invoices query
 	payment_schedule = frappe.qb.DocType("Payment Schedule")
@@ -975,8 +982,11 @@ def get_entries(doc: CheckRun | str) -> dict:
 
 @frappe.whitelist()
 @frappe.read_only()
-def get_balance(doc: CheckRun | str) -> str:
-	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+def get_balance(doc: CheckRun | str | dict) -> str:
+	if isinstance(doc, str):
+		doc = frappe._dict(json.loads(doc))
+	elif isinstance(doc, dict):
+		doc = frappe._dict(doc)
 	if not doc.bank_account or not doc.posting_date:
 		return ""
 	gl_account = frappe.get_value("Bank Account", doc.bank_account, "account")
@@ -985,7 +995,7 @@ def get_balance(doc: CheckRun | str) -> str:
 
 @frappe.whitelist()
 def download_checks(docname: str) -> str:
-	has_permission("Payment Entry", ptype="print", user=frappe.session.user, raise_exception=True)
+	frappe.has_permission("Payment Entry", ptype="print", user=frappe.session.user, throw=True)
 	file_name = frappe.get_value("File", {"attached_to_name": docname})
 	frappe.db.set_value("Check Run", docname, "status", "Confirm Print")
 	return frappe.get_value("File", file_name, "file_url")
@@ -993,7 +1003,7 @@ def download_checks(docname: str) -> str:
 
 @frappe.whitelist()
 def download_nacha(docname: str) -> None:
-	has_permission("Payment Entry", ptype="print", user=frappe.session.user, raise_exception=True)
+	frappe.has_permission("Payment Entry", ptype="print", user=frappe.session.user, throw=True)
 	doc = frappe.get_doc("Check Run", docname)
 	settings = get_check_run_settings(doc)
 	ach_file = doc.build_nacha_file(settings)
@@ -1110,16 +1120,22 @@ def build_nacha_file_from_payment_entries(
 
 
 @frappe.whitelist()
-def get_check_run_settings(doc: CheckRun | str) -> CheckRunSettings:
-	doc = frappe._dict(json.loads(doc)) if isinstance(doc, str) else doc
+def get_check_run_settings(doc: CheckRun | str | dict) -> CheckRunSettings:
+	return resolve_check_run_settings(doc)
+
+
+def resolve_check_run_settings(doc) -> CheckRunSettings:
+	if isinstance(doc, str):
+		doc = frappe._dict(json.loads(doc))
+	elif isinstance(doc, dict):
+		doc = frappe._dict(doc)
 	if frappe.db.exists(
 		"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
 	):
 		return frappe.get_doc(
 			"Check Run Settings", {"bank_account": doc.bank_account, "pay_to_account": doc.pay_to_account}
 		)
-	else:
-		return create(doc.company, doc.bank_account, doc.pay_to_account)
+	return create(doc.company, doc.bank_account, doc.pay_to_account)
 
 
 def get_address(party: str, party_type: str, doctype: str, name: str) -> str:
@@ -1136,6 +1152,13 @@ def get_address(party: str, party_type: str, doctype: str, name: str) -> str:
 
 
 @frappe.whitelist()
+def start_check_pdf_render(docname: str, reprint_check_number: int | None = None) -> None:
+	frappe.get_doc("Check Run", docname).increment_print_count(
+		reprint_check_number=reprint_check_number
+	)
+
+
+@frappe.whitelist()
 @frappe.read_only()
 def ach_only(docname: str) -> dict:
 	if not frappe.db.exists("Check Run", docname):
@@ -1146,7 +1169,7 @@ def ach_only(docname: str) -> dict:
 
 @frappe.whitelist()
 def process_check_run(docname: str) -> None:
-	has_permission("Check Run", ptype="submit", user=frappe.session.user, raise_exception=True)
+	frappe.has_permission("Check Run", ptype="submit", user=frappe.session.user, throw=True)
 	doc = frappe.get_doc("Check Run", docname)
 	doc.process_check_run()
 

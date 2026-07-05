@@ -55,7 +55,7 @@ def cr():  # return draft check run
 @pytest.mark.order(10)
 def test_get_entries(cr):
 	crs = get_check_run_settings(cr)
-	assert frappe.db.exists("Check Run Settings", crs)
+	assert frappe.db.exists("Check Run Settings", crs.name)
 	cr.transactions = frappe.utils.safe_json_loads(cr.transactions)
 	assert len(cr.transactions) > 1
 	# assert that each type of source document appears at least once

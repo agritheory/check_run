@@ -891,6 +891,7 @@ def create_expense_claim(settings):
 	ec.posting_date = settings.day
 	ec.company = settings.company
 	ec.payable_account = payable_acct
+	ec.exchange_rate = 1
 	ec.save()
 	ec.submit()
 	# second month - open
@@ -913,6 +914,7 @@ def create_expense_claim(settings):
 	ec.posting_date = next_day
 	ec.company = settings.company
 	ec.payable_account = payable_acct
+	ec.exchange_rate = 1
 	ec.save()
 	ec.submit()
 	# two expense claims to test aggregation
@@ -933,6 +935,7 @@ def create_expense_claim(settings):
 	ec.posting_date = next_day
 	ec.company = settings.company
 	ec.payable_account = payable_acct
+	ec.exchange_rate = 1
 	ec.save()
 	ec.submit()
 

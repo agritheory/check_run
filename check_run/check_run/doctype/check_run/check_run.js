@@ -12,6 +12,11 @@ frappe.ui.form.on('Check Run', {
 		frappe.realtime.on('render_check_progress', data => {
 			show_progress_bar(frm, data, 'Printing')
 		})
+		$(document).on('form-unload.check_run_fullwidth', (_e, frm_unloading) => {
+			if (frm_unloading?.doctype === 'Check Run') {
+				$('body').removeClass('check-run-form')
+			}
+		})
 	},
 	validate: frm => {
 		validate_mode_of_payment_mandatory(frm)
@@ -32,6 +37,7 @@ frappe.ui.form.on('Check Run', {
 	},
 	refresh: async frm => {
 		frm.disable_save()
+		$('body').addClass('check-run-form')
 		frm.layout.show_message('')
 		if (frm.doc.__onload && frm.doc.__onload.errors) {
 			frm.set_intro(
@@ -51,8 +57,10 @@ frappe.ui.form.on('Check Run', {
 		get_defaults(frm)
 		set_queries(frm)
 		frappe.realtime.off('reload')
-		frappe.realtime.on('reload', message => {
-			frm.reload_doc()
+		frappe.realtime.on('reload', () => {
+			if (cur_frm?.doctype === 'Check Run' && cur_frm.docname === frm.docname) {
+				cur_frm.reload_doc()
+			}
 		})
 		if (frm.is_new()) {
 			get_balance(frm)
@@ -209,7 +217,6 @@ function show_progress_bar(frm, data, action) {
 	if (data.current === data.total) {
 		setTimeout(() => {
 			frm.dashboard.hide()
-			frm.refresh()
 		}, 2000)
 	}
 }
@@ -380,8 +387,6 @@ function reprint_checks(frm) {
 		let values = cur_dialog.get_values()
 		render_checks(frm, values.reprint_check_number || undefined)
 		d.hide()
-		frm.reload_doc()
-		frm.set_value('status', 'Submitted')
 	})
 	d.show()
 }
@@ -465,18 +470,16 @@ function validate_mode_of_payment_mandatory(frm) {
 
 function render_checks(frm, reprint_check_number = undefined) {
 	frappe
-		.call({
-			method: 'increment_print_count',
-			doc: frm.doc,
-			args: { reprint_check_number: reprint_check_number },
+		.xcall('check_run.check_run.doctype.check_run.check_run.start_check_pdf_render', {
+			docname: frm.doc.name,
+			reprint_check_number: reprint_check_number,
 		})
-		.done(() => {
-			frm.reload_doc()
+		.then(() => {
 			frm.add_custom_button('Re-Print Checks', () => {
 				reprint_checks(frm)
 			})
 		})
-		.fail(r => {
+		.catch(() => {
 			frm.reload_doc()
 		})
 }
@@ -500,16 +503,23 @@ function download_nacha(frm) {
 	}
 }
 
+function can_modify_check_run_settings() {
+	return (
+		frappe.session.user === 'Administrator' ||
+		frappe.model.can_write('Check Run Settings') ||
+		frappe.perm.has_perm('Check Run Settings', 0, 'write')
+	)
+}
+
 function settings_button(frm) {
-	if (frappe.perm.has_perm('Check Run Settings', 0, 'write')) {
-		frm.add_custom_button('Modify Settings', () => {
-			frappe
-				.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', { doc: frm.doc })
-				.then(r => {
-					frappe.set_route('Form', 'Check Run Settings', r.name)
-				})
-		})
+	if (!can_modify_check_run_settings()) {
+		return
 	}
+	frm.add_custom_button(__('Modify Settings'), () => {
+		frappe.xcall('check_run.check_run.doctype.check_run.check_run.get_check_run_settings', { doc: frm.doc }).then(r => {
+			frappe.set_route('Form', 'Check Run Settings', r.name)
+		})
+	})
 }
 
 function check_settings(frm) {

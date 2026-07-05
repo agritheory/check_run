@@ -10,19 +10,27 @@ import frappe
 import pytest
 from frappe.utils import get_bench_path
 
+BENCH_SITES = Path(get_bench_path()) / "sites"
 
-def _get_logger(*args, **kwargs):
+# Frappe log handlers write to ../logs relative to cwd. Run pytest from
+# apps/check_run, so chdir to bench/sites before test modules import erpnext.
+os.chdir(BENCH_SITES)
+
+
+def _get_logger(module=None, *args, **kwargs):
 	from frappe.utils.logger import get_logger
 
 	return get_logger(
-		module=None,
+		module=module,
 		with_more_info=False,
 		allow_site=True,
 		filter=None,
 		max_size=100_000,
 		file_count=20,
-		stream_only=True,
 	)
+
+
+frappe.logger = _get_logger
 
 
 @pytest.fixture(scope="module")
@@ -33,21 +41,17 @@ def monkeymodule():
 
 @pytest.fixture(scope="session", autouse=True)
 def db_instance():
-	frappe.logger = _get_logger
-
 	currentsite = "test_site"
-	sites = Path(get_bench_path()) / "sites"
-	if (sites / "common_site_config.json").is_file():
-		currentsite = json.loads((sites / "common_site_config.json").read_text()).get("default_site")
+	if (BENCH_SITES / "common_site_config.json").is_file():
+		currentsite = json.loads((BENCH_SITES / "common_site_config.json").read_text()).get(
+			"default_site"
+		)
 
-	# frappe.read_file("assets/assets.json") resolves relative to process cwd, not sites_path
-	os.chdir(sites)
-
-	frappe.init(site=currentsite, sites_path=sites)
+	frappe.init(site=currentsite, sites_path=BENCH_SITES)
 
 	common_site_config = {}
-	if (sites / "common_site_config.json").is_file():
-		common_site_config = json.loads((sites / "common_site_config.json").read_text())
+	if (BENCH_SITES / "common_site_config.json").is_file():
+		common_site_config = json.loads((BENCH_SITES / "common_site_config.json").read_text())
 	port = common_site_config.get("webserver_port") or common_site_config.get("http_port") or 8000
 	if not frappe.conf.host_name:
 		frappe.conf.host_name = f"http://127.0.0.1:{port}"

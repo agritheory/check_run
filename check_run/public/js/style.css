@@ -2,6 +2,21 @@
 	padding-bottom: 0.7rem;
 }
 
+body.check-run-form .std-form-layout .section-head,
+body.check-run-form .std-form-layout .section-body,
+body.check-run-form .form-footer,
+body.check-run-form .form-grid {
+	max-width: 100% !important;
+}
+
+body.check-run-form .form-section .form-section-description {
+	max-width: 100% !important;
+}
+
+body.check-run-form .check-run-table {
+	width: 100%;
+}
+
 .party-filter[data-v-3c0aadcb] {
 	margin-top: 5px;
 }

@@ -4,8 +4,6 @@ export PIP_ROOT_USER_ACTION=ignore
 
 set -e
 
-DB="${DB:-mariadb}"
-
 # Check for merge conflicts before proceeding
 python -m compileall -f "${GITHUB_WORKSPACE}"
 if grep -lr --exclude-dir=node_modules "^<<<<<<< " "${GITHUB_WORKSPACE}"
@@ -18,15 +16,13 @@ cd ~ || exit
 pip install --upgrade pip
 pip install frappe-bench
 
-if [ "$DB" == "mariadb" ]; then
-  mysql --host 127.0.0.1 --port 3306 -u root -e "SET GLOBAL character_set_server = 'utf8mb4'"
-  mysql --host 127.0.0.1 --port 3306 -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
-  mysql --host 127.0.0.1 --port 3306 -u root -e "CREATE OR REPLACE DATABASE test_site"
-  mysql --host 127.0.0.1 --port 3306 -u root -e "CREATE OR REPLACE USER 'test_site'@'localhost' IDENTIFIED BY 'test_site'"
-  mysql --host 127.0.0.1 --port 3306 -u root -e "GRANT ALL PRIVILEGES ON \`test_site\`.* TO 'test_site'@'localhost'"
-  mysql --host 127.0.0.1 --port 3306 -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'root'"  # match site_cofig
-  mysql --host 127.0.0.1 --port 3306 -u root -e "FLUSH PRIVILEGES"
-fi
+mysql --host 127.0.0.1 --port 3306 -u root -e "SET GLOBAL character_set_server = 'utf8mb4'"
+mysql --host 127.0.0.1 --port 3306 -u root -e "SET GLOBAL collation_server = 'utf8mb4_unicode_ci'"
+mysql --host 127.0.0.1 --port 3306 -u root -e "CREATE OR REPLACE DATABASE test_site"
+mysql --host 127.0.0.1 --port 3306 -u root -e "CREATE OR REPLACE USER 'test_site'@'localhost' IDENTIFIED BY 'test_site'"
+mysql --host 127.0.0.1 --port 3306 -u root -e "GRANT ALL PRIVILEGES ON \`test_site\`.* TO 'test_site'@'localhost'"
+mysql --host 127.0.0.1 --port 3306 -u root -e "ALTER USER 'root'@'localhost' IDENTIFIED BY 'root'"  # match site_cofig
+mysql --host 127.0.0.1 --port 3306 -u root -e "FLUSH PRIVILEGES"
 
 echo "BRANCH_NAME: ${BRANCH_NAME}"
 
@@ -34,14 +30,7 @@ git clone https://github.com/frappe/frappe --branch "${BRANCH_NAME}"
 bench init frappe-bench --frappe-path ~/frappe --python "$(which python)" --skip-assets --ignore-exist
 
 mkdir ~/frappe-bench/sites/test_site
-if [ "$DB" == "postgres" ]; then
-  cp "${GITHUB_WORKSPACE}/.github/helper/site_config_postgres.json" ~/frappe-bench/sites/test_site/site_config.json
-  echo "travis" | psql -h 127.0.0.1 -p 5432 -c "CREATE DATABASE test_site" -U postgres
-  echo "travis" | psql -h 127.0.0.1 -p 5432 -c "CREATE USER test_site WITH PASSWORD 'test_site'" -U postgres
-  echo "travis" | psql -h 127.0.0.1 -p 5432 -c "GRANT ALL PRIVILEGES ON DATABASE test_site TO test_site" -U postgres
-else
-  cp "${GITHUB_WORKSPACE}/.github/helper/site_config.json" ~/frappe-bench/sites/test_site/site_config.json
-fi
+cp "${GITHUB_WORKSPACE}/.github/helper/site_config.json" ~/frappe-bench/sites/test_site/site_config.json
 
 
 cd ~/frappe-bench || exit

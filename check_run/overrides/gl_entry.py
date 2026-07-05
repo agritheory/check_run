@@ -8,7 +8,7 @@ from erpnext.accounts.party import validate_account_party_type, validate_party_f
 
 class CheckRunGLEntry(GLEntry):
 	def validate_party(self):
-		validate_party_frozen_disabled(self.party_type, self.party)
+		validate_party_frozen_disabled(self.company, self.party_type, self.party)
 		if (
 			self.party_type
 			and self.party
