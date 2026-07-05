@@ -1,6 +1,6 @@
 [project]
 name = "check_run"
-version = "15.16.0"
+version = "16.0.0"
 description = "Payables utility for ERPNext"
 readme = "README.md"
 requires-python = ">=3.14,<3.15"
@@ -39,8 +39,8 @@ pdfplumber = "*"
 
 [tool.bench.frappe-dependencies]
 frappe = ">=16.0.0-dev,<17.0.0"
-erpnext = ">=15.0.0,<16.0.0"
-hrms = ">=15.0.0,<16.0.0"
+erpnext = ">=16.0.0-dev,<17.0.0"
+hrms = ">=16.0.0-dev,<17.0.0"
 
 [tool.bench.dev-dependencies]
 pytest = "~=8.2.2"
